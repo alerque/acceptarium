@@ -10,7 +10,7 @@ docdir = $(datarootdir)/doc/$(TRANSFORMED_PACKAGE_NAME)
 licensedir = $(datarootdir)/licenses/$(TRANSFORMED_PACKAGE_NAME)
 
 bin_PROGRAMS = acceptarium
-acceptarium_SOURCES  = src/bin/acceptarium.rs src/lib.rs
+acceptarium_SOURCES  = src/bin/acceptarium.rs src/cli.rs src/lib.rs src/types.rs
 EXTRA_acceptarium_SOURCES =
 EXTRA_DIST =
 dist_doc_DATA = README.md CHANGELOG.md

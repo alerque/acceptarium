@@ -3,6 +3,8 @@ name = "acceptarium"
 version = "0.0.0"
 description = "CLI tool to facilitate digitized receipt handling in plain text accounting workflows"
 readme = "README.md"
+build = "build-aux/build.rs"
+include = ["*.rs"]
 edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
@@ -36,10 +38,50 @@ lto = true
 
 [features]
 default = []
-full = ["cli"]
-cli = []
+full = ["cli", "bash", "elvish", "fish", "manpage", "powershell", "zsh"]
+completions = ["cli", "dep:clap_complete"]
+cli = ["dep:clap"]
+bash = ["completions"]
+elvish = ["completions"]
+fish = ["completions"]
+manpage = ["dep:clap_mangen"]
+powershell = ["completions"]
+zsh = ["completions"]
 
 [dependencies]
+snafu = "0.8"
+
+[dependencies.clap]
+version = "4.5"
+optional = true
+features = ["derive", "color", "wrap_help"]
+
+[build-dependencies]
+snafu = "0.8"
+
+[build-dependencies.clap_complete]
+version = "4.5"
+optional = true
+
+[build-dependencies.clap_mangen]
+version = "0.2"
+optional = true
+
+[build-dependencies.clap]
+version = "4.5"
+optional = true
+features = ["derive"]
+
+[build-dependencies.anyhow]
+version = "1.0"
+
+[build-dependencies.vergen-gix]
+version = "9.1"
+default-features = false
+features = ["build", "cargo", "rustc"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(build)'] }
 
 [package.metadata.bacon]
 default_job = "build"

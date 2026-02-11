@@ -7,4 +7,13 @@ multiple-versions = "allow"
 
 # Not exhaustive, just whitelist the current dependency tree
 [licenses]
-allow = ["AGPL-3.0-only"]
+allow = [
+  "AGPL-3.0-only",
+  "Apache-2.0",
+  "BSD-3-Clause",
+  "CC0-1.0",
+  "MIT",
+  "MIT-0",
+  "Unicode-3.0",
+  "Zlib",
+]
