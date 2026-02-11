@@ -45,10 +45,6 @@ flowchart LR
 
 * Avoid lock-in to any particular PTA solution (pair with [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], or similar journal tools)
 
-## Dependencies
-
-* [Git Annex][gitannex]
-
 [beancount]: https://beancount.io/
 [gitannex]: https://git-annex.branchable.com/
 [hledger]: https://hledger.org/
