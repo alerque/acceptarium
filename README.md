@@ -12,6 +12,19 @@ CLI tooling to facilitate scanning receipts, extracting useful data, archiving t
 
 ## Overview
 
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+    A["Ingest/Scan"] --> B["ID (Store)"]
+    B --> C["Review/Edit"] & D["OCR"]
+    D --> E["LLM or Regex Extraction"]
+    E --> C
+    C --> F["Export"]
+```
+
 1. Scan or import scanned receipts, individually or via some bulk mechanism.
 1. Archive scanned assets using [Git Annex][gitannex] (or potentially pluggable backends? LFS? WebDAV?).
 1. **Optionally** extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
