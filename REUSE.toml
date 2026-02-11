@@ -1,8 +1,27 @@
 version = 1
 
 [[annotations]]
-path = [
-  "*",
-]
+path = ["*.rs", "src/", "README.md"]
 SPDX-FileCopyrightText = "© 2026 Caleb Maclennan <caleb@alerque.com>"
 SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = [
+  "build-aux/*.am",
+  "build-aux/*.m4",
+  "build-aux/git-version-gen",
+  "Makefile.am",
+  "bootstrap.sh",
+  "configure.ac",
+]
+SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [
+  ".gitignore",
+  "Cargo.lock",
+  "Cargo.toml",
+]
+SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
+SPDX-License-Identifier = "0BSD"

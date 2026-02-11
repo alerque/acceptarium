@@ -36,6 +36,7 @@ lto = true
 
 [features]
 default = []
+full = ["cli"]
 cli = []
 
 [dependencies]
