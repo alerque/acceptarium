@@ -23,6 +23,8 @@ flowchart LR
     D --> E["LLM or Regex Extraction"]
     E --> C
     C --> F["Export"]
+    style D stroke-dasharray: 5
+    style E stroke-dasharray: 5
 ```
 
 1. Scan or import scanned receipts, individually or via some bulk mechanism.
