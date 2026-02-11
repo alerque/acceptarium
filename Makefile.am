@@ -37,7 +37,7 @@ include $(top_srcdir)/aminclude.am
 .PHONY: build
 build: $(bin_PROGRAMS)
 
-PHONY_DEVELOPER_TARGETS = release-preview reuse-lint binstall
+PHONY_DEVELOPER_TARGETS = release-preview reuse-lint typos binstall
 .PHONY: $(PHONY_DEVELOPER_TARGETS)
 
 if DEVELOPER_MODE
@@ -45,10 +45,13 @@ if DEVELOPER_MODE
 binstall: @PACKAGE_NAME@$(EXEEXT)
 	cp $< $(<)-v$(VERSION)-$(CARGO_TARGET_TRIPLE)
 
-lint: reuse-lint
+lint: reuse-lint typos
 
 reuse-lint:
 	$(REUSE) lint
+
+typos:
+	$(TYPOS) .
 
 release-preview:
 	$(GIT_CLIFF) --unreleased

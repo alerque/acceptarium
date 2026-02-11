@@ -30,7 +30,7 @@ flowchart LR
 1. Scan or import scanned receipts, individually or in bulk.
 1. Store identifiable scanned assets using [Git Annex][gitannex] or pluggable backends (LFS? WebDAV?).
 1. **Optionally** extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
-1. **Optionally** automatically process data into structured transaction info (via local LLM tooling or patten matching).
+1. **Optionally** automatically process data into structured transaction info (via local LLM tooling or pattern matching).
 1. Facilitate either review of the data with a chance to edit (for automatically extracted data) or manual entry.
 1. Export extracted data as transaction(s) via CVS (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
 
