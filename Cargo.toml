@@ -1,0 +1,41 @@
+[package]
+name = "acceptarium"
+version = "0.0.0"
+description = "CLI tool to facilitate digitized receipt handling in plain text accounting workflows"
+readme = "README.md"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[workspace.package]
+version = "0.0.0"
+authors = ["Caleb Maclennan <caleb@alerque.com>"]
+homepage = "https://codeberg.org/plaintextaccounting/acceptarium"
+repository = "https://codeberg.org/plaintextaccounting/acceptarium"
+license = "AGPL-3.0-only"
+edition = "2024"
+rust-version = "1.85"
+
+[workspace]
+resolver = "2"
+members = ["."]
+
+[[bin]]
+name = "acceptarium"
+required-features = ["cli"]
+
+[lib]
+name = "acceptarium"
+crate-type = ["rlib", "cdylib"]
+
+[profile.release]
+lto = true
+
+[features]
+default = []
+cli = []
+
+[dependencies]
