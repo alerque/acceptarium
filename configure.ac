@@ -16,6 +16,7 @@ AC_PROG_AWK
 AC_PROG_SED
 
 AM_COND_IF([DEVELOPER_MODE], [
+    AX_REQUIRE_PROG([just])
     # Release tooling
     AX_REQUIRE_PROG([cargo-deny])
     AX_REQUIRE_PROG([cargo-set-version])

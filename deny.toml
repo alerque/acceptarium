@@ -1,0 +1,10 @@
+[graph]
+all-features = true
+exclude-dev = true
+
+[bans]
+multiple-versions = "allow"
+
+# Not exhaustive, just whitelist the current dependency tree
+[licenses]
+allow = ["AGPL-3.0-only"]

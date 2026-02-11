@@ -19,9 +19,13 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
 path = [
+  ".editorconfig",
   ".gitignore",
   "Cargo.lock",
   "Cargo.toml",
+  "Justfile",
+  "deny.toml",
+  "rust-toolchain",
 ]
 SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
 SPDX-License-Identifier = "0BSD"

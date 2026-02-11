@@ -40,3 +40,37 @@ full = ["cli"]
 cli = []
 
 [dependencies]
+
+[package.metadata.bacon]
+default_job = "build"
+
+[package.metadata.bacon.jobs.build]
+command = ["cargo", "build", "--features", "full", "--color", "always"]
+
+[package.metadata.docs.rs]
+features = []
+rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.git-cliff.git]
+protect_breaking_commits = true
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = ".*", skip = true },
+]
+commit_preprocessors = [
+  { pattern = '.*', replace_command = 'typos --quiet --write-changes -' },
+]
+
+[package.metadata.typos.default]
+locale = "en-us"
+
+[package.metadata.typos.default.extend-words]
+
+[package.metadata.typos.files]
+ignore-hidden = false
+extend-exclude = ["/.git"]
+
+[package.metadata.binstall]
+pkg-fmt = "bin"
