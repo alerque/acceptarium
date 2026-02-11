@@ -12,11 +12,23 @@ CLI tooling to facilitate scanning receipts, extracting useful data, archiving t
 
 ## Overview
 
-1. Scan receipts.
-2. Archive scanned assets using [Git Annex][gitannex] (or potentially pluggable backends? LFS? WebDAV?).
-3. Extract data via OCR using local LLM tooling (or pluggable remote tooling).
-4. Process data into structured transaction info.
-5. Export data as transaction(s) via CVS (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
+1. Scan or import scanned receipts, individually or via some bulk mechanism.
+1. Archive scanned assets using [Git Annex][gitannex] (or potentially pluggable backends? LFS? WebDAV?).
+1. Extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
+1. Process data into structured transaction info.
+1. Facilitate some sort of data review with a chance to edit.
+1. Export extracted data as transaction(s) via CVS (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
+
+# Goals
+
+* Automate as many steps as possible to make it easy to handle receipts, invoices, etc. in bulk.
+* Use only local first privacy preserving tooling by default even where LLMs may be involved.
+* Facilitate human review and approval or editing for any non-deterministic steps like meta-data extraction from OCR.
+* Allow re-processing data from initial assets in the event of improved tooling (better OCR, more journal import rules, etc.).
+
+## Non-goals
+
+* Avoid lock-in to any particular PTA solution (pair with [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], or similar journal tools)
 
 ## Dependencies
 
@@ -26,4 +38,5 @@ CLI tooling to facilitate scanning receipts, extracting useful data, archiving t
 [gitannex]: https://git-annex.branchable.com/
 [hledger]: https://hledger.org/
 [ledgercli]: https://ledger-cli.org/
+[ollama]: https://ollama.com/
 [pta]: https://plaintextaccounting.org/
