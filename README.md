@@ -14,9 +14,9 @@ CLI tooling to facilitate scanning receipts, extracting useful data, archiving t
 
 1. Scan or import scanned receipts, individually or via some bulk mechanism.
 1. Archive scanned assets using [Git Annex][gitannex] (or potentially pluggable backends? LFS? WebDAV?).
-1. Extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
-1. Process data into structured transaction info.
-1. Facilitate some sort of data review with a chance to edit.
+1. **Optionally** extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
+1. **Optionally** automatically process data into structured transaction info (via LLM tooling or patten matching).
+1. Facilitate either review of the data with a chance to edit (for automatically extracted data) or manual entry.
 1. Export extracted data as transaction(s) via CVS (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
 
 # Goals
