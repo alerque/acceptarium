@@ -37,10 +37,10 @@ crate-type = ["rlib", "cdylib"]
 lto = true
 
 [features]
-default = []
-full = ["shells", "drivers"]
+default = ["cli", "storages"]
+full = ["shells", "storages"]
 shells = ["cli", "bash", "elvish", "fish", "manpage", "powershell", "zsh"]
-drivers = ["git-annex"]
+storages = ["git-annex"]
 git-annex = ["dep:git2"]
 completions = ["cli", "dep:clap_complete"]
 cli = ["dep:clap"]
