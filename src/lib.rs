@@ -4,8 +4,12 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub mod config;
 pub mod storage;
 pub mod types;
+
+// Subcommands
+pub mod status;
 
 #[cfg(feature = "cli")]
 #[doc(hidden)]

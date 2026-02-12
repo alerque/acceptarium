@@ -10,7 +10,8 @@ docdir = $(datarootdir)/doc/$(TRANSFORMED_PACKAGE_NAME)
 licensedir = $(datarootdir)/licenses/$(TRANSFORMED_PACKAGE_NAME)
 
 bin_PROGRAMS = acceptarium
-acceptarium_SOURCES  = src/bin/acceptarium.rs src/cli.rs src/lib.rs src/types.rs
+acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/types.rs
+acceptarium_SOURCES += src/status.rs
 acceptarium_SOURCES += src/storage.rs src/storage/filesystem.rs src/storage/git_annex.rs
 EXTRA_acceptarium_SOURCES =
 EXTRA_DIST =

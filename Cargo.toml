@@ -54,6 +54,15 @@ zsh = ["completions"]
 [dependencies]
 snafu = "0.8"
 
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[dependencies.config]
+version = "0.15"
+default-features = false
+features = ["toml"]
+
 [dependencies.clap]
 version = "4.5"
 optional = true
