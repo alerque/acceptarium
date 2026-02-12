@@ -38,7 +38,10 @@ lto = true
 
 [features]
 default = []
-full = ["cli", "bash", "elvish", "fish", "manpage", "powershell", "zsh"]
+full = ["shells", "drivers"]
+shells = ["cli", "bash", "elvish", "fish", "manpage", "powershell", "zsh"]
+drivers = ["git-annex"]
+git-annex = ["dep:git2"]
 completions = ["cli", "dep:clap_complete"]
 cli = ["dep:clap"]
 bash = ["completions"]
@@ -55,6 +58,11 @@ snafu = "0.8"
 version = "4.5"
 optional = true
 features = ["derive", "color", "wrap_help"]
+
+[dependencies.git2]
+version = "0.20"
+optional = true
+default-features = false
 
 [build-dependencies]
 snafu = "0.8"

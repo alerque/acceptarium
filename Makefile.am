@@ -21,7 +21,11 @@ BUILT_SOURCES =
 
 CLEANFILES =
 
-CARGO_FEATURE_ARGS = --features full
+CARGO_FEATURE_ARGS = --features shells
+
+if GIT_ANNEX
+CARGO_FEATURE_ARGS += --features git-annex
+endif
 
 DISTCLEANFILES = @AMINCLUDE@
 

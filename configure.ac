@@ -15,6 +15,11 @@ QUE_DIST_CHECKSUMS
 AC_PROG_AWK
 AC_PROG_SED
 
+AC_ARG_WITH([git-annex],
+            AS_HELP_STRING([--without-git-annex],
+                           [Compile without git-annex support used as default storage driver]))
+AM_CONDITIONAL([GIT_ANNEX], [test "x$with_git_annex" != "xno"])
+
 AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([just])
     # Release tooling
@@ -24,6 +29,11 @@ AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([reuse])
     AX_REQUIRE_PROG([taplo])
     AX_REQUIRE_PROG([typos])
+])
+
+AM_COND_IF([GIT_ANNEX], [
+    AX_REQUIRE_PROG([git])
+    AX_REQUIRE_PROG([git-annex])
 ])
 
 QUE_RUST_BOILERPLATE

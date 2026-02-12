@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 {
   lib,
+  libgit2,
   naersk,
   stdenv,
   cargo,
@@ -14,9 +15,10 @@ naersk.lib."${stdenv.hostPlatform.system}".buildPackage rec {
   src = ./.;
   buildInputs = [
     cargo
+    libgit2
     rustc
   ];
-  cargoBuildOptions = final: final ++ [ "--features cli" ];
+  cargoBuildOptions = final: final ++ [ "--features full" ];
   singleStep = true;
   copyLibs = true;
   name = cargoToml.package.name;

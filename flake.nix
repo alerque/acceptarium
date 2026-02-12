@@ -45,6 +45,9 @@
         {
           default = pkgs.mkShell {
             inputsFrom = [ pkgs.${cargoToml.package.name} ];
+            buildInputs = with pkgs; [
+              libgit2
+            ];
           };
         }
       );
