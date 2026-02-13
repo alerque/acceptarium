@@ -4,7 +4,7 @@
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Deserialize;
-use std::path;
+use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
@@ -24,7 +24,7 @@ pub struct Cli {
 
     /// Set project root path
     #[clap(short = 'P', long, default_value = "./", value_hint = clap::ValueHint::DirPath)]
-    pub project: path::PathBuf,
+    pub project: PathBuf,
 
     /// Discard all non-error output messages
     #[clap(short, long)]
@@ -37,6 +37,10 @@ pub struct Cli {
     /// Storage backend to use
     #[clap(long)]
     pub storage: Option<StorageDriver>,
+
+    /// Path to a TOML config file (overrides default acceptarium.toml)
+    #[clap(short, long)]
+    pub config: Option<PathBuf>,
 
     #[clap(subcommand)]
     pub subcommand: Commands,
