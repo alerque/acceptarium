@@ -5,7 +5,8 @@ use crate::types::{Result, StorageDriver};
 
 use crate::cli::Cli;
 
-use config::{Config as LayeredConfig, Environment};
+use config::{Config as LayeredConfig, Environment, File};
+use std::path::Path;
 
 use clap::ValueEnum;
 use serde::Deserialize;
@@ -22,13 +23,21 @@ pub struct Config {
 
 impl Config {
     pub fn new(args: &Cli) -> Result<Self> {
+        // Setup default config values
         let mut builder = LayeredConfig::builder()
             .set_default("debug", false)?
             .set_default("quiet", false)?
             .set_default("verbose", false)?
             .set_default("project", "./")?
-            .set_default("storage", "filesystem")?
-            .add_source(Environment::with_prefix("acceptarium"));
+            .set_default("storage", "filesystem")?;
+        // Layer in project level config files(s)
+        let config_path = Path::new("acceptarium.toml");
+        if config_path.exists() {
+            builder = builder.add_source(File::from(config_path).required(false));
+        }
+        // Layer in environment variables
+        builder = builder.add_source(Environment::with_prefix("acceptarium"));
+        // Layer in command line flags
         if args.debug {
             builder = builder.set_override("debug", true)?;
         }
@@ -45,6 +54,7 @@ impl Config {
             let storage = storage.to_possible_value().unwrap();
             builder = builder.set_override("storage", storage.get_name())?;
         }
+        // Put it all together and deserialize it to a config struct
         let sources = builder.build()?;
         let config = sources.try_deserialize()?;
         Ok(config)
