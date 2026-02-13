@@ -35,3 +35,6 @@ impl From<clap::error::Error> for Error {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+// Re-export types also used by clap at build time in runtime modules
+pub type StorageDriver = crate::cli::StorageDriver;

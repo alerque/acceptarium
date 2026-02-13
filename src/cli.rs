@@ -2,8 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use clap::builder::styling::{AnsiColor, Styles};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use serde::Deserialize;
 use std::path;
+
+#[derive(Debug, Deserialize, Clone, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum StorageDriver {
+    Filesystem,
+    GitAnnex,
+}
 
 /// Ingest, process, store, analyze, and export receipts from raster scans to plain text accounting
 /// tools.
@@ -25,6 +33,10 @@ pub struct Cli {
     /// Enable extra verbose output from tooling
     #[clap(short, long)]
     pub verbose: bool,
+
+    /// Storage backend to use
+    #[clap(long)]
+    pub storage: Option<StorageDriver>,
 
     #[clap(subcommand)]
     pub subcommand: Commands,

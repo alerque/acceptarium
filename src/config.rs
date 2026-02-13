@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::types::Result;
+use crate::types::{Result, StorageDriver};
 
 use crate::cli::Cli;
 
 use config::{Config as LayeredConfig, Environment};
 
+use clap::ValueEnum;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -16,6 +17,7 @@ pub struct Config {
     quiet: bool,
     verbose: bool,
     project: String,
+    storage: StorageDriver,
 }
 
 impl Config {
@@ -25,6 +27,7 @@ impl Config {
             .set_default("quiet", false)?
             .set_default("verbose", false)?
             .set_default("project", "./")?
+            .set_default("storage", "filesystem")?
             .add_source(Environment::with_prefix("acceptarium"));
         if args.debug {
             builder = builder.set_override("debug", true)?;
@@ -37,6 +40,10 @@ impl Config {
         }
         if let Some(project) = args.project.to_str() {
             builder = builder.set_override("project", project)?;
+        }
+        if let Some(storage) = &args.storage {
+            let storage = storage.to_possible_value().unwrap();
+            builder = builder.set_override("storage", storage.get_name())?;
         }
         let sources = builder.build()?;
         let config = sources.try_deserialize()?;
