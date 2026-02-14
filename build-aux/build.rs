@@ -38,7 +38,7 @@ fn main() -> AnyhowResult<()> {
         builder.add_instructions(&RustcBuilder::all_rustc()?)?;
     } else {
         builder.add_instructions(&GixBuilder::all_git()?)?;
-    };
+    }
     builder.emit()?;
     #[cfg(feature = "manpage")]
     generate_manpage();
@@ -57,10 +57,13 @@ fn generate_manpage() {
     let manpage_dir = Path::new(&out_dir);
     fs::create_dir_all(manpage_dir).expect("Unable to create directory for generated manpages");
     let app = Cli::command();
-    let bin_name: &str = app
-        .get_bin_name()
-        .expect("Could not retrieve bin-name from generated Clap app");
-    let app = Cli::command();
+    let bin_name = {
+        let preview = app.clone();
+        preview
+            .get_bin_name()
+            .expect("Could not retrieve bin-name from generated Clap app")
+            .to_owned()
+    };
     let man = Man::new(app);
     let mut buffer: Vec<u8> = Default::default();
     man.render(&mut buffer)
@@ -79,24 +82,27 @@ fn generate_shell_completions() {
     let completions_dir = Path::new(&out_dir).join("completions");
     fs::create_dir_all(&completions_dir)
         .expect("Could not create directory in which to place completions");
-    let app = Cli::command();
-    let bin_name: &str = app
-        .get_bin_name()
-        .expect("Could not retrieve bin-name from generated Clap app");
     let mut app = Cli::command();
+    let bin_name = {
+        let preview = app.clone();
+        preview
+            .get_bin_name()
+            .expect("Could not retrieve bin-name from generated Clap app")
+            .to_owned()
+    };
     #[cfg(feature = "bash")]
-    generate_to(Bash, &mut app, bin_name, &completions_dir)
+    generate_to(Bash, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate bash completions");
     #[cfg(feature = "elvish")]
-    generate_to(Elvish, &mut app, bin_name, &completions_dir)
+    generate_to(Elvish, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate elvish completions");
     #[cfg(feature = "fish")]
-    generate_to(Fish, &mut app, bin_name, &completions_dir)
+    generate_to(Fish, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate fish completions");
     #[cfg(feature = "powershell")]
-    generate_to(PowerShell, &mut app, bin_name, &completions_dir)
+    generate_to(PowerShell, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate powershell completions");
     #[cfg(feature = "zsh")]
-    generate_to(Zsh, &mut app, bin_name, &completions_dir)
+    generate_to(Zsh, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate zsh completions");
 }

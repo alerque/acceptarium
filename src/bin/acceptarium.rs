@@ -14,8 +14,7 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
     let args = Cli::from_arg_matches(&matches).expect("Unable to parse arguments");
     let config = Config::new(&args)?;
-    let subcommand = Commands::from_arg_matches(&matches)?;
-    match subcommand {
+    match Commands::from_arg_matches(&matches)? {
         Commands::Status {} => status::run(&config),
     }
 }
