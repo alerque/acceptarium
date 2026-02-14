@@ -57,7 +57,9 @@ impl Config {
                 path.exists().then_some(path)
             });
         if let Some(path) = project_config {
-            builder = builder.add_source(File::from(path.as_path()).required(true));
+            builder = builder
+                .set_default("config", path.to_str().unwrap())?
+                .add_source(File::from(path.as_path()).required(true));
         }
         // Layer in environment variables
         builder = builder.add_source(Environment::with_prefix("acceptarium"));
