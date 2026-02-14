@@ -23,8 +23,8 @@ pub struct Cli {
     pub debug: bool,
 
     /// Set project root path
-    #[clap(short = 'P', long, default_value = "./", value_hint = clap::ValueHint::DirPath)]
-    pub project: PathBuf,
+    #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
+    pub project: Option<PathBuf>,
 
     /// Discard all non-error output messages
     #[clap(short, long)]
@@ -35,11 +35,11 @@ pub struct Cli {
     pub verbose: bool,
 
     /// Storage backend to use
-    #[clap(long)]
+    #[clap(short, long)]
     pub storage: Option<StorageDriver>,
 
     /// Path to a TOML config file (overrides default acceptarium.toml)
-    #[clap(short, long)]
+    #[clap(short, long, value_hint = clap::ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
     #[clap(subcommand)]
