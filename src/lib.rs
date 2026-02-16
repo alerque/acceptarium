@@ -9,7 +9,13 @@ pub mod storage;
 pub mod types;
 
 // Subcommands
+pub mod run;
 pub mod status;
+
+// Import stuff set by autoconf/automake at build time
+pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];
+pub static CONFIGURE_BINDIR: &str = env!["CONFIGURE_BINDIR"];
+pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
 #[cfg(feature = "cli")]
 #[doc(hidden)]

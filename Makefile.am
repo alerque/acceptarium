@@ -8,20 +8,23 @@ AM_DISTCHECK_CONFIGURE_FLAGS = --enable-developer-mode
 
 docdir = $(datarootdir)/doc/$(TRANSFORMED_PACKAGE_NAME)
 licensedir = $(datarootdir)/licenses/$(TRANSFORMED_PACKAGE_NAME)
+datadir = $(datarootdir)/$(TRANSFORMED_PACKAGE_NAME)
+scriptsdir = $(datadir)/scripts
 
 bin_PROGRAMS = acceptarium
 acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/types.rs
-acceptarium_SOURCES += src/status.rs
+acceptarium_SOURCES += src/run.rs src/status.rs
 acceptarium_SOURCES += src/storage.rs src/storage/filesystem.rs src/storage/git_annex.rs
 EXTRA_acceptarium_SOURCES =
 EXTRA_DIST =
 dist_doc_DATA = README.md CHANGELOG.md
 dist_license_DATA = LICENSES/AGPL-3.0-only.txt
 nodist_man_MANS =
+dist_scripts_SCRIPTS = scripts/debug.sh
 
 BUILT_SOURCES =
 
-CLEANFILES =
+CLEANFILES = $(dist_scripts_SCRIPTS)
 
 CARGO_FEATURE_ARGS = --features shells
 
@@ -42,6 +45,7 @@ include $(top_srcdir)/aminclude.am
 
 .PHONY: build
 build: $(bin_PROGRAMS)
+
 
 PHONY_DEVELOPER_TARGETS = release-preview reuse-lint typos binstall
 .PHONY: $(PHONY_DEVELOPER_TARGETS)

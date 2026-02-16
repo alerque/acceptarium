@@ -4,6 +4,7 @@
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Deserialize;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone, ValueEnum)]
@@ -48,6 +49,16 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Execute a script as a child process that inherits Acceptarium environment
+    Run {
+        /// Name of script supplied either by Acceptarium or a local project
+        #[clap(value_hint = clap::ValueHint::CommandName)]
+        name: OsString,
+
+        /// Arguments to pass to script being run
+        #[clap(value_hint = clap::ValueHint::Unknown)]
+        arguments: Vec<OsString>,
+    },
     /// Show status information about configuration, and state
     Status {},
 }

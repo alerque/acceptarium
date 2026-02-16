@@ -13,7 +13,11 @@ QUE_DIST_CHECKSUMS
 
 # Check for and set variables for tooling used during our build process
 AC_PROG_AWK
+AC_PROG_GREP
 AC_PROG_SED
+
+AX_REQUIRE_PROG(bash)
+AX_REQUIRE_PROG(env)
 
 AC_ARG_WITH([git-annex],
             AS_HELP_STRING([--without-git-annex],
@@ -38,7 +42,16 @@ AM_COND_IF([GIT_ANNEX], [
 
 QUE_RUST_BOILERPLATE
 
+# Avoid the need for `--datarootdir=$(cd ..; pwd)` to run directly from
+# an uninstalled build in the source directory
+AM_COND_IF([DEVELOPER_MODE], [
+    datarootdir="$(cd ..; pwd)"
+])
+
 AC_CONFIG_FILES([Makefile])
+
+AC_DEFUN([ACCEPTARIUM_SCRIPT], [AC_CONFIG_FILES([scripts/$1], [chmod +x scripts/$1])])
+ACCEPTARIUM_SCRIPT([debug.sh])
 
 AC_OUTPUT
 
@@ -49,4 +62,3 @@ AC_OUTPUT
 # hence one pass is enough. We can skip ahead and assume the Makefile template
 # is ready to go an this point, avoiding the need for autotools at all.
 AM_COND_IF([SOURCE_IS_DIST], [touch -r aminclude.am Makefile.in])
-

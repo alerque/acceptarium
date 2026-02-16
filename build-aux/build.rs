@@ -5,7 +5,7 @@
 use clap_mangen::Man;
 use {
     anyhow::Result as AnyhowResult,
-    std::env,
+    std::{collections, env},
     vergen_gix::{CargoBuilder, Emitter, GixBuilder, RustcBuilder},
 };
 #[cfg(feature = "completions")]
@@ -40,6 +40,7 @@ fn main() -> AnyhowResult<()> {
         builder.add_instructions(&GixBuilder::all_git()?)?;
     }
     builder.emit()?;
+    pass_on_configure_details();
     #[cfg(feature = "manpage")]
     generate_manpage();
     #[cfg(feature = "completions")]
@@ -105,4 +106,17 @@ fn generate_shell_completions() {
     #[cfg(feature = "zsh")]
     generate_to(Zsh, &mut app, &bin_name, &completions_dir)
         .expect("Unable to generate zsh completions");
+}
+
+/// Pass through some variables set by autoconf/automake about where we're installed to cargo for
+/// use in finding resources at runtime
+fn pass_on_configure_details() {
+    let mut autoconf_vars = collections::HashMap::new();
+    autoconf_vars.insert("CONFIGURE_PREFIX", String::from("./"));
+    autoconf_vars.insert("CONFIGURE_BINDIR", String::from("./"));
+    autoconf_vars.insert("CONFIGURE_DATADIR", String::from("./"));
+    for (var, default) in autoconf_vars {
+        let val = env::var(var).unwrap_or(default);
+        println!("cargo:rustc-env={var}={val}");
+    }
 }

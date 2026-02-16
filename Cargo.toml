@@ -52,6 +52,7 @@ powershell = ["completions"]
 zsh = ["completions"]
 
 [dependencies]
+subprocess = "0.2"
 snafu = "0.8"
 
 [dependencies.serde]

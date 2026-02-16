@@ -1,17 +1,23 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use clap::error::Error as ClapError;
+use config::ConfigError;
 use snafu::prelude::*;
 use std::fmt::{Debug, Display, Formatter};
+use subprocess::PopenError;
 
 #[derive(Snafu)]
 #[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Configuration error: {source}"))]
-    Config { source: config::ConfigError },
+    Config { source: ConfigError },
 
     #[snafu(display("CLI argument error: {source}"))]
-    Clap { source: clap::Error },
+    Clap { source: ClapError },
+
+    #[snafu(display("Process spawning error: {source}"))]
+    Popen { source: PopenError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -22,15 +28,21 @@ impl Debug for Error {
     }
 }
 
-impl From<config::ConfigError> for Error {
-    fn from(source: config::ConfigError) -> Self {
+impl From<ConfigError> for Error {
+    fn from(source: ConfigError) -> Self {
         Error::Config { source }
     }
 }
 
-impl From<clap::error::Error> for Error {
-    fn from(source: clap::error::Error) -> Self {
+impl From<ClapError> for Error {
+    fn from(source: ClapError) -> Self {
         Error::Clap { source }
+    }
+}
+
+impl From<PopenError> for Error {
+    fn from(source: PopenError) -> Self {
+        Error::Popen { source }
     }
 }
 
