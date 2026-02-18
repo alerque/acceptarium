@@ -3,6 +3,7 @@
 
 use clap::error::Error as ClapError;
 use config::ConfigError;
+use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
 use std::fmt::{Debug, Display, Formatter};
 use subprocess::PopenError;
@@ -18,6 +19,9 @@ pub enum Error {
 
     #[snafu(display("Process spawning error: {source}"))]
     Popen { source: PopenError },
+
+    #[snafu(display("JSON serialization error: {source}"))]
+    SerdeJson { source: SerdeJsonError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -43,6 +47,12 @@ impl From<ClapError> for Error {
 impl From<PopenError> for Error {
     fn from(source: PopenError) -> Self {
         Error::Popen { source }
+    }
+}
+
+impl From<SerdeJsonError> for Error {
+    fn from(source: SerdeJsonError) -> Self {
+        Error::SerdeJson { source }
     }
 }
 

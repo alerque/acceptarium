@@ -7,11 +7,12 @@ use crate::cli::Cli;
 
 use clap::ValueEnum;
 use config::{Config as LayeredConfig, Environment, File};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::to_value;
 use std::env;
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[allow(unused)]
 pub struct Config {
     debug: bool,
@@ -81,5 +82,19 @@ impl Config {
         let sources = builder.build()?;
         let config = sources.try_deserialize()?;
         Ok(config)
+    }
+
+    pub fn try_to_env_vars(&self) -> Result<Vec<(String, String)>> {
+        let values = to_value(self)?;
+        let envs = values
+            .as_object()
+            .unwrap()
+            .into_iter()
+            .map(|(key, value)| {
+                let env_key = format!("ACCEPTARIUM_{}", key.to_uppercase());
+                (env_key, value.to_string())
+            })
+            .collect();
+        Ok(envs)
     }
 }

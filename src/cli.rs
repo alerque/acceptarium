@@ -3,11 +3,11 @@
 
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand, ValueEnum};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize, Clone, ValueEnum)]
+#[derive(Debug, Deserialize, Serialize, Clone, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum StorageDriver {
     Filesystem,

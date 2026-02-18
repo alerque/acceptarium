@@ -11,13 +11,14 @@ use std::{ffi::OsString, io};
 use subprocess::{Exec, Redirection};
 
 /// Execute a script as a child process that inherits Acceptarium environment
-pub fn run(_config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<()> {
+pub fn run(config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<()> {
     let datadir = Path::new(CONFIGURE_DATADIR);
     let mut cmd = datadir.to_path_buf();
     cmd.push("scripts");
     cmd.push(name);
-    dbg!(&cmd);
-    let mut process = Exec::cmd(cmd).args(&arguments);
+    let mut process = Exec::cmd(cmd)
+        .args(&arguments)
+        .env_extend(&config.try_to_env_vars()?);
     process = process.stderr(Redirection::Pipe).stdout(Redirection::Pipe);
     let mut popen = process.popen()?;
     let bufstdout = io::BufReader::new(popen.stdout.as_mut().unwrap());

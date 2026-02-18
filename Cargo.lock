@@ -13,6 +13,7 @@ dependencies = [
  "config",
  "git2",
  "serde",
+ "serde_json",
  "snafu",
  "subprocess",
  "vergen-gix",

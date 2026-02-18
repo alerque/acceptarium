@@ -1,6 +1,5 @@
 #!@BASH@
 
 set -e
-set -x
 
-@ENV@ | @GREP@ ACCEPTARIUM
+@ENV@ | @GREP@ '^ACCEPTARIUM_'
