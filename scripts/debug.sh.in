@@ -2,4 +2,8 @@
 
 set -e
 
+echo PWD:
+pwd
+
+echo ENV:
 @ENV@ | @GREP@ '^ACCEPTARIUM_'

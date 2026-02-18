@@ -7,18 +7,20 @@ SPDX-License-Identifier = "AGPL-3.0-only"
 
 [[annotations]]
 path = [
+  "Makefile.am",
+  "bootstrap.sh",
   "build-aux/*.am",
   "build-aux/*.m4",
   "build-aux/git-version-gen",
-  "Makefile.am",
-  "bootstrap.sh",
   "configure.ac",
+  "scripts/*.in",
 ]
 SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
 path = [
+  ".cargo/config.toml",
   ".editorconfig",
   ".gitignore",
   "Cargo.lock",
