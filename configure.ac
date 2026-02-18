@@ -19,6 +19,11 @@ AC_PROG_SED
 AX_REQUIRE_PROG(bash)
 AX_REQUIRE_PROG(env)
 
+AC_ARG_WITH([git],
+            AS_HELP_STRING([--without-git],
+                           [Compile without git vcs support used to track projects]))
+AM_CONDITIONAL([GIT], [test "x$with_git" != "xno"])
+
 AC_ARG_WITH([git-annex],
             AS_HELP_STRING([--without-git-annex],
                            [Compile without git-annex support used as default storage driver]))
@@ -33,6 +38,10 @@ AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([reuse])
     AX_REQUIRE_PROG([taplo])
     AX_REQUIRE_PROG([typos])
+])
+
+AM_COND_IF([GIT], [
+    AX_REQUIRE_PROG([git])
 ])
 
 AM_COND_IF([GIT_ANNEX], [

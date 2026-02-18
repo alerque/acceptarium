@@ -28,6 +28,10 @@ CLEANFILES = $(dist_scripts_SCRIPTS)
 
 CARGO_FEATURE_ARGS = --features shells
 
+if GIT
+CARGO_FEATURE_ARGS += --features git
+endif
+
 if GIT_ANNEX
 CARGO_FEATURE_ARGS += --features git-annex
 endif

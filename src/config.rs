@@ -35,7 +35,10 @@ impl Config {
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
             })
-            .unwrap_or_else(|| PathBuf::from("./"));
+            .unwrap_or_else(|| {
+                let current_dir = env::current_dir().unwrap_or(PathBuf::from("./"));
+                discover_project_root(&current_dir)
+            });
         // Setup default config values
         let mut builder = LayeredConfig::builder()
             .set_default("debug", false)?
@@ -54,6 +57,7 @@ impl Config {
                     .map(PathBuf::from)
             })
             .or_else(|| {
+                // Check if discovered_project has acceptarium.toml
                 let path = discovered_project.join("acceptarium.toml");
                 path.exists().then_some(path)
             });
@@ -97,4 +101,37 @@ impl Config {
             .collect();
         Ok(envs)
     }
+}
+
+#[cfg(feature = "git")]
+fn discover_project_root(cwd: &PathBuf) -> PathBuf {
+    use git2::Repository;
+    let git_repo = Repository::discover(&cwd).ok();
+    let git_root = git_repo
+        .as_ref()
+        .and_then(|repo| repo.workdir().map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from(&cwd));
+    walk_to_root_or_config(cwd, &git_root)
+}
+
+#[cfg(not(feature = "git"))]
+fn discover_project_root(cwd: &PathBuf) -> PathBuf {
+    walk_to_root_or_config(cwd, &PathBuf::from("/"))
+}
+
+fn walk_to_root_or_config(cwd: &PathBuf, root: &PathBuf) -> PathBuf {
+    let mut current = cwd.clone();
+    loop {
+        let config = current.join("acceptarium.toml");
+        if config.exists() {
+            return current;
+        }
+        if current == *root {
+            break;
+        }
+        if !current.pop() {
+            break;
+        }
+    }
+    root.clone()
 }
