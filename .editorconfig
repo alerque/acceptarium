@@ -17,5 +17,14 @@ indent_size = 8
 [*.md]
 trim_trailing_whitespace = false
 
+[{*.py,*.py.in}]
+indent_style = space
+indent_size = 4
+
 [*.rs]
+indent_style = space
+indent_size = 4
+
+[{*.sh,*.sh.in}]
+indent_style = tab
 indent_size = 4
