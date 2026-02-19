@@ -7,8 +7,7 @@ use crate::CONFIGURE_DATADIR;
 
 use snafu::prelude::*;
 use std::ffi::OsString;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use subprocess::{Exec, Redirection};
 use which::which;
@@ -25,19 +24,20 @@ pub fn run(config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<
         external.push(name);
         which(&external)?
     };
-    let mut process = Exec::cmd(cmd)
-        .args(&arguments)
+    let exec = Exec::cmd(cmd)
         .env("ACCEPTARIUM", "true")
-        .env_extend(&config.try_to_env_vars()?);
-    process = process.stderr(Redirection::Pipe).stdout(Redirection::Pipe);
-    let mut proc = process.popen()?;
+        .args(&arguments)
+        .env_extend(config.try_to_env_vars()?)
+        .stderr(Redirection::Pipe)
+        .stdout(Redirection::Pipe);
+    let mut job = exec.start()?;
     let bufstdout = BufReader::new(
-        proc.stdout
+        job.stdout
             .take()
             .context(BufferSnafu { stream: "STDOUT" })?,
     );
     let bufstderr = BufReader::new(
-        proc.stderr
+        job.stderr
             .take()
             .context(BufferSnafu { stream: "STDERR" })?,
     );
@@ -47,6 +47,6 @@ pub fn run(config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<
     for line in bufstderr.lines() {
         eprintln!("{}", line?);
     }
-    proc.wait()?;
+    job.wait()?;
     Ok(())
 }

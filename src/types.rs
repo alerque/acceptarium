@@ -7,7 +7,6 @@ use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
-use subprocess::PopenError;
 use which::Error as WhichError;
 
 #[derive(Snafu)]
@@ -18,9 +17,6 @@ pub enum Error {
 
     #[snafu(display("CLI argument error: {source}"))]
     Clap { source: ClapError },
-
-    #[snafu(display("Process spawning error: {source}"))]
-    Popen { source: PopenError },
 
     #[snafu(display("JSON serialization error: {source}"))]
     SerdeJson { source: SerdeJsonError },
@@ -55,12 +51,6 @@ impl From<ConfigError> for Error {
 impl From<ClapError> for Error {
     fn from(source: ClapError) -> Self {
         Error::Clap { source }
-    }
-}
-
-impl From<PopenError> for Error {
-    fn from(source: PopenError) -> Self {
-        Error::Popen { source }
     }
 }
 
