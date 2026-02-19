@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::Result;
+use crate::types::{BufferSnafu, Result};
 use crate::CONFIGURE_DATADIR;
 
+use snafu::prelude::*;
 use std::ffi::OsString;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -30,17 +31,21 @@ pub fn run(config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<
         .env_extend(&config.try_to_env_vars()?);
     process = process.stderr(Redirection::Pipe).stdout(Redirection::Pipe);
     let mut proc = process.popen()?;
-    let bufstdout = BufReader::new(proc.stdout.as_mut().unwrap());
-    let bufstderr = BufReader::new(proc.stderr.as_mut().unwrap());
+    let bufstdout = BufReader::new(
+        proc.stdout
+            .take()
+            .context(BufferSnafu { stream: "STDOUT" })?,
+    );
+    let bufstderr = BufReader::new(
+        proc.stderr
+            .take()
+            .context(BufferSnafu { stream: "STDERR" })?,
+    );
     for line in bufstdout.lines() {
-        let text: &str =
-            &line.unwrap_or_else(|_| String::from("INVALID UTF-8 FROM CHILD PROCESS STREAM"));
-        println!("{text}");
+        println!("{}", line?);
     }
     for line in bufstderr.lines() {
-        let text: &str =
-            &line.unwrap_or_else(|_| String::from("INVALID UTF-8 FROM CHILD PROCESS STREAM"));
-        eprintln!("{text}");
+        eprintln!("{}", line?);
     }
     proc.wait()?;
     Ok(())

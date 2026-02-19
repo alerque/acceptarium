@@ -6,6 +6,7 @@ use config::ConfigError;
 use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
 use std::fmt::{Debug, Display, Formatter};
+use std::io::Error as IoError;
 use subprocess::PopenError;
 use which::Error as WhichError;
 
@@ -26,6 +27,12 @@ pub enum Error {
 
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
+
+    #[snafu(display("Process stream error: {source}"))]
+    Stream { source: IoError },
+
+    #[snafu(display("IO buffer error in {stream} stream"))]
+    Buffer { stream: String },
 
     #[snafu(display("{message}"))]
     ExternalCommand { message: String },
@@ -66,6 +73,12 @@ impl From<SerdeJsonError> for Error {
 impl From<WhichError> for Error {
     fn from(source: WhichError) -> Self {
         Error::Which { source }
+    }
+}
+
+impl From<IoError> for Error {
+    fn from(source: IoError) -> Self {
+        Error::Stream { source }
     }
 }
 
