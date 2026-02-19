@@ -18,21 +18,28 @@ config:
   layout: elk
 ---
 flowchart LR
-    A["Ingest/Scan"] --> B["ID (Store)"]
-    B --> C["Review/Edit"] & D["OCR"]
-    D --> E["LLM or Regex Extraction"]
-    E --> C
-    C --> F["Export"]
+    A["Ingest/Scan"]
+    B["ID (Store)"]
+    C["OCR"]
+    D["Extract (LLM or Regex)"]
+    E["Review/Edit"]
+    F["Train"]
+    H["Export"]
+    style C stroke-dasharray: 5
     style D stroke-dasharray: 5
-    style E stroke-dasharray: 5
+    style F stroke-dasharray: 5
+    A --> B --> E --> H
+    B --> C --> D --> E
+    E --> F --> D
 ```
 
 1. Scan or import scanned receipts, individually or in bulk.
 1. Store identifiable scanned assets using [Git Annex][gitannex] or pluggable backends (LFS? WebDAV?).
 1. **Optionally** extract data via OCR using local LLM tooling ([Ollama][ollama] or pluggable remote tooling).
 1. **Optionally** automatically process data into structured transaction info (via local LLM tooling or pattern matching).
-1. Facilitate either review of the data with a chance to edit (for automatically extracted data) or manual entry.
-1. Export extracted data as transaction(s) via CVS (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
+1. Facilitate either manual data entry or automatic data extraction with review and a chance to chance to edit.
+1. **Optionally** use final data to update regex rules or train the LLM model to improve future extractions.
+1. Export extracted data as transaction(s) via CVS? JSON? (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
 
 # Goals
 
