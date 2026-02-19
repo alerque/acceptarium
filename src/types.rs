@@ -7,6 +7,7 @@ use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
 use std::fmt::{Debug, Display, Formatter};
 use subprocess::PopenError;
+use which::Error as WhichError;
 
 #[derive(Snafu)]
 #[snafu(visibility(pub))]
@@ -22,6 +23,9 @@ pub enum Error {
 
     #[snafu(display("JSON serialization error: {source}"))]
     SerdeJson { source: SerdeJsonError },
+
+    #[snafu(display("Which error: {source}"))]
+    Which { source: WhichError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -53,6 +57,12 @@ impl From<PopenError> for Error {
 impl From<SerdeJsonError> for Error {
     fn from(source: SerdeJsonError) -> Self {
         Error::SerdeJson { source }
+    }
+}
+
+impl From<WhichError> for Error {
+    fn from(source: WhichError) -> Self {
+        Error::Which { source }
     }
 }
 

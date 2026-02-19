@@ -53,6 +53,7 @@ powershell = ["completions"]
 zsh = ["completions"]
 
 [dependencies]
+which = "8.0"
 serde_json = "1.0"
 snafu = "0.8"
 subprocess = "0.2"
