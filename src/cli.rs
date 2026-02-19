@@ -61,6 +61,9 @@ pub enum Commands {
         arguments: Vec<OsString>,
     },
 
+    /// List known assets
+    List {},
+
     /// Show status information about configuration, and state
     Status {},
 

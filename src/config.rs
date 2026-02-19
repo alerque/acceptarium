@@ -12,7 +12,7 @@ use serde_json::to_value;
 use std::env;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(unused)]
 pub struct Config {
     debug: bool,
@@ -20,7 +20,7 @@ pub struct Config {
     verbose: bool,
     project: String,
     config: Option<PathBuf>,
-    storage: StorageDriver,
+    pub storage: Option<StorageDriver>,
 }
 
 impl Config {
@@ -44,8 +44,7 @@ impl Config {
             .set_default("debug", false)?
             .set_default("quiet", false)?
             .set_default("verbose", false)?
-            .set_default("project", discovered_project.to_str().unwrap())?
-            .set_default("storage", "filesystem")?;
+            .set_default("project", discovered_project.to_str().unwrap())?;
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
             .config

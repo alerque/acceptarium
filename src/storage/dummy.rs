@@ -6,18 +6,18 @@ use crate::types::Result;
 
 use super::Storage;
 
-pub struct FilesystemStorage {
+pub struct DummyStorage {
     _config: Config,
 }
 
-impl FilesystemStorage {
+impl DummyStorage {
     pub fn new(_config: Config) -> Self {
         Self { _config }
     }
 }
 
-impl Storage for FilesystemStorage {
+impl Storage for DummyStorage {
     fn list(&self) -> Result<()> {
-        unimplemented!("filesystem storage driver is not implemented yet")
+        unimplemented!("No storage driver configured.")
     }
 }

@@ -5,8 +5,10 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod config;
-pub mod storage;
 pub mod types;
+
+// Data handling
+pub mod storage;
 
 // Subcommands
 pub mod run;
