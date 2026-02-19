@@ -5,6 +5,7 @@ use clap::error::Error as ClapError;
 use config::ConfigError;
 use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
+use std::ffi::OsString;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use which::Error as WhichError;
@@ -81,6 +82,8 @@ impl From<&str> for Error {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+pub type Args = Vec<OsString>;
 
 // Re-export types also used by clap at build time in runtime modules
 pub type StorageDriver = crate::cli::StorageDriver;
