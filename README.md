@@ -1,12 +1,10 @@
 # acceptarium
 
-> BRAINSTORM STAGE
+A collection of CLI tooling to facilitate scanning receipts, extracting useful data, archiving the assets, and importing the results into [Plain Text Accounting][pta] systems.
 
 acceptarium
 :   (*Latin*) allotment-holding
 :   (*Medieval*) receipt book
-
-CLI tooling to facilitate scanning receipts, extracting useful data, archiving the assets, and importing the results into [Plain Text Accounting][pta] systems.
 
 ----
 
