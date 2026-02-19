@@ -10,7 +10,7 @@ use config::{Config as LayeredConfig, Environment, File};
 use serde::{Deserialize, Serialize};
 use serde_json::to_value;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[allow(unused)]
@@ -104,9 +104,9 @@ impl Config {
 }
 
 #[cfg(feature = "git")]
-fn discover_project_root(cwd: &PathBuf) -> PathBuf {
+fn discover_project_root(cwd: &Path) -> PathBuf {
     use git2::Repository;
-    let git_repo = Repository::discover(&cwd).ok();
+    let git_repo = Repository::discover(cwd).ok();
     let git_root = git_repo
         .as_ref()
         .and_then(|repo| repo.workdir().map(PathBuf::from))
@@ -115,12 +115,12 @@ fn discover_project_root(cwd: &PathBuf) -> PathBuf {
 }
 
 #[cfg(not(feature = "git"))]
-fn discover_project_root(cwd: &PathBuf) -> PathBuf {
+fn discover_project_root(cwd: &Path) -> PathBuf {
     walk_to_root_or_config(cwd, &PathBuf::from("/"))
 }
 
-fn walk_to_root_or_config(cwd: &PathBuf, root: &PathBuf) -> PathBuf {
-    let mut current = cwd.clone();
+fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
+    let mut current = cwd.to_path_buf();
     loop {
         let config = current.join("acceptarium.toml");
         if config.exists() {
