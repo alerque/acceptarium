@@ -16,21 +16,27 @@ CLI tooling to facilitate scanning receipts, extracting useful data, archiving t
 ---
 config:
   layout: elk
+  look: handDrawn
+  theme: redux-dark
 ---
 flowchart LR
-    A["Ingest/Scan"]
-    B["ID (Store)"]
-    C["OCR"]
-    D["Extract (LLM or Regex)"]
-    E["Review/Edit"]
-    F["Train"]
-    H["Export"]
-    style C stroke-dasharray: 5
-    style D stroke-dasharray: 5
-    style F stroke-dasharray: 5
-    A --> B --> E --> H
-    B --> C --> D --> E
-    E --> F --> D
+  A["Ingest/Scan"]
+  B["ID (Store)"]
+  C["Traditional OCR"]
+  D["Regex Extract"]
+  E["Rules"]
+  F["Review/Edit"]
+  G["Export"]
+  L1["LLM Vision"]
+  L2["LLM Extract"]
+  L3["Retrain"]
+  A --> B --> C & L1 --> D & L2 --> F --> G
+  F --> E & L3
+  E --> D
+  L3 --> L2
+  style L1 stroke-dasharray: 5
+  style L2 stroke-dasharray: 5
+  style L3 stroke-dasharray: 5
 ```
 
 1. Scan or import scanned receipts, individually or in bulk.
