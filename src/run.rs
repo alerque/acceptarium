@@ -26,6 +26,7 @@ pub fn run(config: &Config, name: OsString, arguments: Vec<OsString>) -> Result<
     };
     let mut process = Exec::cmd(cmd)
         .args(&arguments)
+        .env("ACCEPTARIUM", "true")
         .env_extend(&config.try_to_env_vars()?);
     process = process.stderr(Redirection::Pipe).stdout(Redirection::Pipe);
     let mut proc = process.popen()?;

@@ -26,6 +26,9 @@ pub enum Error {
 
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
+
+    #[snafu(display("{message}"))]
+    ExternalCommand { message: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -63,6 +66,14 @@ impl From<SerdeJsonError> for Error {
 impl From<WhichError> for Error {
     fn from(source: WhichError) -> Self {
         Error::Which { source }
+    }
+}
+
+impl From<&str> for Error {
+    fn from(source: &str) -> Self {
+        Error::ExternalCommand {
+            message: source.to_string(),
+        }
     }
 }
 

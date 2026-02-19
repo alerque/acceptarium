@@ -48,6 +48,7 @@ pub struct Cli {
 }
 
 #[derive(Subcommand, Debug)]
+#[clap(subcommand_negates_reqs = true)]
 pub enum Commands {
     /// Execute a script as a child process that inherits Acceptarium environment
     Run {
@@ -59,8 +60,13 @@ pub enum Commands {
         #[clap(value_hint = clap::ValueHint::Unknown)]
         arguments: Vec<OsString>,
     },
+
     /// Show status information about configuration, and state
     Status {},
+
+    /// Run a custom command script
+    #[clap(external_subcommand)]
+    External(Vec<OsString>),
 }
 
 pub const STYLES: Styles = Styles::styled()
