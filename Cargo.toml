@@ -53,6 +53,7 @@ powershell = ["completions"]
 zsh = ["completions"]
 
 [dependencies]
+convert_case = "0.6" # held back to match config crate's case feature
 which = "8.0"
 serde_json = "1.0"
 snafu = "0.8"
@@ -65,7 +66,7 @@ features = ["derive"]
 [dependencies.config]
 version = "0.15"
 default-features = false
-features = ["toml"]
+features = ["toml", "convert-case"]
 
 [dependencies.clap]
 version = "4.5"

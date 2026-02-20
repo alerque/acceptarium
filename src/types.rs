@@ -37,6 +37,9 @@ pub enum Error {
     #[snafu(display("No storage driver has been configured"))]
     NoStorageConfigured {},
 
+    #[snafu(display("The storage driver`{driver}` requires a valid configuration"))]
+    MissingStorageConfig { driver: String },
+
     #[snafu(display("This build is not compiled with support for the `{driver}` storage driver"))]
     UnsupportedStorage { driver: String },
 }

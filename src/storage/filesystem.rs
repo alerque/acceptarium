@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::config::Config;
+use crate::config::FilesystemConfig;
 use crate::types::Result;
 
 use super::Storage;
 
 pub struct FilesystemStorage {
-    _config: Config,
+    _config: FilesystemConfig,
 }
 
 impl FilesystemStorage {
-    pub fn new(_config: Config) -> Self {
+    pub fn new(_config: FilesystemConfig) -> Self {
         Self { _config }
     }
 }

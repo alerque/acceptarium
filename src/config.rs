@@ -6,11 +6,25 @@ use crate::types::{Result, StorageDriver};
 use crate::cli::Cli;
 
 use clap::ValueEnum;
+use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
+use convert_case::Casing;
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
+use serde_json::{to_value, Value};
 use std::env;
 use std::path::{Path, PathBuf};
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct FilesystemConfig {
+    pub directory: Option<PathBuf>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct GitAnnexConfig {
+    pub directory: Option<PathBuf>,
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(unused)]
@@ -21,6 +35,12 @@ pub struct Config {
     project: String,
     config: Option<PathBuf>,
     pub(crate) storage: Option<StorageDriver>,
+    pub(crate) filesystem: Option<FilesystemConfig>,
+    #[cfg(feature = "git-annex")]
+    // swap rename for alias for env var parsing, but then the TOML breaks.
+    // #[serde(alias = "GITANNEX")]
+    #[serde(rename(deserialize = "git-annex"))]
+    pub(crate) git_annex: Option<GitAnnexConfig>,
 }
 
 impl Config {
@@ -66,7 +86,12 @@ impl Config {
                 .add_source(File::from(path.as_path()).required(true));
         }
         // Layer in environment variables
-        builder = builder.add_source(Environment::with_prefix("acceptarium"));
+        builder = builder.add_source(
+            Environment::with_prefix("acceptarium")
+                .separator("_")
+                .prefix_separator("_")
+                .ignore_empty(true),
+        );
         // Layer in command line flags
         if args.debug {
             builder = builder.set_override("debug", true)?;
@@ -88,16 +113,9 @@ impl Config {
     }
 
     pub fn try_to_env_vars(&self) -> Result<Vec<(String, String)>> {
-        let values = to_value(self)?;
-        let envs = values
-            .as_object()
-            .unwrap()
-            .into_iter()
-            .map(|(key, value)| {
-                let env_key = format!("ACCEPTARIUM_{}", key.to_uppercase());
-                (env_key, value.to_string())
-            })
-            .collect();
+        let json_value = to_value(self)?;
+        let mut envs = Vec::new();
+        flatten_json_value(&json_value, "ACCEPTARIUM", &mut envs);
         Ok(envs)
     }
 }
@@ -133,4 +151,29 @@ fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
         }
     }
     root.clone()
+}
+
+fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, String)>) {
+    match value {
+        Value::Object(map) => {
+            for (key, val) in map {
+                let key_upper = key.to_case(Case::UpperFlat);
+                let new_prefix = format!("{}_{}", prefix, key_upper);
+                flatten_json_value(&val, &new_prefix, envs);
+            }
+        }
+        Value::String(s) => {
+            if !s.is_empty() {
+                envs.push((prefix.to_string(), s.clone()));
+            }
+        }
+        Value::Bool(b) => {
+            envs.push((prefix.to_string(), b.to_string()));
+        }
+        Value::Number(n) => {
+            envs.push((prefix.to_string(), n.to_string()));
+        }
+        Value::Null => {}
+        _ => {}
+    }
 }
