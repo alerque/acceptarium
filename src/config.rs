@@ -20,7 +20,7 @@ pub struct Config {
     verbose: bool,
     project: String,
     config: Option<PathBuf>,
-    pub storage: Option<StorageDriver>,
+    pub(crate) storage: Option<StorageDriver>,
 }
 
 impl Config {

@@ -33,6 +33,12 @@ pub enum Error {
 
     #[snafu(display("{message}"))]
     ExternalCommand { message: String },
+
+    #[snafu(display("No storage driver has been configured"))]
+    NoStorageConfigured {},
+
+    #[snafu(display("This build is not compiled with support for the `{driver}` storage driver"))]
+    UnsupportedStorage { driver: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
