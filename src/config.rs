@@ -36,7 +36,6 @@ pub struct Config {
     config: Option<PathBuf>,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
-    #[cfg(feature = "git-annex")]
     // swap rename for alias for env var parsing, but then the TOML breaks.
     // #[serde(alias = "GITANNEX")]
     #[serde(rename(deserialize = "git-annex"))]
