@@ -159,21 +159,18 @@ fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, Strin
             for (key, val) in map {
                 let key_upper = key.to_case(Case::UpperFlat);
                 let new_prefix = format!("{}_{}", prefix, key_upper);
-                flatten_json_value(&val, &new_prefix, envs);
+                flatten_json_value(val, &new_prefix, envs);
             }
-        }
-        Value::String(s) => {
-            if !s.is_empty() {
-                envs.push((prefix.to_string(), s.clone()));
-            }
-        }
-        Value::Bool(b) => {
-            envs.push((prefix.to_string(), b.to_string()));
-        }
-        Value::Number(n) => {
-            envs.push((prefix.to_string(), n.to_string()));
         }
         Value::Null => {}
-        _ => {}
+        _ => {
+            let s = value
+                .as_str()
+                .map(String::from)
+                .unwrap_or_else(|| value.to_string());
+            if !s.is_empty() && s != "null" {
+                envs.push((prefix.to_string(), s));
+            }
+        }
     }
 }
