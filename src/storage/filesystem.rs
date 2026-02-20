@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::Result;
+use crate::types::{Asset, AssetId, Result};
 
 use super::Storage;
 
 use glob::glob;
+use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
 
 pub struct FilesystemStorage {
@@ -20,16 +22,31 @@ impl FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn list(&self) -> Result<()> {
+    fn list(&self) -> Result<HashMap<AssetId, Asset>> {
         let mut directory = self.config.project.clone();
-        directory.push(self.config.filesystem.as_ref().unwrap().directory.clone());
-        let matcher = directory.join(self.config.filesystem.as_ref().unwrap().glob.as_str());
+        let fs_config = self.config.filesystem.as_ref().unwrap();
+        directory.push(fs_config.directory.clone());
+
+        let glob_pattern = fs_config.glob.as_str();
+        let matcher = directory.join(glob_pattern);
         let entries: Vec<PathBuf> = glob(matcher.to_str().unwrap())?.flatten().collect();
+
+        let mut assets = HashMap::new();
+
         for entry in entries {
-            if let Some(filename) = entry.file_name() {
-                println!("{}", filename.to_string_lossy());
-            }
+            let content =
+                fs::read_to_string(&entry).map_err(|e| crate::types::Error::ExternalCommand {
+                    message: format!("Failed to read asset file: {}", e),
+                })?;
+
+            let asset: Asset =
+                toml::from_str(&content).map_err(|e| crate::types::Error::ExternalCommand {
+                    message: format!("Failed to parse asset file: {}", e),
+                })?;
+
+            assets.insert(asset.id.clone(), asset);
         }
-        Ok(())
+
+        Ok(assets)
     }
 }

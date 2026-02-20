@@ -4,11 +4,12 @@
 use crate::config::Config;
 #[cfg(not(feature = "git-annex"))]
 use crate::types::UnsupportedStorageSnafu;
-use crate::types::{MissingStorageConfigSnafu, NoStorageConfiguredSnafu};
+use crate::types::{Asset, AssetId, MissingStorageConfigSnafu, NoStorageConfiguredSnafu};
 use crate::types::{Result, StorageDriver};
+use std::collections::HashMap;
 
 pub trait Storage {
-    fn list(&self) -> Result<()>;
+    fn list(&self) -> Result<HashMap<AssetId, Asset>>;
 }
 
 #[cfg(feature = "git-annex")]
@@ -18,7 +19,11 @@ pub mod filesystem;
 
 pub fn list(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
-    storage.list()
+    let assets = storage.list()?;
+    for (id, asset) in assets {
+        println!("{}\t{}", id, asset.name);
+    }
+    Ok(())
 }
 
 fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {

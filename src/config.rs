@@ -20,7 +20,6 @@ fn default_directory() -> PathBuf {
 }
 
 fn default_glob() -> GlobPattern {
-    // "*.toml".into()
     GlobPattern::new("*.toml").unwrap()
 }
 

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::ALPHABET;
+
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use glob::{Pattern, PatternError};
@@ -150,4 +152,63 @@ impl<'de> Deserialize<'de> for GlobPattern {
             .map(GlobPattern)
             .map_err(|e| serde::de::Error::custom(e.to_string()))
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct AssetId(String);
+
+impl AssetId {
+    pub fn new() -> Self {
+        let id = crate::new_id();
+        Self(id)
+    }
+}
+
+impl Default for AssetId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Display for AssetId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl AssetId {
+    pub fn parse(s: &str) -> Result<Self, String> {
+        if s.len() != 7 {
+            return Err("Asset ID must be exactly 12 characters".to_string());
+        }
+        if !s.chars().all(|c| ALPHABET.contains(&c)) {
+            return Err("Asset ID must only contain alphanumeric characters".to_string());
+        }
+        Ok(Self(s.to_string()))
+    }
+}
+
+impl Serialize for AssetId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl<'de> Deserialize<'de> for AssetId {
+    fn deserialize<D>(deserializer: D) -> Result<AssetId, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        AssetId::parse(&s).map_err(|e| serde::de::Error::custom(e))
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Asset {
+    pub id: AssetId,
+    pub name: String,
 }
