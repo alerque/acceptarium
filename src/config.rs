@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::types::{Result, StorageDriver};
+use crate::types::{GlobPattern, Result, StorageDriver};
 
 use crate::cli::Cli;
 
@@ -11,29 +11,43 @@ use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
 use serde::{Deserialize, Serialize};
 use serde_json::{to_value, Value};
+
 use std::env;
 use std::path::{Path, PathBuf};
+
+fn default_directory() -> PathBuf {
+    PathBuf::from("./acceptarium")
+}
+
+fn default_glob() -> GlobPattern {
+    // "*.toml".into()
+    GlobPattern::new("*.toml").unwrap()
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct FilesystemConfig {
-    pub directory: Option<PathBuf>,
+    #[serde(default = "default_directory")]
+    pub directory: PathBuf,
+    #[serde(default = "default_glob")]
+    pub glob: GlobPattern,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct GitAnnexConfig {
-    pub directory: Option<PathBuf>,
+    #[serde(default = "default_directory")]
+    pub directory: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(unused)]
 pub struct Config {
-    debug: bool,
-    quiet: bool,
-    verbose: bool,
-    project: String,
-    config: Option<PathBuf>,
+    pub debug: bool,
+    pub quiet: bool,
+    pub verbose: bool,
+    pub project: PathBuf,
+    pub config: Option<PathBuf>,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.

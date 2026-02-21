@@ -3,6 +3,8 @@
 
 use clap::error::Error as ClapError;
 use config::ConfigError;
+use glob::{Pattern, PatternError};
+use serde::{Deserialize, Serialize};
 use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
 use std::ffi::OsString;
@@ -42,6 +44,9 @@ pub enum Error {
 
     #[snafu(display("This build is not compiled with support for the `{driver}` storage driver"))]
     UnsupportedStorage { driver: String },
+
+    #[snafu(display("Invalid glob pattern for `{source}`"))]
+    Glob { source: PatternError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -90,9 +95,59 @@ impl From<&str> for Error {
     }
 }
 
+impl From<PatternError> for Error {
+    fn from(source: PatternError) -> Self {
+        Error::Glob { source }
+    }
+}
+
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub type Args = Vec<OsString>;
 
 // Re-export types also used by clap at build time in runtime modules
 pub type StorageDriver = crate::cli::StorageDriver;
+
+#[derive(Clone, Debug)]
+pub struct GlobPattern(Pattern);
+
+impl GlobPattern {
+    pub fn new(pattern: &str) -> Result<Self> {
+        Ok(Self(Pattern::new(pattern)?))
+    }
+}
+
+impl Default for GlobPattern {
+    fn default() -> Self {
+        Self(Pattern::new("*").unwrap())
+    }
+}
+
+impl std::ops::Deref for GlobPattern {
+    type Target = Pattern;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Serialize for GlobPattern {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.0.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for GlobPattern {
+    fn deserialize<D>(deserializer: D) -> Result<GlobPattern, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Pattern::new(&s)
+            .map(GlobPattern)
+            .map_err(|e| serde::de::Error::custom(e.to_string()))
+    }
+}

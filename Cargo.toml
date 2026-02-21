@@ -54,10 +54,11 @@ zsh = ["completions"]
 
 [dependencies]
 convert_case = "0.6" # held back to match config crate's case feature
-which = "8.0"
+glob = "0.3"
 serde_json = "1.0"
 snafu = "0.8"
 subprocess = "1.0"
+which = "8.0"
 
 [dependencies.serde]
 version = "1.0"

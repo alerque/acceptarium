@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::config::GitAnnexConfig;
+use crate::config::Config;
 use crate::types::Result;
 
 use super::Storage;
 
 pub struct GitAnnexStorage {
-    _config: GitAnnexConfig,
+    _config: Config,
 }
 
 impl GitAnnexStorage {
-    pub fn new(_config: GitAnnexConfig) -> Self {
+    pub fn new(_config: Config) -> Self {
         Self { _config }
     }
 }
