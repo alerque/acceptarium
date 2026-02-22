@@ -9,6 +9,7 @@ use glob::{Pattern, PatternError};
 use serde::{Deserialize, Serialize};
 use serde_json::Error as SerdeJsonError;
 use snafu::prelude::*;
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
@@ -221,4 +222,45 @@ impl<'de> Deserialize<'de> for AssetId {
 pub struct Asset {
     pub id: AssetId,
     pub file: Option<PathBuf>,
+}
+
+#[derive(Debug, Default)]
+pub struct Assets {
+    inner: HashMap<AssetId, Asset>,
+}
+
+impl Assets {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn insert(&mut self, asset: Asset) {
+        self.inner.insert(asset.id.clone(), asset);
+    }
+
+    pub fn get(&self, id: &AssetId) -> Option<&Asset> {
+        self.inner.get(id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&AssetId, &Asset)> {
+        self.inner.iter()
+    }
+}
+
+impl std::fmt::Display for Assets {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (id, asset) in self.inner.iter() {
+            let filename = asset
+                .file
+                .as_ref()
+                .map(|p| {
+                    p.file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_default()
+                })
+                .unwrap_or_default();
+            writeln!(f, "{}\t{}", id, filename)?;
+        }
+        Ok(())
+    }
 }

@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::{Asset, AssetId, Result};
+use crate::types::{Assets, Result};
 
 use super::Storage;
-
-use std::collections::HashMap;
 
 pub struct GitAnnexStorage {
     _config: Config,
@@ -19,7 +17,7 @@ impl GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
-    fn list(&self) -> Result<HashMap<AssetId, Asset>> {
+    fn list(&self) -> Result<Assets> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 }
