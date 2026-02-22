@@ -224,7 +224,7 @@ pub struct Asset {
     pub file: Option<PathBuf>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct Assets {
     inner: HashMap<AssetId, Asset>,
 }
@@ -244,6 +244,10 @@ impl Assets {
 
     pub fn iter(&self) -> impl Iterator<Item = (&AssetId, &Asset)> {
         self.inner.iter()
+    }
+
+    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string_pretty(&self.inner)
     }
 }
 

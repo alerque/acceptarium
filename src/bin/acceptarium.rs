@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     match Commands::from_arg_matches(&matches)? {
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),
-        Commands::List {} => storage::list(&config),
+        Commands::List { json } => storage::list(&config, json),
         Commands::External(mut args) => {
             let name = args.pop().ok_or("external command without a name")?;
             run::run(&config, name, args)

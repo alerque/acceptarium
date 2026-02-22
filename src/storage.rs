@@ -17,10 +17,14 @@ pub mod git_annex;
 
 pub mod filesystem;
 
-pub fn list(config: &Config) -> Result<()> {
+pub fn list(config: &Config, json: bool) -> Result<()> {
     let storage = instantiate_storage(config)?;
     let assets = storage.list()?;
-    print!("{}", assets);
+    if json {
+        println!("{}", assets.to_json()?);
+    } else {
+        print!("{}", assets);
+    }
     Ok(())
 }
 

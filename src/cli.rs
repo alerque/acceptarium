@@ -62,7 +62,11 @@ pub enum Commands {
     },
 
     /// List known assets
-    List {},
+    List {
+        /// Output assets as JSON
+        #[clap(short, long)]
+        json: bool,
+    },
 
     /// Show status information about configuration, and state
     Status {},
