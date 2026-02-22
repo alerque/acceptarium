@@ -7,6 +7,7 @@ use crate::types::UnsupportedStorageSnafu;
 use crate::types::{Asset, AssetId, MissingStorageConfigSnafu, NoStorageConfiguredSnafu};
 use crate::types::{Result, StorageDriver};
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 pub trait Storage {
     fn list(&self) -> Result<HashMap<AssetId, Asset>>;
@@ -21,7 +22,9 @@ pub fn list(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
     let assets = storage.list()?;
     for (id, asset) in assets {
-        println!("{}\t{}", id, asset.name);
+        let empty = PathBuf::from("");
+        let fname: &Path = asset.file.as_deref().unwrap_or(&empty);
+        println!("{}\t{}", id, fname.to_string_lossy());
     }
     Ok(())
 }

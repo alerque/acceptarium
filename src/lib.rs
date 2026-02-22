@@ -25,7 +25,9 @@ pub mod cli;
 
 use nanoid::nanoid;
 
-pub const ALPHABET: [char; 62] = [
+pub(crate) const ASSET_ID_LEN: usize = 7;
+
+pub(crate) const ASSET_ID_CHARS: [char; 62] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
     'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B',
     'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
@@ -33,6 +35,6 @@ pub const ALPHABET: [char; 62] = [
 ];
 
 pub(crate) fn new_id() -> String {
-    let id = nanoid!(7, &ALPHABET);
-    format!("{}", id)
+    let id = nanoid!(ASSET_ID_LEN, &ASSET_ID_CHARS);
+    id.to_string()
 }

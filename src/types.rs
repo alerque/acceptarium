@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::ALPHABET;
+use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 
 use clap::error::Error as ClapError;
 use config::ConfigError;
@@ -12,6 +12,7 @@ use snafu::prelude::*;
 use std::ffi::OsString;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
+use std::path::PathBuf;
 use which::Error as WhichError;
 
 #[derive(Snafu)]
@@ -49,6 +50,9 @@ pub enum Error {
 
     #[snafu(display("Invalid glob pattern for `{source}`"))]
     Glob { source: PatternError },
+
+    #[snafu(display("Invalid asset ID: {message}"))]
+    InvalidAssetId { message: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -177,12 +181,18 @@ impl std::fmt::Display for AssetId {
 }
 
 impl AssetId {
-    pub fn parse(s: &str) -> Result<Self, String> {
-        if s.len() != 7 {
-            return Err("Asset ID must be exactly 12 characters".to_string());
+    pub fn parse(s: &str) -> Result<Self> {
+        if s.len() != ASSET_ID_LEN {
+            return InvalidAssetIdSnafu {
+                message: format!("Asset ID must be exactly {} characters", ASSET_ID_LEN),
+            }
+            .fail();
         }
-        if !s.chars().all(|c| ALPHABET.contains(&c)) {
-            return Err("Asset ID must only contain alphanumeric characters".to_string());
+        if !s.chars().all(|c| ASSET_ID_CHARS.contains(&c)) {
+            return InvalidAssetIdSnafu {
+                message: "Asset ID must only contain alphanumeric characters".to_string(),
+            }
+            .fail();
         }
         Ok(Self(s.to_string()))
     }
@@ -203,12 +213,12 @@ impl<'de> Deserialize<'de> for AssetId {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        AssetId::parse(&s).map_err(|e| serde::de::Error::custom(e))
+        AssetId::parse(&s).map_err(serde::de::Error::custom)
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Asset {
     pub id: AssetId,
-    pub name: String,
+    pub file: Option<PathBuf>,
 }
