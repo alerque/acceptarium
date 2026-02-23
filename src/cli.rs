@@ -23,10 +23,6 @@ pub struct Cli {
     #[clap(short, long)]
     pub debug: bool,
 
-    /// Set project root path
-    #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
-    pub project: Option<PathBuf>,
-
     /// Discard all non-error output messages
     #[clap(short, long)]
     pub quiet: bool,
@@ -35,13 +31,17 @@ pub struct Cli {
     #[clap(short, long)]
     pub verbose: bool,
 
-    /// Storage backend to use
-    #[clap(short, long)]
-    pub storage: Option<StorageDriver>,
+    /// Set project root path
+    #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
+    pub project: Option<PathBuf>,
 
-    /// Path to a TOML config file (overrides default acceptarium.toml)
-    #[clap(short, long, value_hint = clap::ValueHint::FilePath)]
-    pub config: Option<PathBuf>,
+    /// Override a configuration value (can be passed multiple times)
+    #[clap(short, long, num_args = 2, value_names = ["KEY", "VALUE"])]
+    pub config: Vec<String>,
+
+    /// Path to a TOML config file, relative to project root
+    #[clap(long, value_hint = clap::ValueHint::FilePath)]
+    pub config_file: Option<PathBuf>,
 
     #[clap(subcommand)]
     pub subcommand: Commands,
@@ -50,6 +50,13 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 #[clap(subcommand_negates_reqs = true)]
 pub enum Commands {
+    /// List known assets
+    List {
+        /// Output assets as JSON
+        #[clap(short, long)]
+        json: bool,
+    },
+
     /// Execute a script as a child process that inherits Acceptarium environment
     Run {
         /// Name of script supplied either by Acceptarium or a local project
@@ -59,13 +66,6 @@ pub enum Commands {
         /// Arguments to pass to script being run
         #[clap(value_hint = clap::ValueHint::Unknown)]
         arguments: Vec<OsString>,
-    },
-
-    /// List known assets
-    List {
-        /// Output assets as JSON
-        #[clap(short, long)]
-        json: bool,
     },
 
     /// Show status information about configuration, and state

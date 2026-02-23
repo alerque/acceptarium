@@ -40,6 +40,9 @@ pub enum Error {
     #[snafu(display("{message}"))]
     ExternalCommand { message: String },
 
+    #[snafu(display("{message}"))]
+    ConfigKeyValue { message: String },
+
     #[snafu(display("No storage driver has been configured"))]
     NoStorageConfigured {},
 

@@ -5,7 +5,6 @@ use crate::types::{GlobPattern, Result, StorageDriver};
 
 use crate::cli::Cli;
 
-use clap::ValueEnum;
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
@@ -46,7 +45,8 @@ pub struct Config {
     pub quiet: bool,
     pub verbose: bool,
     pub project: PathBuf,
-    pub config: Option<PathBuf>,
+    #[serde(rename(deserialize = "config-file"))]
+    pub config_file: Option<PathBuf>,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.
@@ -79,7 +79,7 @@ impl Config {
             .set_default("project", discovered_project.to_str().unwrap())?;
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
-            .config
+            .config_file
             .clone()
             .or_else(|| {
                 env::var("ACCEPTARIUM_CONFIG")
@@ -114,9 +114,9 @@ impl Config {
         if args.verbose {
             builder = builder.set_override("verbose", true)?;
         }
-        if let Some(storage) = &args.storage {
-            let storage = storage.to_possible_value().unwrap();
-            builder = builder.set_override("storage", storage.get_name())?;
+        let mut config_overrides = args.config.clone().into_iter();
+        while let (Some(key), Some(value)) = (config_overrides.next(), config_overrides.next()) {
+            builder = builder.set_override(&key, value)?;
         }
         // Put it all together and deserialize it to a config struct
         let sources = builder.build()?;
