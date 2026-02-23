@@ -15,9 +15,10 @@ fn main() -> Result<()> {
     let args = Cli::from_arg_matches(&matches).expect("Unable to parse arguments");
     let config = Config::new(&args)?;
     match Commands::from_arg_matches(&matches)? {
+        Commands::Add { files, commit } => storage::add(&config, files, commit),
+        Commands::List { json } => storage::list(&config, json),
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),
-        Commands::List { json } => storage::list(&config, json),
         Commands::External(mut args) => {
             let name = args.pop().ok_or("external command without a name")?;
             run::run(&config, name, args)

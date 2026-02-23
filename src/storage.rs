@@ -4,11 +4,16 @@
 use crate::config::Config;
 #[cfg(not(feature = "git-annex"))]
 use crate::types::UnsupportedStorageSnafu;
+use crate::types::{Asset, Assets, Result, StorageDriver};
 use crate::types::{
-    Assets, MissingStorageConfigSnafu, NoStorageConfiguredSnafu, Result, StorageDriver,
+    FileIoSnafu, FilesystemSnafu, MissingStorageConfigSnafu, NoStorageConfiguredSnafu,
 };
 
+use snafu::prelude::*;
+use std::path::PathBuf;
+
 pub trait Storage {
+    fn add(&self, file: PathBuf) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
 }
 
@@ -16,6 +21,24 @@ pub trait Storage {
 pub mod git_annex;
 
 pub mod filesystem;
+
+pub fn add(config: &Config, files: Vec<PathBuf>, _commit: bool) -> Result<()> {
+    // Check for extant readable files first to fail early and avoid a partial operation
+    files.iter().try_for_each(|file| {
+        file.try_exists()
+            .context(FileIoSnafu)?
+            .then_some(())
+            .context(FilesystemSnafu {
+                message: format!("File does not exist: {}", file.display()),
+            })
+    })?;
+    let storage = instantiate_storage(config)?;
+    files.iter().try_for_each(|file| {
+        let asset = storage.add(file.to_owned())?;
+        println!("{}", asset);
+        Ok(())
+    })
+}
 
 pub fn list(config: &Config, json: bool) -> Result<()> {
     let storage = instantiate_storage(config)?;

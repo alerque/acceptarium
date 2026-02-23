@@ -50,6 +50,17 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 #[clap(subcommand_negates_reqs = true)]
 pub enum Commands {
+    /// Add (import) new asset to tracked asset storage
+    Add {
+        /// Commit imported asset to VCS tracker (if configured)
+        #[clap(short, long)]
+        commit: bool,
+
+        /// Files to add as assets (at least one required)
+        #[clap(value_hint = clap::ValueHint::FilePath, required = true, num_args(1..))]
+        files: Vec<PathBuf>,
+    },
+
     /// List known assets
     List {
         /// Output assets as JSON

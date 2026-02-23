@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::new_id;
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 
 use clap::error::Error as ClapError;
@@ -57,6 +58,12 @@ pub enum Error {
 
     #[snafu(display("Invalid asset ID: {message}"))]
     InvalidAssetId { message: String },
+
+    #[snafu(display("Filesystem error: {source}"))]
+    FileIo { source: IoError },
+
+    #[snafu(display("Filesystem error: {message}"))]
+    Filesystem { message: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -167,7 +174,7 @@ pub struct AssetId(String);
 
 impl AssetId {
     pub fn new() -> Self {
-        let id = crate::new_id();
+        let id = new_id();
         Self(id)
     }
 }
@@ -227,6 +234,13 @@ pub struct Asset {
     pub file: Option<PathBuf>,
 }
 
+impl Asset {
+    pub fn new(file: Option<PathBuf>) -> Result<Self> {
+        let id = AssetId::new();
+        Ok(Self { id, file })
+    }
+}
+
 impl std::fmt::Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let filename = self
@@ -252,7 +266,7 @@ impl Assets {
         Self::default()
     }
 
-    pub fn insert(&mut self, asset: Asset) {
+    pub fn add(&mut self, asset: Asset) {
         self.inner.insert(asset.id.clone(), asset);
     }
 
