@@ -227,6 +227,21 @@ pub struct Asset {
     pub file: Option<PathBuf>,
 }
 
+impl std::fmt::Display for Asset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let filename = self
+            .file
+            .as_ref()
+            .map(|p| {
+                p.file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default()
+            })
+            .unwrap_or_default();
+        write!(f, "{}\t{}", self.id, filename)
+    }
+}
+
 #[derive(Debug, Default, Serialize)]
 pub struct Assets {
     inner: HashMap<AssetId, Asset>,
@@ -256,17 +271,8 @@ impl Assets {
 
 impl std::fmt::Display for Assets {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (id, asset) in self.inner.iter() {
-            let filename = asset
-                .file
-                .as_ref()
-                .map(|p| {
-                    p.file_name()
-                        .map(|n| n.to_string_lossy().to_string())
-                        .unwrap_or_default()
-                })
-                .unwrap_or_default();
-            writeln!(f, "{}\t{}", id, filename)?;
+        for asset in self.inner.values() {
+            writeln!(f, "{}", asset)?;
         }
         Ok(())
     }
