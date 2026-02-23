@@ -15,6 +15,7 @@ use std::ffi::OsString;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use std::path::PathBuf;
+use toml::de::Error as DeserializeError;
 use toml::ser::Error as SerializeError;
 use which::Error as WhichError;
 
@@ -66,6 +67,9 @@ pub enum Error {
     #[snafu(display("Filesystem error: {message}"))]
     Filesystem { message: String },
 
+    #[snafu(display("Deserialize error: {source}"))]
+    Deserialize { source: DeserializeError },
+
     #[snafu(display("Serialize error: {source}"))]
     Serialize { source: SerializeError },
 }
@@ -99,6 +103,12 @@ impl From<SerdeJsonError> for Error {
 impl From<WhichError> for Error {
     fn from(source: WhichError) -> Self {
         Error::Which { source }
+    }
+}
+
+impl From<DeserializeError> for Error {
+    fn from(source: DeserializeError) -> Self {
+        Error::Deserialize { source }
     }
 }
 

@@ -72,13 +72,8 @@ impl Storage for FilesystemStorage {
         let entries: Vec<PathBuf> = glob(matcher.to_str().unwrap())?.flatten().collect();
         let mut assets = Assets::new();
         for entry in entries {
-            let content = read_to_string(&entry).map_err(|e| crate::types::Error::Filesystem {
-                message: format!("Failed to read asset file: {}", e),
-            })?;
-            let mut asset: Asset =
-                toml::from_str(&content).map_err(|e| crate::types::Error::Filesystem {
-                    message: format!("Failed to parse asset file: {}", e),
-                })?;
+            let content = read_to_string(&entry)?;
+            let asset: Asset = toml::from_str(&content)?;
             assets.add(asset);
         }
         Ok(assets)
