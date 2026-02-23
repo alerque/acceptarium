@@ -253,16 +253,12 @@ impl Asset {
 
 impl std::fmt::Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let filename = self
+        let file = self
             .file
             .as_ref()
-            .map(|p| {
-                p.file_name()
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_default()
-            })
+            .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();
-        write!(f, "{}\t{}", self.id, filename)
+        write!(f, "{}\t{}", self.id, file)
     }
 }
 

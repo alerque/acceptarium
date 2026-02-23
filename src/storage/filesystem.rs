@@ -79,7 +79,6 @@ impl Storage for FilesystemStorage {
                 toml::from_str(&content).map_err(|e| crate::types::Error::Filesystem {
                     message: format!("Failed to parse asset file: {}", e),
                 })?;
-            asset.file = Some(entry);
             assets.add(asset);
         }
         Ok(assets)
