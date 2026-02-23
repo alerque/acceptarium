@@ -70,7 +70,8 @@ impl Config {
             .unwrap_or_else(|| {
                 let current_dir = env::current_dir().unwrap_or(PathBuf::from("./"));
                 discover_project_root(&current_dir)
-            });
+            })
+            .canonicalize()?;
         // Setup default config values
         let mut builder = LayeredConfig::builder()
             .set_default("debug", false)?

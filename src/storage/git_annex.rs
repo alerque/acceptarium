@@ -19,6 +19,10 @@ impl GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
+    fn init(&self) -> Result<()> {
+        unimplemented!("git-annex storage driver is not implemented yet")
+    }
+
     fn add(&self, _file: PathBuf) -> Result<Asset> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }

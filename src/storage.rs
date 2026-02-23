@@ -5,14 +5,13 @@ use crate::config::Config;
 #[cfg(not(feature = "git-annex"))]
 use crate::types::UnsupportedStorageSnafu;
 use crate::types::{Asset, Assets, Result, StorageDriver};
-use crate::types::{
-    FileIoSnafu, FilesystemSnafu, MissingStorageConfigSnafu, NoStorageConfiguredSnafu,
-};
+use crate::types::{FileIoSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
 
 use snafu::prelude::*;
 use std::path::PathBuf;
 
 pub trait Storage {
+    fn init(&self) -> Result<()>;
     fn add(&self, file: PathBuf) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
 }
@@ -54,25 +53,17 @@ pub fn list(config: &Config, json: bool) -> Result<()> {
 fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
     let config = config.clone();
     let storage: Box<dyn Storage> = match config.storage {
-        Some(StorageDriver::Filesystem) => match config.filesystem {
-            Some(_) => Box::new(filesystem::FilesystemStorage::new(config)),
-            None => {
-                return MissingStorageConfigSnafu {
-                    driver: "filesystem",
-                }
-                .fail()
-            }
-        },
+        Some(StorageDriver::Filesystem) => {
+            let s = filesystem::FilesystemStorage::new(config);
+            s.init()?;
+            Box::new(s)
+        }
         #[cfg(feature = "git-annex")]
-        Some(StorageDriver::GitAnnex) => match config.git_annex {
-            Some(_) => Box::new(git_annex::GitAnnexStorage::new(config)),
-            None => {
-                return MissingStorageConfigSnafu {
-                    driver: "git-annex",
-                }
-                .fail()
-            }
-        },
+        Some(StorageDriver::GitAnnex) => {
+            let s = git_annex::GitAnnexStorage::new(config);
+            s.init()?;
+            Box::new(s)
+        }
         #[cfg(not(feature = "git-annex"))]
         Some(StorageDriver::GitAnnex) => {
             return UnsupportedStorageSnafu {
