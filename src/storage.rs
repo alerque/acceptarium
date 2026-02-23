@@ -11,7 +11,6 @@ use snafu::prelude::*;
 use std::path::PathBuf;
 
 pub trait Storage {
-    fn init(&self) -> Result<()>;
     fn add(&self, file: PathBuf) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
 }
@@ -51,19 +50,10 @@ pub fn list(config: &Config, json: bool) -> Result<()> {
 }
 
 fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
-    let config = config.clone();
-    let storage: Box<dyn Storage> = match config.storage {
-        Some(StorageDriver::Filesystem) => {
-            let s = filesystem::FilesystemStorage::new(config);
-            s.init()?;
-            Box::new(s)
-        }
+    match config.storage {
+        Some(StorageDriver::Filesystem) => filesystem::FilesystemStorage::init(config),
         #[cfg(feature = "git-annex")]
-        Some(StorageDriver::GitAnnex) => {
-            let s = git_annex::GitAnnexStorage::new(config);
-            s.init()?;
-            Box::new(s)
-        }
+        Some(StorageDriver::GitAnnex) => git_annex::GitAnnexStorage::init(config),
         #[cfg(not(feature = "git-annex"))]
         Some(StorageDriver::GitAnnex) => {
             return UnsupportedStorageSnafu {
@@ -71,7 +61,6 @@ fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
             }
             .fail()
         }
-        None => return NoStorageConfiguredSnafu {}.fail(),
-    };
-    Ok(storage)
+        None => NoStorageConfiguredSnafu {}.fail(),
+    }
 }

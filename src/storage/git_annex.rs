@@ -8,21 +8,16 @@ use super::Storage;
 
 use std::path::PathBuf;
 
-pub struct GitAnnexStorage {
-    _config: Config,
-}
+pub struct GitAnnexStorage;
 
 impl GitAnnexStorage {
-    pub fn new(_config: Config) -> Self {
-        Self { _config }
+    pub fn init(config: &Config) -> Result<Box<dyn Storage>> {
+        let _ = config;
+        unimplemented!("git-annex storage driver is not implemented yet")
     }
 }
 
 impl Storage for GitAnnexStorage {
-    fn init(&self) -> Result<()> {
-        unimplemented!("git-annex storage driver is not implemented yet")
-    }
-
     fn add(&self, _file: PathBuf) -> Result<Asset> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
