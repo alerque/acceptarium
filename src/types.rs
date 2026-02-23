@@ -15,6 +15,7 @@ use std::ffi::OsString;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use std::path::PathBuf;
+use toml::ser::Error as SerializeError;
 use which::Error as WhichError;
 
 #[derive(Snafu)]
@@ -64,6 +65,9 @@ pub enum Error {
 
     #[snafu(display("Filesystem error: {message}"))]
     Filesystem { message: String },
+
+    #[snafu(display("Serialize error: {source}"))]
+    Serialize { source: SerializeError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -95,6 +99,12 @@ impl From<SerdeJsonError> for Error {
 impl From<WhichError> for Error {
     fn from(source: WhichError) -> Self {
         Error::Which { source }
+    }
+}
+
+impl From<SerializeError> for Error {
+    fn from(source: SerializeError) -> Self {
+        Error::Serialize { source }
     }
 }
 

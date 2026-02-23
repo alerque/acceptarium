@@ -60,9 +60,18 @@ impl Storage for FilesystemStorage {
     }
 
     fn add(&self, file: PathBuf) -> Result<Asset> {
-        let asset = Asset::new(Some(file))?;
+        let mut asset = Asset::new(Some(file))?;
+        let project_root = &self.config.project;
+        let fs_config = self.config.filesystem.as_ref().unwrap();
+        let mut directory = project_root.clone();
+        directory.push(fs_config.directory.clone());
+        let filename = format!("{}.toml", asset.id);
+        let metadata_path = directory.join(filename);
+        let toml_content = toml::to_string_pretty(&asset)?;
+        std::fs::write(metadata_path, toml_content)?;
         Ok(asset)
     }
+
     fn list(&self) -> Result<Assets> {
         let mut directory = self.config.project.clone();
         let fs_config = self.config.filesystem.as_ref().unwrap();
