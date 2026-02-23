@@ -16,6 +16,7 @@ use std::path::PathBuf;
 pub struct FilesystemStorage {
     data_dir: PathBuf,
     glob_pattern: String,
+    copy: bool,
 }
 
 impl FilesystemStorage {
@@ -53,15 +54,22 @@ impl FilesystemStorage {
         Ok(Box::new(Self {
             data_dir,
             glob_pattern: fs_config.glob.to_string(),
+            copy: fs_config.copy,
         }))
     }
 }
 
 impl Storage for FilesystemStorage {
     fn add(&self, file: PathBuf) -> Result<Asset> {
-        let asset = Asset::new(Some(file))?;
+        let mut asset = Asset::new(Some(file.clone()))?;
         let mut metadata_path = self.data_dir.join(asset.id.to_string());
         metadata_path.add_extension("toml");
+        if self.copy {
+            let basename = file.file_name().unwrap();
+            let dest_path = self.data_dir.join(basename);
+            std::fs::copy(file, &dest_path)?;
+            asset.file = Some(dest_path);
+        }
         let toml_content = toml::to_string_pretty(&asset)?;
         std::fs::write(metadata_path, toml_content)?;
         Ok(asset)

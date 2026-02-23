@@ -22,6 +22,10 @@ fn default_glob() -> GlobPattern {
     GlobPattern::new("*.toml").unwrap()
 }
 
+fn default_copy() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct FilesystemConfig {
@@ -29,6 +33,8 @@ pub struct FilesystemConfig {
     pub directory: PathBuf,
     #[serde(default = "default_glob")]
     pub glob: GlobPattern,
+    #[serde(default = "default_copy")]
+    pub copy: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
