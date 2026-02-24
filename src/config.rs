@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::types::{GlobPattern, Result, StorageDriver};
+use crate::types::GlobPattern;
+use crate::{Result, StorageDriver};
 
 use crate::cli::Cli;
 

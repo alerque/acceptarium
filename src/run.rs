@@ -1,17 +1,18 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::config::Config;
 use crate::error::BufferSnafu;
-use crate::types::{Result, RunArgs};
 use crate::CONFIGURE_DATADIR;
+use crate::{Config, Result};
 
-use snafu::prelude::*;
+use snafu::OptionExt;
 use std::ffi::OsString;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use subprocess::{Exec, Redirection};
 use which::which;
+
+pub type RunArgs = Vec<OsString>;
 
 /// Execute a script as a child process that inherits Acceptarium environment
 pub fn run(config: &Config, name: OsString, arguments: RunArgs) -> Result<()> {

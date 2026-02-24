@@ -1,19 +1,14 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::config::Config;
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
 use crate::error::{FileIoSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
-use crate::types::{Asset, Assets, Result, StorageDriver};
+use crate::Storage;
+use crate::{Config, Result, StorageDriver};
 
-use snafu::prelude::*;
+use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
-
-pub trait Storage {
-    fn add(&self, file: PathBuf) -> Result<Asset>;
-    fn list(&self) -> Result<Assets>;
-}
 
 #[cfg(feature = "git-annex")]
 pub mod git_annex;

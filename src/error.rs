@@ -5,7 +5,7 @@ use clap::error::Error as ClapError;
 use config::ConfigError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
-use snafu::prelude::*;
+use snafu::Snafu;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use toml::de::Error as DeserializeError;

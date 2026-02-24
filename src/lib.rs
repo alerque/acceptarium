@@ -4,25 +4,40 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub mod config;
-pub mod error;
-pub mod types;
+// Private modules
+mod config;
+mod error;
+mod types;
 
-// Data handling
-pub mod storage;
-
-// Subcommands
+// Public modules
 pub mod run;
 pub mod status;
+pub mod storage;
+
+#[cfg(feature = "cli")]
+#[doc(hidden)]
+pub mod cli;
+
+// Public structs
+pub use cli::StorageDriver;
+pub use config::Config;
+pub use error::Error;
+pub use types::Asset;
+pub use types::Assets;
+pub use types::Result;
 
 // Import stuff set by autoconf/automake at build time
 pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];
 pub static CONFIGURE_BINDIR: &str = env!["CONFIGURE_BINDIR"];
 pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
-#[cfg(feature = "cli")]
-#[doc(hidden)]
-pub mod cli;
+use std::path::PathBuf;
+
+// Public traits
+pub trait Storage {
+    fn add(&self, file: PathBuf) -> Result<Asset>;
+    fn list(&self) -> Result<Assets>;
+}
 
 const ASSET_ID_LEN: usize = 7;
 

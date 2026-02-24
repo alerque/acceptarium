@@ -9,16 +9,10 @@ use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::ffi::OsString;
 use std::fmt::{Debug, Display};
 use std::path::PathBuf;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-pub type RunArgs = Vec<OsString>;
-
-// Re-export types also used by clap at build time in runtime modules
-pub type StorageDriver = crate::cli::StorageDriver;
 
 #[derive(Clone, Debug)]
 pub struct GlobPattern(Pattern);
@@ -123,14 +117,20 @@ impl<'de> Deserialize<'de> for AssetId {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Asset {
-    pub id: AssetId,
-    pub file: Option<PathBuf>,
+    id: AssetId,
+    file: Option<PathBuf>,
 }
 
 impl Asset {
     pub fn new(file: Option<PathBuf>) -> Result<Self> {
         let id = AssetId::new();
         Ok(Self { id, file })
+    }
+    pub fn id(&self) -> &AssetId {
+        &self.id
+    }
+    pub fn file(&self) -> Option<&PathBuf> {
+        self.file.as_ref()
     }
 }
 

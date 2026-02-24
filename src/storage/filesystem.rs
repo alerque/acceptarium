@@ -61,15 +61,16 @@ impl FilesystemStorage {
 
 impl Storage for FilesystemStorage {
     fn add(&self, file: PathBuf) -> Result<Asset> {
-        let mut asset = Asset::new(Some(file.clone()))?;
-        let mut metadata_path = self.data_dir.join(asset.id.to_string());
-        metadata_path.add_extension("toml");
+        let mut file = file.to_owned();
         if self.copy {
             let basename = file.file_name().unwrap();
             let dest_path = self.data_dir.join(basename);
             std::fs::copy(file, &dest_path)?;
-            asset.file = Some(dest_path);
+            file = dest_path;
         }
+        let asset = Asset::new(Some(file))?;
+        let mut metadata_path = self.data_dir.join(asset.id().to_string());
+        metadata_path.add_extension("toml");
         let toml_content = toml::to_string_pretty(&asset)?;
         std::fs::write(metadata_path, toml_content)?;
         Ok(asset)
