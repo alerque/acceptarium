@@ -8,7 +8,7 @@ acceptarium
 
 ----
 
-## Overview
+# Overview
 
 ```mermaid
 ---
@@ -45,7 +45,7 @@ flowchart LR
 1. **Optionally** use final data to update regex rules or train the LLM model to improve future extractions.
 1. Export extracted data as transaction(s) via CVS? JSON? (or possibly directly to journal for [HLedger][hledger], [Ledger CLI][ledgercli], [Beancount][beancount], etc.).
 
-# Goals
+## Goals
 
 * Automate as many steps as possible to make it easy to handle receipts, invoices, etc. in bulk.
 * Use only local-first privacy-preserving tooling by default even where LLMs may be involved.
