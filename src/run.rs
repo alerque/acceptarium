@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::{Args, BufferSnafu, Result};
+use crate::error::BufferSnafu;
+use crate::types::{Result, RunArgs};
 use crate::CONFIGURE_DATADIR;
 
 use snafu::prelude::*;
@@ -13,7 +14,7 @@ use subprocess::{Exec, Redirection};
 use which::which;
 
 /// Execute a script as a child process that inherits Acceptarium environment
-pub fn run(config: &Config, name: OsString, arguments: Args) -> Result<()> {
+pub fn run(config: &Config, name: OsString, arguments: RunArgs) -> Result<()> {
     let mut script = PathBuf::from(CONFIGURE_DATADIR);
     script.push("scripts");
     script.push(&name);

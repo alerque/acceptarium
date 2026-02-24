@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
+use crate::error::{FilesystemSnafu, MissingStorageConfigSnafu};
 use crate::types::{Asset, Assets, Result};
-use crate::types::{FilesystemSnafu, MissingStorageConfigSnafu};
 
 use super::Storage;
 

@@ -3,9 +3,9 @@
 
 use crate::config::Config;
 #[cfg(not(feature = "git-annex"))]
-use crate::types::UnsupportedStorageSnafu;
+use crate::error::UnsupportedStorageSnafu;
+use crate::error::{FileIoSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
 use crate::types::{Asset, Assets, Result, StorageDriver};
-use crate::types::{FileIoSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
 
 use snafu::prelude::*;
 use std::path::PathBuf;

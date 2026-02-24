@@ -12,7 +12,7 @@ datadir = $(datarootdir)/$(TRANSFORMED_PACKAGE_NAME)
 scriptsdir = $(datadir)/scripts
 
 bin_PROGRAMS = acceptarium
-acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/types.rs
+acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/error.rs src/types.rs
 acceptarium_SOURCES += src/run.rs src/status.rs
 acceptarium_SOURCES += src/storage.rs src/storage/filesystem.rs src/storage/git_annex.rs
 EXTRA_acceptarium_SOURCES =

@@ -1,0 +1,132 @@
+// SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
+// SPDX-License-Identifier: AGPL-3.0-only
+
+use clap::error::Error as ClapError;
+use config::ConfigError;
+use glob::PatternError;
+use serde_json::Error as SerdeJsonError;
+use snafu::prelude::*;
+use std::fmt::{Debug, Display, Formatter};
+use std::io::Error as IoError;
+use toml::de::Error as DeserializeError;
+use toml::ser::Error as SerializeError;
+use which::Error as WhichError;
+
+#[derive(Snafu)]
+#[snafu(visibility(pub))]
+pub enum Error {
+    #[snafu(display("Configuration error: {source}"))]
+    Config { source: ConfigError },
+
+    #[snafu(display("CLI argument error: {source}"))]
+    Clap { source: ClapError },
+
+    #[snafu(display("JSON serialization error: {source}"))]
+    SerdeJson { source: SerdeJsonError },
+
+    #[snafu(display("Which error: {source}"))]
+    Which { source: WhichError },
+
+    #[snafu(display("Process stream error: {source}"))]
+    Stream { source: IoError },
+
+    #[snafu(display("IO buffer error in {stream} stream"))]
+    Buffer { stream: String },
+
+    #[snafu(display("{message}"))]
+    ExternalCommand { message: String },
+
+    #[snafu(display("{message}"))]
+    ConfigKeyValue { message: String },
+
+    #[snafu(display("No storage driver has been configured"))]
+    NoStorageConfigured {},
+
+    #[snafu(display("The storage driver`{driver}` requires a valid configuration"))]
+    MissingStorageConfig { driver: String },
+
+    #[snafu(display("This build is not compiled with support for the `{driver}` storage driver"))]
+    UnsupportedStorage { driver: String },
+
+    #[snafu(display("Invalid glob pattern for `{source}`"))]
+    Glob { source: PatternError },
+
+    #[snafu(display("Invalid asset ID: {message}"))]
+    InvalidAssetId { message: String },
+
+    #[snafu(display("Filesystem error: {source}"))]
+    FileIo { source: IoError },
+
+    #[snafu(display("Filesystem error: {message}"))]
+    Filesystem { message: String },
+
+    #[snafu(display("Deserialize error: {source}"))]
+    Deserialize { source: DeserializeError },
+
+    #[snafu(display("Serialize error: {source}"))]
+    Serialize { source: SerializeError },
+}
+
+// Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
+// So we delegate. c.f. https://github.com/shepmaster/snafu/issues/110
+impl Debug for Error {
+    fn fmt(&self, fmt: &mut Formatter) -> std::fmt::Result {
+        Display::fmt(self, fmt)
+    }
+}
+
+impl From<ConfigError> for Error {
+    fn from(source: ConfigError) -> Self {
+        Error::Config { source }
+    }
+}
+
+impl From<ClapError> for Error {
+    fn from(source: ClapError) -> Self {
+        Error::Clap { source }
+    }
+}
+
+impl From<SerdeJsonError> for Error {
+    fn from(source: SerdeJsonError) -> Self {
+        Error::SerdeJson { source }
+    }
+}
+
+impl From<WhichError> for Error {
+    fn from(source: WhichError) -> Self {
+        Error::Which { source }
+    }
+}
+
+impl From<DeserializeError> for Error {
+    fn from(source: DeserializeError) -> Self {
+        Error::Deserialize { source }
+    }
+}
+
+impl From<SerializeError> for Error {
+    fn from(source: SerializeError) -> Self {
+        Error::Serialize { source }
+    }
+}
+
+impl From<IoError> for Error {
+    fn from(source: IoError) -> Self {
+        Error::Stream { source }
+    }
+}
+
+impl From<&str> for Error {
+    fn from(source: &str) -> Self {
+        Error::ExternalCommand {
+            message: source.to_string(),
+        }
+    }
+}
+
+impl From<PatternError> for Error {
+    fn from(source: PatternError) -> Self {
+        Error::Glob { source }
+    }
+}
