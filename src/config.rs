@@ -27,6 +27,10 @@ fn default_copy() -> bool {
     true
 }
 
+fn default_rename() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct FilesystemConfig {
@@ -36,6 +40,8 @@ pub struct FilesystemConfig {
     pub glob: GlobPattern,
     #[serde(default = "default_copy")]
     pub copy: bool,
+    #[serde(default = "default_rename")]
+    pub rename: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]

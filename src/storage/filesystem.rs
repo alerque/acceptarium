@@ -20,6 +20,7 @@ pub struct FilesystemStorage {
     data_dir: PathBuf,
     glob_pattern: String,
     copy: bool,
+    rename: bool,
 }
 
 impl FilesystemStorage {
@@ -59,6 +60,7 @@ impl FilesystemStorage {
             data_dir,
             glob_pattern: fs_config.glob.to_string(),
             copy: fs_config.copy,
+            rename: fs_config.rename,
         }))
     }
 }
@@ -69,7 +71,10 @@ impl Storage for FilesystemStorage {
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         let mut asset = Asset::new(None, Some(&source_file))?;
         let source_ext = source_file.extension().unwrap_or_default();
-        let dest_base: PathBuf = source_file.file_stem().unwrap_or_default().into();
+        let dest_base: PathBuf = match self.rename {
+            true => asset.id().to_string().into(),
+            false => source_file.file_stem().unwrap_or_default().into(),
+        };
         let file: PathBuf = match self.copy {
             true => {
                 let mut dest = self.data_dir.join(&dest_base);
