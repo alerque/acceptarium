@@ -9,11 +9,14 @@ use super::Storage;
 
 use glob::glob;
 use snafu::OptionExt;
+use std::env::current_dir;
 use std::fs::read_to_string;
 use std::ops::Not;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use sugar_path::SugarPath;
 
 pub struct FilesystemStorage {
+    project_dir: PathBuf,
     data_dir: PathBuf,
     glob_pattern: String,
     copy: bool,
@@ -52,6 +55,7 @@ impl FilesystemStorage {
                 ),
             })?;
         Ok(Box::new(Self {
+            project_dir,
             data_dir,
             glob_pattern: fs_config.glob.to_string(),
             copy: fs_config.copy,
@@ -60,19 +64,30 @@ impl FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn add(&self, file: PathBuf) -> Result<Asset> {
-        let mut file = file.to_owned();
-        if self.copy {
-            let basename = file.file_name().unwrap();
-            let dest_path = self.data_dir.join(basename);
-            std::fs::copy(file, &dest_path)?;
-            file = dest_path;
-        }
-        let asset = Asset::new(Some(file))?;
-        let mut metadata_path = self.data_dir.join(asset.id().to_string());
-        metadata_path.add_extension("toml");
+    fn add(&self, source: &Path) -> Result<Asset> {
+        let source = source.canonicalize()?;
+        let source_file = PathBuf::from(source.file_name().unwrap_or_default());
+        let mut asset = Asset::new(None, Some(&source_file))?;
+        let source_ext = source_file.extension().unwrap_or_default();
+        let dest_base: PathBuf = source_file.file_stem().unwrap_or_default().into();
+        let file: PathBuf = match self.copy {
+            true => {
+                let mut dest = self.data_dir.join(&dest_base);
+                dest.add_extension(source_ext);
+                std::fs::copy(&source, &dest)?;
+                dest
+            }
+            false => source,
+        };
+        let file = file
+            .strip_prefix(&self.project_dir)
+            .map(PathBuf::from)
+            .unwrap_or(file);
+        asset.set_file(Some(&file));
         let toml_content = toml::to_string_pretty(&asset)?;
-        std::fs::write(metadata_path, toml_content)?;
+        let mut metadata_path = self.data_dir.join(&dest_base);
+        metadata_path.add_extension("toml");
+        std::fs::write(&metadata_path, toml_content)?;
         Ok(asset)
     }
 
@@ -82,7 +97,17 @@ impl Storage for FilesystemStorage {
         let mut assets = Assets::new();
         for entry in entries {
             let content = read_to_string(&entry)?;
-            let asset: Asset = toml::from_str(&content)?;
+            let mut asset: Asset = toml::from_str(&content)?;
+            if let Some(file_path) = asset.file() {
+                let path = if file_path.is_relative() {
+                    self.project_dir
+                        .join(file_path)
+                        .relative(current_dir()?.canonicalize()?)
+                } else {
+                    file_path.clone()
+                };
+                asset.set_file(Some(&path));
+            }
             assets.add(asset);
         }
         Ok(assets)

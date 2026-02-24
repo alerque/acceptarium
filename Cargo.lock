@@ -19,6 +19,7 @@ dependencies = [
  "serde_json",
  "snafu",
  "subprocess",
+ "sugar_path",
  "toml 0.8.23",
  "vergen-gix",
  "which",
@@ -2156,6 +2157,16 @@ checksum = "98e067360c7f5a302e35c9f9cd24cb583c378fbedc73d0237284dbdd0650fcc5"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "sugar_path"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36fe837e881ad5c3b60fadeb8e9b0bc5c907c4b7d84b4415a7f0bbc3f9073631"
+dependencies = [
+ "memchr",
+ "smallvec",
 ]
 
 [[package]]

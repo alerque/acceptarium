@@ -119,18 +119,32 @@ impl<'de> Deserialize<'de> for AssetId {
 pub struct Asset {
     id: AssetId,
     file: Option<PathBuf>,
+    source_fname: Option<PathBuf>,
 }
 
 impl Asset {
-    pub fn new(file: Option<PathBuf>) -> Result<Self> {
+    pub fn new(file: Option<&PathBuf>, source_fname: Option<&PathBuf>) -> Result<Self> {
         let id = AssetId::new();
-        Ok(Self { id, file })
+        Ok(Self {
+            id,
+            file: file.cloned(),
+            source_fname: source_fname.cloned(),
+        })
     }
     pub fn id(&self) -> &AssetId {
         &self.id
     }
     pub fn file(&self) -> Option<&PathBuf> {
         self.file.as_ref()
+    }
+    pub fn source_fname(&self) -> Option<&PathBuf> {
+        self.source_fname.as_ref()
+    }
+    pub fn set_file(&mut self, file: Option<&PathBuf>) {
+        self.file = file.cloned();
+    }
+    pub fn set_source_fname(&mut self, source_fname: Option<&PathBuf>) {
+        self.source_fname = source_fname.cloned();
     }
 }
 

@@ -15,19 +15,20 @@ pub mod git_annex;
 
 pub mod filesystem;
 
-pub fn add(config: &Config, files: Vec<PathBuf>, _commit: bool) -> Result<()> {
+pub fn add(config: &Config, sources: Vec<PathBuf>, _commit: bool) -> Result<()> {
     let storage = instantiate_storage(config)?;
-    // Check for extant readable files first to fail early and avoid a partial operation
-    files.iter().try_for_each(|file| {
-        file.try_exists()
+    // Check that all sources are readable files first, fail early to avoid partial operations
+    sources.iter().try_for_each(|source| {
+        source
+            .try_exists()
             .context(FileIoSnafu)?
             .then_some(())
             .context(FilesystemSnafu {
-                message: format!("File does not exist: {}", file.display()),
+                message: format!("Source file '{}' does not exist", source.display()),
             })
     })?;
-    files.iter().try_for_each(|file| {
-        let asset = storage.add(file.to_owned())?;
+    sources.iter().try_for_each(|source| {
+        let asset = storage.add(source)?;
         println!("{}", asset);
         Ok(())
     })

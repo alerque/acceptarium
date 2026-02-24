@@ -31,11 +31,11 @@ pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];
 pub static CONFIGURE_BINDIR: &str = env!["CONFIGURE_BINDIR"];
 pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
-use std::path::PathBuf;
+use std::path::Path;
 
 // Public traits
 pub trait Storage {
-    fn add(&self, file: PathBuf) -> Result<Asset>;
+    fn add(&self, source: &Path) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
 }
 

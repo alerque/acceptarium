@@ -59,6 +59,7 @@ zsh = ["completions"]
  serde_json = "1.0"
  snafu = "0.8"
  subprocess = "1.0"
+ sugar_path = "2.0"
  toml = "0.8"
  which = "8.0"
 
