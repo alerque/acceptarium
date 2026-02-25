@@ -88,7 +88,7 @@ impl Storage for FilesystemStorage {
             .strip_prefix(&self.project_dir)
             .map(PathBuf::from)
             .unwrap_or(asset_path);
-        asset.set_asset_path(Some(&asset_path))?;
+        asset.set_asset_path(Some(&asset_path));
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
@@ -104,14 +104,15 @@ impl Storage for FilesystemStorage {
             let content = read_to_string(&entry)?;
             let mut asset: Asset = toml::from_str(&content)?;
             if let Some(asset_path) = asset.asset_path(&self.project_dir) {
-                let absolute = asset_path.to_str().unwrap().starts_with("//");
-                let asset_path = if absolute {
-                    asset_path.canonicalize()?
-                } else {
-                    let cwd = current_dir()?.canonicalize()?;
+                let cwd = current_dir()?.canonicalize()?;
+                let asset_path = if asset_path.starts_with(&self.project_dir)
+                    && cwd.starts_with(&self.project_dir)
+                {
                     self.project_dir.join(&asset_path).relative(cwd)
+                } else {
+                    asset_path.canonicalize()?
                 };
-                asset.set_asset_path(Some(&asset_path))?;
+                asset.set_asset_path(Some(&asset_path));
             }
             assets.add(asset);
         }
