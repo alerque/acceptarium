@@ -15,6 +15,7 @@ dependencies = [
  "git2",
  "glob",
  "nanoid",
+ "relative-path",
  "serde",
  "serde_json",
  "snafu",
@@ -1920,6 +1921,15 @@ name = "regex-syntax"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a96887878f22d7bad8a3b6dc5b7440e0ada9a245242924394987b21cf2210a4c"
+
+[[package]]
+name = "relative-path"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bca40a312222d8ba74837cb474edef44b37f561da5f773981007a10bbaa992b0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "roff"

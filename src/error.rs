@@ -4,10 +4,12 @@
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use glob::PatternError;
+use relative_path::FromPathError;
 use serde_json::Error as SerdeJsonError;
 use snafu::Snafu;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
+use std::path::StripPrefixError;
 use toml::de::Error as DeserializeError;
 use toml::ser::Error as SerializeError;
 use which::Error as WhichError;
@@ -65,6 +67,15 @@ pub enum Error {
 
     #[snafu(display("Serialize error: {source}"))]
     Serialize { source: SerializeError },
+
+    #[snafu(display("Unable to convert path"))]
+    PathConv {},
+
+    #[snafu(display("Path error: {source}"))]
+    Path { source: FromPathError },
+
+    #[snafu(display("Unable te strip prefix: {source}"))]
+    StripPrefix { source: StripPrefixError },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -128,5 +139,16 @@ impl From<&str> for Error {
 impl From<PatternError> for Error {
     fn from(source: PatternError) -> Self {
         Error::Glob { source }
+    }
+}
+
+impl From<FromPathError> for Error {
+    fn from(source: FromPathError) -> Self {
+        Error::Path { source }
+    }
+}
+impl From<StripPrefixError> for Error {
+    fn from(source: StripPrefixError) -> Self {
+        Error::StripPrefix { source }
     }
 }

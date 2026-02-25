@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::error::Error;
-use crate::error::InvalidAssetIdSnafu;
+use crate::error::{InvalidAssetIdSnafu, PathConvSnafu};
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 
 use glob::Pattern;
 use nanoid::nanoid;
+use relative_path::RelativePathBuf;
 use serde::{Deserialize, Serialize};
+use snafu::OptionExt;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -118,44 +120,70 @@ impl<'de> Deserialize<'de> for AssetId {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Asset {
     id: AssetId,
-    file: Option<PathBuf>,
-    source_fname: Option<PathBuf>,
+    asset_path: Option<RelativePathBuf>,
+    source_fname: Option<RelativePathBuf>,
 }
 
 impl Asset {
-    pub fn new(file: Option<&PathBuf>, source_fname: Option<&PathBuf>) -> Result<Self> {
+    pub fn new(asset_path: Option<&Path>, source_fname: Option<&Path>) -> Result<Self> {
         let id = AssetId::new();
+        let asset_path = asset_path.and_then(|p| RelativePathBuf::from_path(p).ok());
+        let source_fname = source_fname.and_then(|p| RelativePathBuf::from_path(p).ok());
         Ok(Self {
             id,
-            file: file.cloned(),
-            source_fname: source_fname.cloned(),
+            asset_path,
+            source_fname,
         })
     }
     pub fn id(&self) -> &AssetId {
         &self.id
     }
-    pub fn file(&self) -> Option<&PathBuf> {
-        self.file.as_ref()
+    pub fn asset_path(&self, project_dir: &Path) -> Option<PathBuf> {
+        self.asset_path.as_ref().map(|asset_path| {
+            let absolute = asset_path.as_relative_path().as_str().starts_with("/");
+            let base = if absolute {
+                Path::new("/")
+            } else {
+                project_dir
+            };
+            asset_path.as_relative_path().to_path(base)
+        })
     }
-    pub fn source_fname(&self) -> Option<&PathBuf> {
-        self.source_fname.as_ref()
+    pub fn source_fname(&self) -> Option<PathBuf> {
+        self.source_fname
+            .as_ref()
+            .map(|p| p.as_relative_path().to_path(""))
     }
-    pub fn set_file(&mut self, file: Option<&PathBuf>) {
-        self.file = file.cloned();
+    pub fn set_asset_path(&mut self, asset_path: Option<&Path>) -> Result<()> {
+        self.asset_path = asset_path
+            .map(|path| {
+                if path.is_absolute() {
+                    path.to_str()
+                        .context(PathConvSnafu {})
+                        .map(RelativePathBuf::from)
+                } else {
+                    RelativePathBuf::from_path(path).map_err(Into::into)
+                }
+            })
+            .transpose()?;
+        Ok(())
     }
-    pub fn set_source_fname(&mut self, source_fname: Option<&PathBuf>) {
-        self.source_fname = source_fname.cloned();
+    pub fn set_source_fname(&mut self, source_fname: Option<&Path>) -> Result<()> {
+        self.source_fname = source_fname
+            .map(|p| RelativePathBuf::from_path(p))
+            .transpose()?;
+        Ok(())
     }
 }
 
 impl Display for Asset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let file = self
-            .file
+        let asset_path = self
+            .asset_path
             .as_ref()
-            .map(|p| p.to_string_lossy().to_string())
+            .map(|p| p.to_string())
             .unwrap_or_default();
-        write!(f, "{}\t{}", self.id, file)
+        write!(f, "{}\t{}", self.id, asset_path)
     }
 }
 

@@ -75,7 +75,7 @@ impl Storage for FilesystemStorage {
             true => asset.id().to_string().into(),
             false => source_file.file_stem().unwrap_or_default().into(),
         };
-        let file: PathBuf = match self.copy {
+        let asset_path: PathBuf = match self.copy {
             true => {
                 let mut dest = self.data_dir.join(&dest_base);
                 dest.add_extension(source_ext);
@@ -84,11 +84,11 @@ impl Storage for FilesystemStorage {
             }
             false => source,
         };
-        let file = file
+        let asset_path = asset_path
             .strip_prefix(&self.project_dir)
             .map(PathBuf::from)
-            .unwrap_or(file);
-        asset.set_file(Some(&file));
+            .unwrap_or(asset_path);
+        asset.set_asset_path(Some(&asset_path))?;
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
@@ -103,15 +103,15 @@ impl Storage for FilesystemStorage {
         for entry in entries {
             let content = read_to_string(&entry)?;
             let mut asset: Asset = toml::from_str(&content)?;
-            if let Some(file_path) = asset.file() {
-                let path = if file_path.is_relative() {
-                    self.project_dir
-                        .join(file_path)
-                        .relative(current_dir()?.canonicalize()?)
+            if let Some(asset_path) = asset.asset_path(&self.project_dir) {
+                let absolute = asset_path.to_str().unwrap().starts_with("//");
+                let asset_path = if absolute {
+                    asset_path.canonicalize()?
                 } else {
-                    file_path.clone()
+                    let cwd = current_dir()?.canonicalize()?;
+                    self.project_dir.join(&asset_path).relative(cwd)
                 };
-                asset.set_file(Some(&path));
+                asset.set_asset_path(Some(&asset_path))?;
             }
             assets.add(asset);
         }
