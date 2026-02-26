@@ -1,16 +1,17 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::cli::Cli;
+use crate::error::NonUnicodePathSnafu;
 use crate::types::GlobPattern;
 use crate::{Result, StorageDriver};
-
-use crate::cli::Cli;
 
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
 use serde::{Deserialize, Serialize};
 use serde_json::{to_value, Value};
+use snafu::OptionExt;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -108,7 +109,7 @@ impl Config {
             });
         if let Some(path) = project_config {
             builder = builder
-                .set_default("config", path.to_str().unwrap())?
+                .set_default("config", path.to_str().context(NonUnicodePathSnafu)?)?
                 .add_source(File::from(path.as_path()).required(true));
         }
         // Layer in environment variables

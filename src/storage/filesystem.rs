@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::error::{FilesystemSnafu, MissingStorageConfigSnafu};
+use crate::error::{FilesystemSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu};
 use crate::types::{Asset, Assets, Result};
 
 use super::Storage;
@@ -98,7 +98,9 @@ impl Storage for FilesystemStorage {
 
     fn list(&self) -> Result<Assets> {
         let matcher = self.data_dir.join(&self.glob_pattern);
-        let entries: Vec<PathBuf> = glob(matcher.to_str().unwrap())?.flatten().collect();
+        let entries: Vec<PathBuf> = glob(matcher.to_str().context(NonUnicodePathSnafu)?)?
+            .flatten()
+            .collect();
         let mut assets = Assets::new();
         for entry in entries {
             let content = read_to_string(&entry)?;

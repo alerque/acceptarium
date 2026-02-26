@@ -3,7 +3,7 @@
 
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
-use crate::error::{FileIoSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
+use crate::error::{FilesystemSnafu, IoSnafu, NoStorageConfiguredSnafu};
 use crate::Storage;
 use crate::{Config, Result, StorageDriver};
 
@@ -21,7 +21,7 @@ pub fn add(config: &Config, sources: Vec<PathBuf>, _commit: bool) -> Result<()> 
     sources.iter().try_for_each(|source| {
         source
             .try_exists()
-            .context(FileIoSnafu)?
+            .context(IoSnafu)?
             .then_some(())
             .context(FilesystemSnafu {
                 message: format!("Source file '{}' does not exist", source.display()),

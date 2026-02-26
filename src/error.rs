@@ -28,9 +28,6 @@ pub enum Error {
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
 
-    #[snafu(display("Process stream error: {source}"))]
-    Stream { source: IoError },
-
     #[snafu(display("IO buffer error in {stream} stream"))]
     Buffer { stream: String },
 
@@ -52,11 +49,14 @@ pub enum Error {
     #[snafu(display("Invalid glob pattern for `{source}`"))]
     Glob { source: PatternError },
 
+    #[snafu(display("Unable to convert non-Unicode paths"))]
+    NonUnicodePath {},
+
     #[snafu(display("Invalid asset ID: {message}"))]
     InvalidAssetId { message: String },
 
-    #[snafu(display("Filesystem error: {source}"))]
-    FileIo { source: IoError },
+    #[snafu(display("IO error: {source}"))]
+    Io { source: IoError },
 
     #[snafu(display("Filesystem error: {message}"))]
     Filesystem { message: String },
@@ -117,7 +117,7 @@ impl From<SerializeError> for Error {
 
 impl From<IoError> for Error {
     fn from(source: IoError) -> Self {
-        Error::Stream { source }
+        Error::Io { source }
     }
 }
 
