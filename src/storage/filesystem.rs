@@ -12,7 +12,6 @@ use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use std::env::current_dir;
 use std::fs::read_to_string;
-use std::ops::Not;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
 
@@ -35,28 +34,26 @@ impl FilesystemStorage {
             })?;
         let project_dir = config.project.canonicalize()?;
         let data_dir = project_dir.join(&fs_config.directory).canonicalize()?;
-        data_dir
-            .starts_with(&project_dir)
-            .then_some(())
-            .context(FilesystemSnafu {
+        ensure!(
+            data_dir.starts_with(&project_dir),
+            FilesystemSnafu {
                 message: format!(
                     "Storage directory '{}' is not inside project root '{}'",
                     fs_config.directory.display(),
                     project_dir.display()
                 ),
-            })?;
+            }
+        );
         let data_meta = std::fs::metadata(&data_dir)?;
-        data_meta
-            .permissions()
-            .readonly()
-            .not()
-            .then_some(())
-            .context(FilesystemSnafu {
+        ensure!(
+            !data_meta.permissions().readonly(),
+            FilesystemSnafu {
                 message: format!(
                     "Storage directory '{}' is not writable by the current user",
                     fs_config.directory.display()
                 ),
-            })?;
+            }
+        );
         Ok(Box::new(Self {
             project_dir,
             data_dir,
