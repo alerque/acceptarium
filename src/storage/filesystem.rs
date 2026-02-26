@@ -21,7 +21,6 @@ pub struct FilesystemStorage {
     glob_pattern: String,
     copy: bool,
     rename: bool,
-    dry_run: bool,
 }
 
 impl FilesystemStorage {
@@ -60,15 +59,20 @@ impl FilesystemStorage {
             glob_pattern: fs_config.glob.to_string(),
             copy: fs_config.copy,
             rename: fs_config.rename,
-            dry_run: config.dry_run,
         }))
     }
 }
 
 impl Storage for FilesystemStorage {
-    fn add(&self, source: &Path) -> Result<Asset> {
+    fn add(&self, source: &Path, dry_run: bool) -> Result<Asset> {
         let source = source.canonicalize()?;
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
+        ensure!(
+            &source_file.try_exists().context(IoSnafu)?,
+            FilesystemSnafu {
+                message: format!("Source file '{}' does not exist", source.display()),
+            }
+        );
         let mut asset = Asset::new(None, Some(&source_file))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
@@ -108,7 +112,7 @@ impl Storage for FilesystemStorage {
                 }
             );
         }
-        if !self.dry_run {
+        if dry_run {
             if self.copy {
                 std::fs::copy(&source, &asset_path_abs)?;
             }

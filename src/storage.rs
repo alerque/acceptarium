@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::error::NoStorageConfiguredSnafu;
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
-use crate::error::{FilesystemSnafu, IoSnafu, NoStorageConfiguredSnafu};
 use crate::Storage;
 use crate::{Config, Result, StorageDriver};
 
-use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
 
 #[cfg(feature = "git-annex")]
@@ -17,21 +16,20 @@ pub mod filesystem;
 
 pub fn add(config: &Config, sources: Vec<PathBuf>, _commit: bool) -> Result<()> {
     let storage = instantiate_storage(config)?;
-    // Check that all sources are readable files first, fail early to avoid partial operations
+    // Run everything in dry run mode first, fails early to avoid partial operations
     sources.iter().try_for_each(|source| {
-        source
-            .try_exists()
-            .context(IoSnafu)?
-            .then_some(())
-            .context(FilesystemSnafu {
-                message: format!("Source file '{}' does not exist", source.display()),
-            })
+        // Dry run for preflight checks
+        storage.add(source, true).map(drop)
     })?;
-    sources.iter().try_for_each(|source| {
-        let asset = storage.add(source)?;
-        println!("{}", asset);
+    if !config.dry_run {
+        sources.iter().try_for_each(|source| {
+            let asset = storage.add(source, false)?;
+            println!("{}", asset);
+            Ok(())
+        })
+    } else {
         Ok(())
-    })
+    }
 }
 
 pub fn list(config: &Config, json: bool) -> Result<()> {
@@ -55,7 +53,7 @@ fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
             return UnsupportedStorageSnafu {
                 driver: "git-annex",
             }
-            .fail()
+            .fail();
         }
         None => NoStorageConfiguredSnafu {}.fail(),
     }

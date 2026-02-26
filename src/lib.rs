@@ -35,7 +35,7 @@ use std::path::Path;
 
 // Public traits
 pub trait Storage {
-    fn add(&self, source: &Path) -> Result<Asset>;
+    fn add(&self, source: &Path, dry_run: bool) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
 }
 
