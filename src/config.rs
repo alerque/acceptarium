@@ -56,6 +56,8 @@ pub struct GitAnnexConfig {
 #[allow(unused)]
 pub struct Config {
     pub debug: bool,
+    #[serde(rename(deserialize = "dry-run"))]
+    pub dry_run: bool,
     pub quiet: bool,
     pub verbose: bool,
     pub project: PathBuf,
@@ -89,6 +91,7 @@ impl Config {
         // Setup default config values
         let mut builder = LayeredConfig::builder()
             .set_default("debug", false)?
+            .set_default("dry-run", false)?
             .set_default("quiet", false)?
             .set_default("verbose", false)?
             .set_default("project", discovered_project.to_str().unwrap())?;
@@ -128,6 +131,9 @@ impl Config {
         }
         if args.verbose {
             builder = builder.set_override("verbose", true)?;
+        }
+        if args.dry_run {
+            builder = builder.set_override("dry-run", true)?;
         }
         let mut config_overrides = args.config.clone().into_iter();
         while let (Some(key), Some(value)) = (config_overrides.next(), config_overrides.next()) {

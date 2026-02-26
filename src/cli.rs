@@ -31,6 +31,10 @@ pub struct Cli {
     #[clap(short, long)]
     pub verbose: bool,
 
+    /// Run actions in dry run mode that checks everything but makes no changes
+    #[clap(short = 'n', long)]
+    pub dry_run: bool,
+
     /// Set project root path
     #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
     pub project: Option<PathBuf>,

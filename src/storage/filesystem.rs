@@ -21,6 +21,7 @@ pub struct FilesystemStorage {
     glob_pattern: String,
     copy: bool,
     rename: bool,
+    dry_run: bool,
 }
 
 impl FilesystemStorage {
@@ -61,6 +62,7 @@ impl FilesystemStorage {
             glob_pattern: fs_config.glob.to_string(),
             copy: fs_config.copy,
             rename: fs_config.rename,
+            dry_run: config.dry_run,
         }))
     }
 }
@@ -79,7 +81,9 @@ impl Storage for FilesystemStorage {
             true => {
                 let mut dest = self.data_dir.join(&dest_base);
                 dest.add_extension(source_ext);
-                std::fs::copy(&source, &dest)?;
+                if !self.dry_run {
+                    std::fs::copy(&source, &dest)?;
+                }
                 dest
             }
             false => source,
@@ -92,7 +96,9 @@ impl Storage for FilesystemStorage {
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
-        std::fs::write(&metadata_path, toml_content)?;
+        if !self.dry_run {
+            std::fs::write(&metadata_path, toml_content)?;
+        }
         Ok(asset)
     }
 
