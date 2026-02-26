@@ -14,7 +14,7 @@ pub mod git_annex;
 
 pub mod filesystem;
 
-pub fn add(config: &Config, sources: Vec<PathBuf>, _commit: bool) -> Result<()> {
+pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
     // Run everything in dry run mode first, fails early to avoid partial operations
     sources.iter().try_for_each(|source| {

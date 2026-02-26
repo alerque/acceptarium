@@ -20,20 +20,32 @@ pub enum StorageDriver {
 #[clap(author, bin_name = "acceptarium")]
 pub struct Cli {
     /// Enable extra debug output from tooling
-    #[clap(short, long)]
-    pub debug: bool,
+    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_debug"))]
+    pub debug: Option<bool>,
+
+    #[clap(long, action = clap::ArgAction::SetFalse, hide = true, overrides_with("debug"))]
+    pub no_debug: Option<bool>,
 
     /// Discard all non-error output messages
-    #[clap(short, long)]
-    pub quiet: bool,
+    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_quiet"))]
+    pub quiet: Option<bool>,
+
+    #[clap(long = "no-quiet", action = clap::ArgAction::SetFalse, hide = true)]
+    pub no_quiet: Option<bool>,
 
     /// Enable extra verbose output from tooling
-    #[clap(short, long)]
-    pub verbose: bool,
+    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_verbose"))]
+    pub verbose: Option<bool>,
+
+    #[clap(long = "no-verbose", action = clap::ArgAction::SetFalse, hide = true)]
+    pub no_verbose: Option<bool>,
 
     /// Run actions in dry run mode that checks everything but makes no changes
-    #[clap(short = 'n', long)]
-    pub dry_run: bool,
+    #[clap(short = 'n', long, action = clap::ArgAction::SetTrue, overrides_with("no_dry_run"))]
+    pub dry_run: Option<bool>,
+
+    #[clap(long = "no-dry-run", action = clap::ArgAction::SetFalse, hide = true)]
+    pub no_dry_run: Option<bool>,
 
     /// Set project root path
     #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
@@ -54,11 +66,28 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 #[clap(subcommand_negates_reqs = true)]
 pub enum Commands {
-    /// Add (import) new asset to tracked asset storage
+    /// Import an asset file and begin tracking via the configured storage
     Add {
-        /// Commit imported asset to VCS tracker (if configured)
-        #[clap(short, long)]
-        commit: bool,
+        /// Automatically commit imported asset to VCS tracker (if configured)
+        #[clap(short = 't', long, action = clap::ArgAction::SetTrue, overrides_with("no_commit"))]
+        commit: Option<bool>,
+
+        #[clap(long = "no-commit", action = clap::ArgAction::SetFalse, hide = true)]
+        no_commit: Option<bool>,
+
+        /// Copy the source file from its current location into the configured data directory
+        #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_copy"))]
+        copy: Option<bool>,
+
+        #[clap(long = "no-copy", action = clap::ArgAction::SetFalse, hide = true)]
+        no_copy: Option<bool>,
+
+        /// Rename source files using the internal asset ID when copying to data folder
+        #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_rename"))]
+        rename: Option<bool>,
+
+        #[clap(long = "no-rename", action = clap::ArgAction::SetFalse, hide = true)]
+        no_rename: Option<bool>,
 
         /// Files to add as assets (at least one required)
         #[clap(value_hint = clap::ValueHint::FilePath, required = true, num_args(1..))]

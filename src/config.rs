@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::cli::Cli;
+use crate::cli::{Cli, Commands};
 use crate::error::NonUnicodePathSnafu;
 use crate::types::GlobPattern;
 use crate::{Result, StorageDriver};
@@ -24,14 +24,6 @@ fn default_glob() -> GlobPattern {
     GlobPattern::new("*.toml").unwrap()
 }
 
-fn default_copy() -> bool {
-    true
-}
-
-fn default_rename() -> bool {
-    true
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct FilesystemConfig {
@@ -39,9 +31,11 @@ pub struct FilesystemConfig {
     pub directory: PathBuf,
     #[serde(default = "default_glob")]
     pub glob: GlobPattern,
-    #[serde(default = "default_copy")]
+    #[serde(default)]
+    pub commit: bool,
+    #[serde(default)]
     pub copy: bool,
-    #[serde(default = "default_rename")]
+    #[serde(default)]
     pub rename: bool,
 }
 
@@ -122,22 +116,45 @@ impl Config {
                 .prefix_separator("_")
                 .ignore_empty(true),
         );
-        // Layer in command line flags
-        if args.debug {
-            builder = builder.set_override("debug", true)?;
-        }
-        if args.quiet {
-            builder = builder.set_override("quiet", true)?;
-        }
-        if args.verbose {
-            builder = builder.set_override("verbose", true)?;
-        }
-        if args.dry_run {
-            builder = builder.set_override("dry-run", true)?;
-        }
+        // Layer in config overrides
         let mut config_overrides = args.config.clone().into_iter();
         while let (Some(key), Some(value)) = (config_overrides.next(), config_overrides.next()) {
             builder = builder.set_override(&key, value)?;
+        }
+        // Layer in command line flags
+        if let Some(val) = deboolify(args.debug, args.no_debug) {
+            builder = builder.set_override("debug", val)?;
+        }
+        if let Some(val) = deboolify(args.quiet, args.no_quiet) {
+            builder = builder.set_override("quiet", val)?;
+        }
+        if let Some(val) = deboolify(args.verbose, args.no_verbose) {
+            builder = builder.set_override("verbose", val)?;
+        }
+        if let Some(val) = deboolify(args.dry_run, args.no_dry_run) {
+            builder = builder.set_override("dry-run", val)?;
+        }
+        match args.subcommand {
+            Commands::Add {
+                commit,
+                no_commit,
+                copy,
+                no_copy,
+                rename,
+                no_rename,
+                ..
+            } => {
+                if let Some(val) = deboolify(commit, no_commit) {
+                    builder = builder.set_override("filesystem.commit", val)?;
+                }
+                if let Some(val) = deboolify(copy, no_copy) {
+                    builder = builder.set_override("filesystem.copy", val)?;
+                }
+                if let Some(val) = deboolify(rename, no_rename) {
+                    builder = builder.set_override("filesystem.rename", val)?;
+                }
+            }
+            _ => {}
         }
         // Put it all together and deserialize it to a config struct
         let sources = builder.build()?;
@@ -205,5 +222,15 @@ fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, Strin
                 envs.push((prefix.to_string(), s));
             }
         }
+    }
+}
+
+// Make up for clap not having a way to negate flags with None being a possible state
+// c.f. https://github.com/clap-rs/clap/issues/815
+fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
+    match (yes, no) {
+        (Some(true), _) => yes,
+        (_, Some(false)) => no,
+        _ => None,
     }
 }

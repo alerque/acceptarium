@@ -14,7 +14,7 @@ fn main() -> Result<()> {
     let args = Cli::from_arg_matches(&matches).expect("Unable to parse arguments");
     let config = Config::new(&args)?;
     match Commands::from_arg_matches(&matches)? {
-        Commands::Add { files, commit } => storage::add(&config, files, commit),
+        Commands::Add { files, .. } => storage::add(&config, files),
         Commands::List { json } => storage::list(&config, json),
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),
