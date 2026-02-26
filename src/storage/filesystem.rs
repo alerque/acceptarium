@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::error::{FilesystemSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu};
+use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu};
 use crate::types::{Asset, Assets, Result};
 
 use super::Storage;
 
 use glob::glob;
-use snafu::OptionExt;
+use snafu::ensure;
+use snafu::{OptionExt, ResultExt};
 use std::env::current_dir;
 use std::fs::read_to_string;
 use std::ops::Not;
@@ -77,26 +78,43 @@ impl Storage for FilesystemStorage {
             true => asset.id().to_string().into(),
             false => source_file.file_stem().unwrap_or_default().into(),
         };
-        let asset_path: PathBuf = match self.copy {
+        let asset_path_abs: PathBuf = match self.copy {
             true => {
                 let mut dest = self.data_dir.join(&dest_base);
                 dest.add_extension(source_ext);
-                if !self.dry_run {
-                    std::fs::copy(&source, &dest)?;
-                }
                 dest
             }
-            false => source,
+            false => source.clone(),
         };
-        let asset_path = asset_path
+        let asset_path = asset_path_abs
             .strip_prefix(&self.project_dir)
             .map(PathBuf::from)
-            .unwrap_or(asset_path);
+            .unwrap_or(asset_path_abs.clone());
         asset.set_asset_path(Some(&asset_path));
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
+        if !self.rename {
+            ensure!(
+                !&asset_path_abs.try_exists().context(IoSnafu)?,
+                FilesystemSnafu {
+                    message: format!("Data file '{}' already exists", &asset_path_abs.display()),
+                }
+            );
+            ensure!(
+                !metadata_path.try_exists().context(IoSnafu)?,
+                FilesystemSnafu {
+                    message: format!(
+                        "Metadata file '{}' already exists",
+                        &metadata_path.display()
+                    ),
+                }
+            );
+        }
         if !self.dry_run {
+            if self.copy {
+                std::fs::copy(&source, &asset_path_abs)?;
+            }
             std::fs::write(&metadata_path, toml_content)?;
         }
         Ok(asset)
