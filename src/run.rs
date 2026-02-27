@@ -28,6 +28,7 @@ pub fn run(config: &Config, name: OsString, arguments: RunArgs) -> Result<()> {
     };
     let exec = Exec::cmd(cmd)
         .env("ACCEPTARIUM", "true")
+        .env("ACCEPTARIUMDIR", CONFIGURE_DATADIR)
         .args(&arguments)
         .env_extend(config.try_to_env_vars()?)
         .stderr(Redirection::Pipe)

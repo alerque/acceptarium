@@ -1,9 +1,5 @@
 #!@ZSH@
 
-set -e
+source "$ACCEPTARIUMDIR/lib/functions.zsh"
 
-echo PWD:
-pwd
-
-echo ENV:
-@ENV@ | @GREP@ '^ACCEPTARIUM_'
+debug_env

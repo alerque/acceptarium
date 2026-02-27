@@ -58,6 +58,7 @@ AM_COND_IF([DEVELOPER_MODE], [
 ])
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([lib/functions.zsh])
 
 AC_DEFUN([ACCEPTARIUM_SCRIPT], [AC_CONFIG_FILES([scripts/$1], [chmod +x scripts/$1])])
 ACCEPTARIUM_SCRIPT([debug.zsh])

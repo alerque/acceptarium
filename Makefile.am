@@ -10,6 +10,7 @@ docdir = $(datarootdir)/doc/$(TRANSFORMED_PACKAGE_NAME)
 licensedir = $(datarootdir)/licenses/$(TRANSFORMED_PACKAGE_NAME)
 datadir = $(datarootdir)/$(TRANSFORMED_PACKAGE_NAME)
 scriptsdir = $(datadir)/scripts
+scriptlibdir = $(datadir)/lib
 
 bin_PROGRAMS = acceptarium
 acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/error.rs src/types.rs
@@ -21,6 +22,7 @@ dist_doc_DATA = README.md CHANGELOG.md
 dist_license_DATA = LICENSES/AGPL-3.0-only.txt
 nodist_man_MANS =
 dist_scripts_SCRIPTS = scripts/debug.zsh
+dist_scriptlib_SCRIPTS = lib/functions.zsh
 
 BUILT_SOURCES =
 
