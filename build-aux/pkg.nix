@@ -22,6 +22,7 @@
   just,
   taplo,
   typos,
+  zsh,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -45,6 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
     pkg-config
     rustPlatform.cargoSetupHook
     rustc
+    zsh
   ];
 
   preAutoreconf = ''
@@ -57,6 +59,7 @@ stdenv.mkDerivation (finalAttrs: {
   buildInputs = [
     gitMinimal
     git-annex
+    zsh
   ];
 
   devShellInputs = [

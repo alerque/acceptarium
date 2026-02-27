@@ -20,7 +20,7 @@ EXTRA_DIST =
 dist_doc_DATA = README.md CHANGELOG.md
 dist_license_DATA = LICENSES/AGPL-3.0-only.txt
 nodist_man_MANS =
-dist_scripts_SCRIPTS = scripts/debug.sh
+dist_scripts_SCRIPTS = scripts/debug.zsh
 
 BUILT_SOURCES =
 

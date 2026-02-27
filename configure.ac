@@ -16,8 +16,8 @@ AC_PROG_AWK
 AC_PROG_GREP
 AC_PROG_SED
 
-AX_REQUIRE_PROG(bash)
 AX_REQUIRE_PROG(env)
+AX_REQUIRE_PROG(zsh)
 
 AC_ARG_WITH([git],
             AS_HELP_STRING([--without-git],
@@ -60,7 +60,7 @@ AM_COND_IF([DEVELOPER_MODE], [
 AC_CONFIG_FILES([Makefile])
 
 AC_DEFUN([ACCEPTARIUM_SCRIPT], [AC_CONFIG_FILES([scripts/$1], [chmod +x scripts/$1])])
-ACCEPTARIUM_SCRIPT([debug.sh])
+ACCEPTARIUM_SCRIPT([debug.zsh])
 
 AC_OUTPUT
 
