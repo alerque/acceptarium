@@ -96,6 +96,13 @@ pub enum Commands {
 
     /// List known assets
     List {
+        /// View only assets currently tracked in VCS (if configured)
+        #[clap(long, action = clap::ArgAction::SetTrue, overrides_with("no_tracked"))]
+        tracked: Option<bool>,
+
+        #[clap(long = "no-tracked", action = clap::ArgAction::SetFalse, hide = true)]
+        no_tracked: Option<bool>,
+
         /// Output assets as JSON
         #[clap(short, long)]
         json: bool,

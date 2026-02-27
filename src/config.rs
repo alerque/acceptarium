@@ -37,6 +37,8 @@ pub struct FilesystemConfig {
     pub copy: bool,
     #[serde(default)]
     pub rename: bool,
+    #[serde(default)]
+    pub tracked: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
@@ -154,7 +156,18 @@ impl Config {
                     builder = builder.set_override("filesystem.rename", val)?;
                 }
             }
-            _ => {}
+            Commands::List {
+                tracked,
+                no_tracked,
+                ..
+            } => {
+                if let Some(val) = deboolify(tracked, no_tracked) {
+                    builder = builder.set_override("filesystem.tracked", val)?;
+                }
+            }
+            Commands::Run { .. } => {}
+            Commands::Status {} => {}
+            Commands::External(_) => {}
         }
         // Put it all together and deserialize it to a config struct
         let sources = builder.build()?;
