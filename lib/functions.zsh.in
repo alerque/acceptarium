@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
+# SPDX-License-Identifier: AGPL-3.0-only
+
 alias acceptarium="${ACCEPTARIUM:-acceptarium}"
 alias env="${ENV:-@ENV@}"
 alias grep="${GREP:-@GREP@}"

@@ -13,6 +13,7 @@ path = [
   "build-aux/*.m4",
   "build-aux/git-version-gen",
   "configure.ac",
+  "lib/*.in",
   "scripts/*.in",
 ]
 SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"

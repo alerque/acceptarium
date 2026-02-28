@@ -4,6 +4,8 @@ acceptarium-[0-9].*
 acceptarium-v*
 .version
 .version-prev
+lib/*
+!lib/*.in
 scripts/*
 !scripts/*.in
 *.asc
