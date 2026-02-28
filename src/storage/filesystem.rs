@@ -66,13 +66,13 @@ impl FilesystemStorage {
 impl Storage for FilesystemStorage {
     fn add(&self, source: &Path, dry_run: bool) -> Result<Asset> {
         let source = source.canonicalize()?;
-        let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         ensure!(
-            &source_file.try_exists().context(IoSnafu)?,
+            source.try_exists().context(IoSnafu)?,
             FilesystemSnafu {
                 message: format!("Source file '{}' does not exist", source.display()),
             }
         );
+        let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         let mut asset = Asset::new(None, Some(&source_file))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
