@@ -52,6 +52,9 @@ pub enum Error {
     #[snafu(display("Unable to convert non-Unicode paths"))]
     NonUnicodePath {},
 
+    #[snafu(display("Unable determine current executable path"))]
+    CurrentExecutable { source: IoError },
+
     #[snafu(display("Invalid asset ID: {message}"))]
     InvalidAssetId { message: String },
 

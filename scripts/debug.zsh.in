@@ -2,4 +2,8 @@
 
 source "$ACCEPTARIUMDIR/lib/functions.zsh"
 
+# Dump some environment variables to demonstrate what is available to scripts
 debug_env
+
+# Call back to the parent binary and see that all config options should automatically be passed through
+acceptarium status

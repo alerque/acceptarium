@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::error::BufferSnafu;
+use crate::error::{BufferSnafu, CurrentExecutableSnafu};
 use crate::CONFIGURE_DATADIR;
 use crate::{Config, Result};
 
-use snafu::OptionExt;
+use snafu::{OptionExt, ResultExt};
+use std::env::current_exe;
 use std::ffi::OsString;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -26,8 +27,9 @@ pub fn run(config: &Config, name: OsString, arguments: RunArgs) -> Result<()> {
         external.push(name);
         which(&external)?
     };
+    let acceptarium_bin = current_exe().context(CurrentExecutableSnafu {})?;
     let exec = Exec::cmd(cmd)
-        .env("ACCEPTARIUM", "true")
+        .env("ACCEPTARIUM", acceptarium_bin)
         .env("ACCEPTARIUMDIR", CONFIGURE_DATADIR)
         .args(&arguments)
         .env_extend(config.try_to_env_vars()?)
