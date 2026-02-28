@@ -5,12 +5,55 @@ use crate::error::Error;
 use crate::error::InvalidAssetIdSnafu;
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 
+use blake3::Hash as Blake3;
 use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
+
+#[derive(Clone, Debug)]
+pub struct Blake3Sum(Blake3);
+
+impl Blake3Sum {
+    pub fn new(hash: Blake3) -> Self {
+        Self(hash)
+    }
+}
+
+impl From<Blake3> for Blake3Sum {
+    fn from(hash: Blake3) -> Self {
+        Self(hash)
+    }
+}
+
+impl Display for Blake3Sum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.to_hex())
+    }
+}
+
+impl Serialize for Blake3Sum {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0.to_hex())
+    }
+}
+
+impl<'de> Deserialize<'de> for Blake3Sum {
+    fn deserialize<D>(deserializer: D) -> Result<Blake3Sum, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Blake3::from_hex(&s)
+            .map(Blake3Sum)
+            .map_err(|e| serde::de::Error::custom(e.to_string()))
+    }
+}
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -120,10 +163,15 @@ pub struct Asset {
     id: AssetId,
     asset_path: Option<PathBuf>,
     source_fname: Option<PathBuf>,
+    blake3: Option<Blake3Sum>,
 }
 
 impl Asset {
-    pub fn new(asset_path: Option<&Path>, source_fname: Option<&Path>) -> Result<Self> {
+    pub fn new(
+        asset_path: Option<&Path>,
+        source_fname: Option<&Path>,
+        blake3: Option<Blake3Sum>,
+    ) -> Result<Self> {
         let id = AssetId::new();
         let asset_path = asset_path.map(Into::into);
         let source_fname = source_fname.map(Into::into);
@@ -131,6 +179,7 @@ impl Asset {
             id,
             asset_path,
             source_fname,
+            blake3,
         })
     }
     pub fn id(&self) -> &AssetId {
@@ -154,6 +203,12 @@ impl Asset {
     pub fn set_source_fname(&mut self, source_fname: Option<&Path>) {
         self.source_fname = source_fname.map(Into::into);
     }
+    pub fn blake3(&self) -> Option<&Blake3Sum> {
+        self.blake3.as_ref()
+    }
+    pub fn set_blake3(&mut self, blake3: Option<Blake3Sum>) {
+        self.blake3 = blake3;
+    }
 }
 
 impl Display for Asset {
@@ -163,7 +218,12 @@ impl Display for Asset {
             .as_ref()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();
-        write!(f, "{}\t{}", self.id, asset_path)
+        let blake3 = self
+            .blake3
+            .as_ref()
+            .map(|h| h.to_string())
+            .unwrap_or_default();
+        write!(f, "{}\t{}\t{}", self.id, asset_path, blake3)
     }
 }
 

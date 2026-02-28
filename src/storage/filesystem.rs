@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::checksum_blake3;
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu};
 use crate::types::{Asset, Assets, Result};
@@ -73,7 +74,8 @@ impl Storage for FilesystemStorage {
             }
         );
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
-        let mut asset = Asset::new(None, Some(&source_file))?;
+        let blake3 = checksum_blake3(&source)?;
+        let mut asset = Asset::new(None, Some(&source_file), Some(blake3))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
             true => asset.id().to_string().into(),

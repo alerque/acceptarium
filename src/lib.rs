@@ -24,6 +24,7 @@ pub use config::Config;
 pub use error::Error;
 pub use types::Asset;
 pub use types::Assets;
+pub use types::Blake3Sum;
 pub use types::Result;
 
 // Import stuff set by autoconf/automake at build time
@@ -31,7 +32,24 @@ pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];
 pub static CONFIGURE_BINDIR: &str = env!["CONFIGURE_BINDIR"];
 pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
+use blake3::Hasher;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
+
+pub fn checksum_blake3(path: &Path) -> Result<Blake3Sum> {
+    let mut file = File::open(path)?;
+    let mut hasher = Hasher::new();
+    let mut buffer = [0u8; 8192];
+    loop {
+        let bytes_read = file.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+    Ok(Blake3Sum::new(hasher.finalize()))
+}
 
 // Public traits
 pub trait Storage {

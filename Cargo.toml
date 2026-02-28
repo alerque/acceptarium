@@ -63,6 +63,10 @@ sugar_path = "2.0"
 toml = "0.8"
 which = "8.0"
 
+[dependencies.blake3]
+version = "1.5"
+features = ["rayon", "serde"]
+
 [dependencies.config]
 version = "0.15"
 default-features = false
