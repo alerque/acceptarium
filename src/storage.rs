@@ -4,8 +4,8 @@
 use crate::error::NoStorageConfiguredSnafu;
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
-use crate::Storage;
-use crate::{Config, Result, StorageDriver};
+use crate::{AssetId, Storage};
+use crate::{Config, Error, Result, StorageDriver};
 
 use std::path::PathBuf;
 
@@ -40,6 +40,18 @@ pub fn list(config: &Config, json: bool) -> Result<()> {
     } else {
         print!("{}", assets);
     }
+    Ok(())
+}
+
+pub fn get<ID>(config: &Config, id: ID, key: &str) -> Result<()>
+where
+    ID: TryInto<AssetId>,
+    Error: From<ID::Error>,
+{
+    let storage = instantiate_storage(config)?;
+    let id: AssetId = id.try_into()?;
+    let val = storage.get(id, key)?;
+    println!("{}", val);
     Ok(())
 }
 

@@ -165,6 +165,7 @@ impl Config {
                     builder = builder.set_override("filesystem.tracked", val)?;
                 }
             }
+            Commands::Get { .. } => {}
             Commands::Run { .. } => {}
             Commands::Status {} => {}
             Commands::External(_) => {}

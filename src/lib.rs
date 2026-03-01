@@ -23,6 +23,7 @@ pub use cli::StorageDriver;
 pub use config::Config;
 pub use error::Error;
 pub use types::Asset;
+pub use types::AssetId;
 pub use types::Assets;
 pub use types::Blake3Sum;
 pub use types::Result;
@@ -55,6 +56,7 @@ pub fn checksum_blake3(path: &Path) -> Result<Blake3Sum> {
 pub trait Storage {
     fn add(&self, source: &Path, dry_run: bool) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
+    fn get(&self, id: AssetId, key: &str) -> Result<String>;
 }
 
 const ASSET_ID_LEN: usize = 7;

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::{Asset, Assets, Result};
+use crate::types::{Asset, AssetId, Assets, Result};
 use crate::Storage;
 
 use std::path::Path;
@@ -22,6 +22,10 @@ impl Storage for GitAnnexStorage {
     }
 
     fn list(&self) -> Result<Assets> {
+        unimplemented!("git-annex storage driver is not implemented yet")
+    }
+
+    fn get(&self, _id: AssetId, _key: &str) -> Result<String> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 }

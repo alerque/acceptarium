@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::types::AssetId;
+
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
 use snafu::Snafu;
+use std::convert::Infallible;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use std::path::StripPrefixError;
@@ -72,6 +75,15 @@ pub enum Error {
 
     #[snafu(display("Unable te strip prefix: {source}"))]
     StripPrefix { source: StripPrefixError },
+
+    #[snafu(display("The checksum is already used by '{id}'"))]
+    AssetHashExists { id: AssetId },
+
+    #[snafu(display("The asset ID '{id}' is not in the storage"))]
+    UnknownAssetId { id: AssetId },
+
+    #[snafu(display("The field '{key}' is not a known meta data key"))]
+    UnknownMetaKey { key: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
@@ -79,6 +91,12 @@ pub enum Error {
 impl Debug for Error {
     fn fmt(&self, fmt: &mut Formatter) -> std::fmt::Result {
         Display::fmt(self, fmt)
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        unreachable!();
     }
 }
 

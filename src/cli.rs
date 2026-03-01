@@ -108,6 +108,15 @@ pub enum Commands {
         json: bool,
     },
 
+    /// Get metadata for a specific asset by ID
+    Get {
+        /// Asset ID to look up
+        id: String,
+
+        /// Metadata key for which to return the value
+        key: String,
+    },
+
     /// Execute a script as a child process that inherits Acceptarium environment
     Run {
         /// Name of script supplied either by Acceptarium or a local project

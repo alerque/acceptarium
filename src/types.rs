@@ -10,6 +10,7 @@ use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 
@@ -155,6 +156,20 @@ impl<'de> Deserialize<'de> for AssetId {
     {
         let s = String::deserialize(deserializer)?;
         AssetId::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl TryFrom<String> for AssetId {
+    type Error = Error;
+    fn try_from(s: String) -> Result<Self> {
+        Self::parse(&s)
+    }
+}
+
+impl TryFrom<&String> for AssetId {
+    type Error = Error;
+    fn try_from(s: &String) -> Result<Self> {
+        Self::parse(s)
     }
 }
 

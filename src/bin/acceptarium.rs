@@ -16,6 +16,7 @@ fn main() -> Result<()> {
     match Commands::from_arg_matches(&matches)? {
         Commands::Add { files, .. } => storage::add(&config, files),
         Commands::List { json, .. } => storage::list(&config, json),
+        Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),
         Commands::External(mut args) => {

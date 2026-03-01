@@ -3,8 +3,11 @@
 
 use crate::checksum_blake3;
 use crate::config::Config;
-use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu};
-use crate::types::{Asset, Assets, Result};
+use crate::error::{
+    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
+    UnknownAssetIdSnafu, UnknownMetaKeySnafu,
+};
+use crate::types::{Asset, AssetId, Assets, Result};
 
 use super::Storage;
 
@@ -75,6 +78,18 @@ impl Storage for FilesystemStorage {
         );
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         let blake3 = checksum_blake3(&source)?;
+        let assets = self.list()?;
+        let existing_asset = assets.iter().find(|(_, asset)| {
+            asset
+                .blake3()
+                .map_or(false, |hash| hash.to_string() == blake3.to_string())
+        });
+        ensure!(
+            existing_asset.is_none(),
+            AssetHashExistsSnafu {
+                id: existing_asset.map(|(id, _)| id.clone()).unwrap_or_default()
+            }
+        );
         let mut asset = Asset::new(None, Some(&source_file), Some(blake3))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
@@ -146,5 +161,27 @@ impl Storage for FilesystemStorage {
             assets.add(asset);
         }
         Ok(assets)
+    }
+
+    fn get(&self, id: AssetId, key: &str) -> Result<String> {
+        let assets = self.list()?;
+        if let Some(asset) = assets.get(&id) {
+            let value = match key {
+                "id" => asset.id().to_string(),
+                "asset_path" => asset
+                    .asset_path(&self.project_dir)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default(),
+                "source_fname" => asset
+                    .source_fname()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default(),
+                "blake3" => asset.blake3().map(|h| h.to_string()).unwrap_or_default(),
+                _ => UnknownMetaKeySnafu { key }.fail()?,
+            };
+            Ok(value)
+        } else {
+            UnknownAssetIdSnafu { id }.fail()?
+        }
     }
 }
