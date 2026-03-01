@@ -129,7 +129,7 @@ impl Storage for FilesystemStorage {
                 }
             );
         }
-        if dry_run {
+        if !dry_run {
             if self.copy {
                 std::fs::copy(&source, &asset_path_abs)?;
             }
