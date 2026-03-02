@@ -3,13 +3,15 @@
 
 use crate::types::AssetId;
 
+use snafu::Snafu;
+use std::convert::Infallible;
+use std::fmt::{Debug, Display, Formatter};
+
+// Error types we wrap
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
-use snafu::Snafu;
-use std::convert::Infallible;
-use std::fmt::{Debug, Display, Formatter};
 use std::io::Error as IoError;
 use std::path::StripPrefixError;
 use toml::de::Error as DeserializeError;
@@ -76,8 +78,8 @@ pub enum Error {
     #[snafu(display("Unable te strip prefix: {source}"))]
     StripPrefix { source: StripPrefixError },
 
-    #[snafu(display("The checksum is already used by '{id}'"))]
-    AssetHashExists { id: AssetId },
+    #[snafu(display("The checksum is already used by '{asset_path}'"))]
+    AssetHashExists { asset_path: String },
 
     #[snafu(display("The asset ID '{id}' is not in the storage"))]
     UnknownAssetId { id: AssetId },

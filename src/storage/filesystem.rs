@@ -79,15 +79,15 @@ impl Storage for FilesystemStorage {
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         let blake3 = checksum_blake3(&source)?;
         let assets = self.list()?;
-        let existing_asset = assets.iter().find(|(_, asset)| {
-            asset
-                .blake3()
-                .map_or(false, |hash| hash.to_string() == blake3.to_string())
-        });
+        let existing_with_same_checksum = assets
+            .iter()
+            .find(|(_, asset)| asset.blake3().is_some_and(|hash| *hash == blake3));
         ensure!(
-            existing_asset.is_none(),
+            existing_with_same_checksum.is_none(),
             AssetHashExistsSnafu {
-                id: existing_asset.map(|(id, _)| id.clone()).unwrap_or_default()
+                asset_path: existing_with_same_checksum
+                    .map(|(asset_path, _)| asset_path.to_string())
+                    .unwrap_or_default()
             }
         );
         let mut asset = Asset::new(None, Some(&source_file), Some(blake3))?;

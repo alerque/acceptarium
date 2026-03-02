@@ -14,7 +14,7 @@ use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);
 
 impl Blake3Sum {
@@ -170,6 +170,12 @@ impl TryFrom<&String> for AssetId {
     type Error = Error;
     fn try_from(s: &String) -> Result<Self> {
         Self::parse(s)
+    }
+}
+
+impl From<AssetId> for String {
+    fn from(id: AssetId) -> Self {
+        id.0
     }
 }
 

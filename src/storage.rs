@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::error::NoStorageConfiguredSnafu;
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
+use crate::error::{AssetHashExistsSnafu, NoStorageConfiguredSnafu};
 use crate::{AssetId, Storage};
 use crate::{Config, Error, Result, StorageDriver};
 
+use snafu::ensure;
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 #[cfg(feature = "git-annex")]
@@ -17,9 +19,22 @@ pub mod filesystem;
 pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
     // Run everything in dry run mode first, fails early to avoid partial operations
+    let mut seen_hashes = HashSet::new();
     sources.iter().try_for_each(|source| {
         // Dry run for preflight checks
-        storage.add(source, true).map(drop)
+        let asset = storage.add(source, true)?;
+        if let Some(hash) = asset.blake3() {
+            ensure!(
+                seen_hashes.insert(hash.clone()),
+                AssetHashExistsSnafu {
+                    asset_path: asset
+                        .source_fname()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default(),
+                }
+            );
+        }
+        Ok::<(), Error>(())
     })?;
     if !config.dry_run {
         sources.iter().try_for_each(|source| {
