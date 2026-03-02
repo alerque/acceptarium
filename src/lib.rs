@@ -33,12 +33,16 @@ pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];
 pub static CONFIGURE_BINDIR: &str = env!["CONFIGURE_BINDIR"];
 pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
+use crate::error::{FilesystemSnafu, IoSnafu};
+
 use blake3::Hasher;
+use snafu::ensure;
+use snafu::ResultExt;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-pub fn checksum_blake3(path: &Path) -> Result<Blake3Sum> {
+pub(crate) fn checksum_blake3(path: &Path) -> Result<Blake3Sum> {
     let mut file = File::open(path)?;
     let mut hasher = Hasher::new();
     let mut buffer = [0u8; 8192];
@@ -50,6 +54,17 @@ pub fn checksum_blake3(path: &Path) -> Result<Blake3Sum> {
         hasher.update(&buffer[..bytes_read]);
     }
     Ok(Blake3Sum::new(hasher.finalize()))
+}
+
+pub(crate) fn canonical_and_exists(source: &Path) -> Result<PathBuf> {
+    let source = source.canonicalize()?;
+    ensure!(
+        source.try_exists().context(IoSnafu)?,
+        FilesystemSnafu {
+            message: format!("Source file '{}' does not exist", source.display()),
+        }
+    );
+    Ok(source)
 }
 
 // Public traits

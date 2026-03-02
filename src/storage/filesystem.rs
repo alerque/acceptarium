@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::checksum_blake3;
 use crate::config::Config;
 use crate::error::{
     AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
 use crate::types::{Asset, AssetId, Assets, Result};
+use crate::{canonical_and_exists, checksum_blake3};
 
 use super::Storage;
 
@@ -69,13 +69,7 @@ impl FilesystemStorage {
 
 impl Storage for FilesystemStorage {
     fn add(&self, source: &Path, dry_run: bool) -> Result<Asset> {
-        let source = source.canonicalize()?;
-        ensure!(
-            source.try_exists().context(IoSnafu)?,
-            FilesystemSnafu {
-                message: format!("Source file '{}' does not exist", source.display()),
-            }
-        );
+        let source = canonical_and_exists(source)?;
         let source_file = PathBuf::from(source.file_name().unwrap_or_default());
         let blake3 = checksum_blake3(&source)?;
         let assets = self.list()?;
