@@ -3,9 +3,7 @@
 
 use crate::config::Config;
 use crate::types::{Asset, AssetId, Assets, Result};
-use crate::Storage;
-
-use std::path::Path;
+use crate::{Ingestable, Storage};
 
 pub struct GitAnnexStorage;
 
@@ -17,7 +15,7 @@ impl GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
-    fn add(&self, _source: &Path, _dry_run: bool) -> Result<Asset> {
+    fn add(&self, _source: Box<dyn Ingestable>, _dry_run: bool) -> Result<Asset> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 

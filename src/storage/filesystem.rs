@@ -7,16 +7,14 @@ use crate::error::{
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
 use crate::types::{Asset, AssetId, Assets, Result};
-use crate::{canonical_and_exists, checksum_blake3};
-
-use super::Storage;
+use crate::{Ingestable, Storage};
 
 use glob::glob;
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use std::env::current_dir;
 use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use sugar_path::SugarPath;
 
 pub struct FilesystemStorage {
@@ -68,10 +66,11 @@ impl FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn add(&self, source: &Path, dry_run: bool) -> Result<Asset> {
-        let source = canonical_and_exists(source)?;
-        let source_file = PathBuf::from(source.file_name().unwrap_or_default());
-        let blake3 = checksum_blake3(&source)?;
+    fn add(&self, source: Box<dyn Ingestable>, dry_run: bool) -> Result<Asset> {
+        let source_file = source.filename().context(FilesystemSnafu {
+            message: "Current implementation must have a valid filesystem path",
+        })?;
+        let blake3 = source.blake3().clone();
         let assets = self.list()?;
         let existing_with_same_checksum = assets
             .iter()
@@ -84,7 +83,7 @@ impl Storage for FilesystemStorage {
                     .unwrap_or_default()
             }
         );
-        let mut asset = Asset::new(None, Some(&source_file), Some(blake3))?;
+        let mut asset = Asset::new(None, Some(source_file), Some(blake3))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
             true => asset.id().to_string().into(),
@@ -96,7 +95,7 @@ impl Storage for FilesystemStorage {
                 dest.add_extension(source_ext);
                 dest
             }
-            false => source.clone(),
+            false => source_file.to_path_buf(),
         };
         let asset_path = asset_path_abs
             .strip_prefix(&self.project_dir)
@@ -125,7 +124,7 @@ impl Storage for FilesystemStorage {
         }
         if !dry_run {
             if self.copy {
-                std::fs::copy(&source, &asset_path_abs)?;
+                std::fs::copy(source_file, &asset_path_abs)?;
             }
             std::fs::write(&metadata_path, toml_content)?;
         }

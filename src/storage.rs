@@ -4,6 +4,7 @@
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
 use crate::error::{AssetHashExistsSnafu, NoStorageConfiguredSnafu};
+use crate::ingestable::local_file::LocalFile;
 use crate::{AssetId, Storage};
 use crate::{Config, Error, Result, StorageDriver};
 
@@ -11,18 +12,18 @@ use snafu::ensure;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+pub mod filesystem;
 #[cfg(feature = "git-annex")]
 pub mod git_annex;
-
-pub mod filesystem;
 
 pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
     // Run everything in dry run mode first, fails early to avoid partial operations
     let mut seen_hashes = HashSet::new();
     sources.iter().try_for_each(|source| {
+        let source = LocalFile::from_path(source)?;
         // Dry run for preflight checks
-        let asset = storage.add(source, true)?;
+        let asset = storage.add(source.into_boxed(), true)?;
         if let Some(hash) = asset.blake3() {
             ensure!(
                 seen_hashes.insert(hash.clone()),
@@ -38,7 +39,8 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     })?;
     if !config.dry_run {
         sources.iter().try_for_each(|source| {
-            let asset = storage.add(source, false)?;
+            let source = LocalFile::from_path(source)?;
+            let asset = storage.add(source.into_boxed(), false)?;
             println!("{}", asset);
             Ok(())
         })
