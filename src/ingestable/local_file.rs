@@ -11,6 +11,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LocalFile {
     path: PathBuf,
     filename: PathBuf,

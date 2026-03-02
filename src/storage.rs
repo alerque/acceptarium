@@ -6,7 +6,7 @@ use crate::error::UnsupportedStorageSnafu;
 use crate::error::{AssetHashExistsSnafu, NoStorageConfiguredSnafu};
 use crate::ingestable::local_file::LocalFile;
 use crate::{AssetId, Storage};
-use crate::{Config, Error, Result, StorageDriver};
+use crate::{Config, Error, OperationMode, Result, StorageDriver};
 
 use snafu::ensure;
 use std::collections::HashSet;
@@ -23,7 +23,7 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     sources.iter().try_for_each(|source| {
         let source = LocalFile::from_path(source)?;
         // Dry run for preflight checks
-        let asset = storage.add(source.into_boxed(), true)?;
+        let asset = storage.add(source.into_boxed(), OperationMode::JustCheck)?;
         if let Some(hash) = asset.blake3() {
             ensure!(
                 seen_hashes.insert(hash.clone()),
@@ -40,7 +40,7 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     if !config.dry_run {
         sources.iter().try_for_each(|source| {
             let source = LocalFile::from_path(source)?;
-            let asset = storage.add(source.into_boxed(), false)?;
+            let asset = storage.add(source.into_boxed(), OperationMode::JustRun)?;
             println!("{}", asset);
             Ok(())
         })

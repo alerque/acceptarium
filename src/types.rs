@@ -14,6 +14,14 @@ use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub enum OperationMode {
+    JustCheck,
+    JustRun,
+    #[default]
+    CheckAndRun,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);
 

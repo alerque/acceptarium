@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::types::{Asset, AssetId, Assets, Result};
+use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 pub struct GitAnnexStorage;
@@ -15,7 +15,7 @@ impl GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
-    fn add(&self, _source: Box<dyn Ingestable>, _dry_run: bool) -> Result<Asset> {
+    fn add(&self, _source: Box<dyn Ingestable>, _mode: OperationMode) -> Result<Asset> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 

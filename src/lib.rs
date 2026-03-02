@@ -27,6 +27,7 @@ pub use types::Asset;
 pub use types::AssetId;
 pub use types::Assets;
 pub use types::Blake3Sum;
+pub use types::OperationMode;
 pub use types::Result;
 
 // Import stuff set by autoconf/automake at build time
@@ -38,7 +39,7 @@ use std::path::Path;
 
 // Public traits
 pub trait Storage {
-    fn add(&self, source: Box<dyn Ingestable>, dry_run: bool) -> Result<Asset>;
+    fn add(&self, source: Box<dyn Ingestable>, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
     fn get(&self, id: AssetId, key: &str) -> Result<String>;
 }

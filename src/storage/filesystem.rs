@@ -6,7 +6,7 @@ use crate::error::{
     AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
-use crate::types::{Asset, AssetId, Assets, Result};
+use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 use glob::glob;
@@ -66,23 +66,25 @@ impl FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn add(&self, source: Box<dyn Ingestable>, dry_run: bool) -> Result<Asset> {
+    fn add(&self, source: Box<dyn Ingestable>, mode: OperationMode) -> Result<Asset> {
         let source_file = source.filename().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;
         let blake3 = source.blake3().clone();
-        let assets = self.list()?;
-        let existing_with_same_checksum = assets
-            .iter()
-            .find(|(_, asset)| asset.blake3().is_some_and(|hash| *hash == blake3));
-        ensure!(
-            existing_with_same_checksum.is_none(),
-            AssetHashExistsSnafu {
-                asset_path: existing_with_same_checksum
-                    .map(|(asset_path, _)| asset_path.to_string())
-                    .unwrap_or_default()
-            }
-        );
+        if mode != OperationMode::JustRun {
+            let assets = self.list()?;
+            let existing_with_same_checksum = assets
+                .iter()
+                .find(|(_, asset)| asset.blake3().is_some_and(|hash| *hash == blake3));
+            ensure!(
+                existing_with_same_checksum.is_none(),
+                AssetHashExistsSnafu {
+                    asset_path: existing_with_same_checksum
+                        .map(|(asset_path, _)| asset_path.to_string())
+                        .unwrap_or_default()
+                }
+            );
+        }
         let mut asset = Asset::new(None, Some(source_file), Some(blake3))?;
         let source_ext = source_file.extension().unwrap_or_default();
         let dest_base: PathBuf = match self.rename {
@@ -105,24 +107,29 @@ impl Storage for FilesystemStorage {
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
-        if !self.rename {
-            ensure!(
-                !&asset_path_abs.try_exists().context(IoSnafu)?,
-                FilesystemSnafu {
-                    message: format!("Data file '{}' already exists", &asset_path_abs.display()),
-                }
-            );
-            ensure!(
-                !metadata_path.try_exists().context(IoSnafu)?,
-                FilesystemSnafu {
-                    message: format!(
-                        "Metadata file '{}' already exists",
-                        &metadata_path.display()
-                    ),
-                }
-            );
+        if mode != OperationMode::JustRun {
+            if !self.rename {
+                ensure!(
+                    !&asset_path_abs.try_exists().context(IoSnafu)?,
+                    FilesystemSnafu {
+                        message: format!(
+                            "Data file '{}' already exists",
+                            &asset_path_abs.display()
+                        ),
+                    }
+                );
+                ensure!(
+                    !metadata_path.try_exists().context(IoSnafu)?,
+                    FilesystemSnafu {
+                        message: format!(
+                            "Metadata file '{}' already exists",
+                            &metadata_path.display()
+                        ),
+                    }
+                );
+            }
         }
-        if !dry_run {
+        if mode != OperationMode::JustCheck {
             if self.copy {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
