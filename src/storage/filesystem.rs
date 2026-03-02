@@ -66,7 +66,7 @@ impl FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn add(&self, source: Box<dyn Ingestable>, mode: OperationMode) -> Result<Asset> {
+    fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
         let source_file = source.filename().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;
@@ -107,27 +107,22 @@ impl Storage for FilesystemStorage {
         let toml_content = toml::to_string_pretty(&asset)?;
         let mut metadata_path = self.data_dir.join(&dest_base);
         metadata_path.add_extension("toml");
-        if mode != OperationMode::JustRun {
-            if !self.rename {
-                ensure!(
-                    !&asset_path_abs.try_exists().context(IoSnafu)?,
-                    FilesystemSnafu {
-                        message: format!(
-                            "Data file '{}' already exists",
-                            &asset_path_abs.display()
-                        ),
-                    }
-                );
-                ensure!(
-                    !metadata_path.try_exists().context(IoSnafu)?,
-                    FilesystemSnafu {
-                        message: format!(
-                            "Metadata file '{}' already exists",
-                            &metadata_path.display()
-                        ),
-                    }
-                );
-            }
+        if mode != OperationMode::JustRun && !self.rename {
+            ensure!(
+                !&asset_path_abs.try_exists().context(IoSnafu)?,
+                FilesystemSnafu {
+                    message: format!("Data file '{}' already exists", &asset_path_abs.display()),
+                }
+            );
+            ensure!(
+                !metadata_path.try_exists().context(IoSnafu)?,
+                FilesystemSnafu {
+                    message: format!(
+                        "Metadata file '{}' already exists",
+                        &metadata_path.display()
+                    ),
+                }
+            );
         }
         if mode != OperationMode::JustCheck {
             if self.copy {

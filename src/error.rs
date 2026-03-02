@@ -6,6 +6,7 @@ use crate::types::AssetId;
 use snafu::Snafu;
 use std::convert::Infallible;
 use std::fmt::{Debug, Display, Formatter};
+use std::path::PathBuf;
 
 // Error types we wrap
 use clap::error::Error as ClapError;
@@ -78,8 +79,8 @@ pub enum Error {
     #[snafu(display("Unable te strip prefix: {source}"))]
     StripPrefix { source: StripPrefixError },
 
-    #[snafu(display("The checksum is already used by '{asset_path}'"))]
-    AssetHashExists { asset_path: String },
+    #[snafu(display("The checksum is already used by '{}'", asset_path.display()))]
+    AssetHashExists { asset_path: PathBuf },
 
     #[snafu(display("The asset ID '{id}' is not in the storage"))]
     UnknownAssetId { id: AssetId },

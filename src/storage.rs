@@ -18,35 +18,27 @@ pub mod git_annex;
 
 pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
-    // Run everything in dry run mode first, fails early to avoid partial operations
+    let ingestables: Vec<_> = sources
+        .iter()
+        .map(|source| LocalFile::from_path(source.as_path()))
+        .collect::<Result<_>>()?;
     let mut seen_hashes = HashSet::new();
-    sources.iter().try_for_each(|source| {
-        let source = LocalFile::from_path(source)?;
-        // Dry run for preflight checks
-        let asset = storage.add(source.into_boxed(), OperationMode::JustCheck)?;
-        if let Some(hash) = asset.blake3() {
-            ensure!(
-                seen_hashes.insert(hash.clone()),
-                AssetHashExistsSnafu {
-                    asset_path: asset
-                        .source_fname()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_default(),
-                }
-            );
-        }
-        Ok::<(), Error>(())
-    })?;
-    if !config.dry_run {
-        sources.iter().try_for_each(|source| {
-            let source = LocalFile::from_path(source)?;
-            let asset = storage.add(source.into_boxed(), OperationMode::JustRun)?;
-            println!("{}", asset);
-            Ok(())
-        })
-    } else {
-        Ok(())
+    for ingestable in &ingestables {
+        let _ = storage.add(ingestable, OperationMode::JustCheck)?;
+        ensure!(
+            seen_hashes.insert(&ingestable.blake3),
+            AssetHashExistsSnafu {
+                asset_path: &ingestable.filename,
+            }
+        );
     }
+    if !config.dry_run {
+        for ingestable in &ingestables {
+            let asset = storage.add(ingestable, OperationMode::JustRun)?;
+            println!("{}", asset);
+        }
+    }
+    Ok(())
 }
 
 pub fn list(config: &Config, json: bool) -> Result<()> {

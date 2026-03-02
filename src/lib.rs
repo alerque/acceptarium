@@ -37,9 +37,8 @@ pub static CONFIGURE_DATADIR: &str = env!["CONFIGURE_DATADIR"];
 
 use std::path::Path;
 
-// Public traits
 pub trait Storage {
-    fn add(&self, source: Box<dyn Ingestable>, mode: OperationMode) -> Result<Asset>;
+    fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
     fn get(&self, id: AssetId, key: &str) -> Result<String>;
 }

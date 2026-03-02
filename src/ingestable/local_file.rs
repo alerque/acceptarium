@@ -11,11 +11,11 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct LocalFile {
-    path: PathBuf,
-    filename: PathBuf,
-    blake3: Blake3Sum,
+    pub path: PathBuf,
+    pub filename: PathBuf,
+    pub blake3: Blake3Sum,
 }
 
 impl LocalFile {
@@ -48,10 +48,6 @@ impl LocalFile {
             hasher.update(&buffer[..bytes_read]);
         }
         Ok(Blake3Sum::new(hasher.finalize()))
-    }
-
-    pub fn into_boxed(self) -> Box<dyn Ingestable> {
-        Box::new(self)
     }
 }
 

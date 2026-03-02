@@ -15,7 +15,7 @@ impl GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
-    fn add(&self, _source: Box<dyn Ingestable>, _mode: OperationMode) -> Result<Asset> {
+    fn add(&self, _source: &dyn Ingestable, _mode: OperationMode) -> Result<Asset> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 
