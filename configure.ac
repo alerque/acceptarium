@@ -29,6 +29,11 @@ AC_ARG_WITH([git-annex],
                            [Compile without git-annex support used as default storage driver]))
 AM_CONDITIONAL([GIT_ANNEX], [test "x$with_git_annex" != "xno"])
 
+AC_ARG_WITH([ollama],
+            AS_HELP_STRING([--with-ollama],
+                           [Compile with ollama support for local LLM inference operations]))
+AM_CONDITIONAL([OLLAMA], [test "x$with_ollama" == "xyes"])
+
 AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([just])
     # Release tooling
@@ -47,6 +52,10 @@ AM_COND_IF([GIT], [
 AM_COND_IF([GIT_ANNEX], [
     AX_REQUIRE_PROG([git])
     AX_REQUIRE_PROG([git-annex])
+])
+
+AM_COND_IF([OLLAMA], [
+    AX_REQUIRE_PROG([ollama])
 ])
 
 QUE_RUST_BOILERPLATE

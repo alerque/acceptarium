@@ -23,11 +23,11 @@ nuke-n-pave:
     ./bootstrap.sh
 
 dev-conf: nuke-n-pave
-    ./configure --enable-developer-mode --enable-debug
+    ./configure --enable-developer-mode --enable-debug --with-ollama
     {{ make }}
 
 rel-conf: nuke-n-pave
-    ./configure --enable-developer-mode
+    ./configure --enable-developer-mode --with-ollama
     {{ make }}
 
 [parallel]

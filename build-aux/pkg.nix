@@ -20,6 +20,7 @@
   cargo-deny,
   git-annex,
   just,
+  ollama,
   taplo,
   typos,
   zsh,
@@ -43,6 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
     git-annex
     gitMinimal
     jq
+    ollama
     pkg-config
     rustPlatform.cargoSetupHook
     rustc
@@ -59,6 +61,7 @@ stdenv.mkDerivation (finalAttrs: {
   buildInputs = [
     gitMinimal
     git-annex
+    ollama
     zsh
   ];
 
@@ -70,7 +73,7 @@ stdenv.mkDerivation (finalAttrs: {
     typos
   ];
 
-  configureFlags = [ ];
+  configureFlags = [ "--with-ollama" ];
 
   postPatch = ''
     patchShebangs build-aux/*.sh build-aux/git-version-gen

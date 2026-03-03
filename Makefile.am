@@ -39,6 +39,10 @@ if GIT_ANNEX
 CARGO_FEATURE_ARGS += --features git-annex
 endif
 
+if OLLAMA
+CARGO_FEATURE_ARGS += --features ml,ollama
+endif
+
 DISTCLEANFILES = @AMINCLUDE@
 
 # A classical use of the autoconf-archive include macro would expand

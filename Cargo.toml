@@ -37,11 +37,13 @@ crate-type = ["rlib", "cdylib"]
 lto = true
 
 [features]
-default = ["cli", "storages"]
+default = ["cli", "storages", "ml"]
 full = ["shells", "storages"]
 shells = ["cli", "bash", "elvish", "fish", "manpage", "powershell", "zsh"]
 storages = ["git-annex"]
 git-annex = ["git"]
+ml = ["ollama"]
+ollama = ["dep:rig-core", "dep:tokio"]
 git = ["dep:git2"]
 completions = ["cli", "dep:clap_complete"]
 cli = ["dep:clap"]
@@ -82,9 +84,19 @@ version = "0.20"
 optional = true
 default-features = false
 
+[dependencies.rig-core]
+version = "0.31"
+optional = true
+features = ["all"]
+
 [dependencies.serde]
 version = "1.0"
 features = ["derive"]
+
+[dependencies.tokio]
+version = "1.50"
+optional = true
+features = ["full"]
 
 [build-dependencies]
 snafu = "0.8"
