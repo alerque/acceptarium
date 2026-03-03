@@ -117,6 +117,13 @@ pub enum Commands {
         key: String,
     },
 
+    /// Remove an asset and its metadata
+    Remove {
+        /// ID of asset to remove
+        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
+        id: String,
+    },
+
     /// Execute a script as a child process that inherits Acceptarium environment
     Run {
         /// Name of script supplied either by Acceptarium or a local project

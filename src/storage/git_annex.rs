@@ -23,7 +23,15 @@ impl Storage for GitAnnexStorage {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 
+    fn load(&self, _id: AssetId) -> Result<Asset> {
+        unimplemented!("git-annex storage driver is not implemented yet")
+    }
+
     fn get(&self, _id: AssetId, _key: &str) -> Result<String> {
+        unimplemented!("git-annex storage driver is not implemented yet")
+    }
+
+    fn remove(&self, _id: AssetId) -> Result<()> {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 }

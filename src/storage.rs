@@ -64,6 +64,18 @@ where
     Ok(())
 }
 
+pub fn remove<ID>(config: &Config, id: ID) -> Result<()>
+where
+    ID: TryInto<AssetId>,
+    Error: From<ID::Error>,
+{
+    let storage = instantiate_storage(config)?;
+    let asset_id: AssetId = id.try_into()?;
+    storage.remove(asset_id.clone())?;
+    println!("Removed asset {}", asset_id);
+    Ok(())
+}
+
 fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
     match config.storage {
         Some(StorageDriver::Filesystem) => filesystem::FilesystemStorage::init(config),

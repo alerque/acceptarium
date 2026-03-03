@@ -88,8 +88,7 @@ impl Storage for FilesystemStorage {
             .unwrap_or(asset_path_abs.clone());
         asset.set_asset_path(Some(&asset_path));
         let toml_content = toml::to_string_pretty(&asset)?;
-        let mut metadata_path = self.data_dir.join(&dest_base);
-        metadata_path.add_extension("toml");
+        let metadata_path = self.metadata_path(&asset)?;
         if mode != OperationMode::JustRun && !self.rename {
             ensure!(
                 !&asset_path_abs.try_exists().context(IoSnafu)?,
@@ -141,6 +140,11 @@ impl Storage for FilesystemStorage {
         Ok(assets)
     }
 
+    fn load(&self, id: AssetId) -> Result<Asset> {
+        let assets = self.list()?;
+        assets.get(&id).cloned().context(UnknownAssetIdSnafu { id })
+    }
+
     fn get(&self, id: AssetId, key: &str) -> Result<String> {
         let assets = self.list()?;
         if let Some(asset) = assets.get(&id) {
@@ -161,5 +165,28 @@ impl Storage for FilesystemStorage {
         } else {
             UnknownAssetIdSnafu { id }.fail()?
         }
+    }
+
+    fn remove(&self, id: AssetId) -> Result<()> {
+        let asset = self.load(id.clone())?;
+        if let Some(asset_path) = asset.asset_path(&self.project_dir)
+            && asset_path.exists()
+        {
+            std::fs::remove_file(&asset_path)?;
+        }
+        let metadata_path = self.metadata_path(&asset)?;
+        if metadata_path.exists() {
+            std::fs::remove_file(&metadata_path)?;
+        }
+        Ok(())
+    }
+}
+
+impl FilesystemStorage {
+    fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
+        let mut path = asset
+            .asset_path(&self.project_dir).expect("foo");
+        let path = path.with_extension("toml");
+        Ok(path)
     }
 }

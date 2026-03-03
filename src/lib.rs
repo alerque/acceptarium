@@ -40,7 +40,9 @@ use std::path::Path;
 pub trait Storage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
+    fn load(&self, id: AssetId) -> Result<Asset>;
     fn get(&self, id: AssetId, key: &str) -> Result<String>;
+    fn remove(&self, id: AssetId) -> Result<()>;
 }
 
 pub trait Ingestable: Send {

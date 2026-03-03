@@ -166,6 +166,7 @@ impl Config {
                 }
             }
             Commands::Get { .. } => {}
+            Commands::Remove { .. } => {}
             Commands::Run { .. } => {}
             Commands::Status {} => {}
             Commands::External(_) => {}
