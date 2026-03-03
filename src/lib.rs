@@ -46,7 +46,7 @@ pub trait Storage {
 pub trait Ingestable: Send {
     fn blake3(&self) -> &Blake3Sum;
     fn filename(&self) -> Option<&Path>;
-    fn source_path(&self) -> Option<&Path>;
+    fn path(&self) -> Option<&Path>;
 }
 
 const ASSET_ID_LEN: usize = 7;

@@ -50,7 +50,7 @@ impl FilesystemStorage {
 
 impl Storage for FilesystemStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
-        let source_file = source.filename().context(FilesystemSnafu {
+        let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;
         let blake3 = source.blake3().clone();

@@ -60,7 +60,7 @@ impl Ingestable for LocalFile {
         Some(&self.filename)
     }
 
-    fn source_path(&self) -> Option<&Path> {
+    fn path(&self) -> Option<&Path> {
         Some(&self.path)
     }
 }
