@@ -64,6 +64,18 @@ where
     Ok(())
 }
 
+pub fn set<ID>(config: &Config, id: ID, key: &str, value: &str) -> Result<()>
+where
+    ID: TryInto<AssetId>,
+    Error: From<ID::Error>,
+{
+    let storage = instantiate_storage(config)?;
+    let asset_id: AssetId = id.try_into()?;
+    storage.set(asset_id.clone(), key, value)?;
+    println!("Set {} = {} for asset {}", key, value, asset_id);
+    Ok(())
+}
+
 pub fn remove<ID>(config: &Config, id: ID) -> Result<()>
 where
     ID: TryInto<AssetId>,

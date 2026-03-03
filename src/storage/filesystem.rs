@@ -15,8 +15,9 @@ use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use std::env::current_dir;
 use std::fs::read_to_string;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
+use blake3::Hash as Blake3;
 
 pub struct FilesystemStorage {
     project_dir: PathBuf,
@@ -167,6 +168,31 @@ impl Storage for FilesystemStorage {
         }
     }
 
+    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
+        let mut asset = self.load(id.clone())?;
+        match key {
+            "asset_path" => {
+                asset.set_asset_path(Some(Path::new(value)));
+            }
+            "source_fname" => {
+                asset.set_source_fname(Some(Path::new(value)));
+            }
+            "blake3" => {
+                asset.set_blake3(Some(Blake3::from_hex(value).expect("bad hash").into()));
+            }
+            _ => return UnknownMetaKeySnafu { key }.fail(),
+        }
+        self.save(&asset)?;
+        Ok(())
+    }
+
+    fn save(&self, asset: &Asset) -> Result<()> {
+        let toml_content = toml::to_string_pretty(asset)?;
+        let metadata_path = self.metadata_path(asset)?;
+        std::fs::write(&metadata_path, toml_content)?;
+        Ok(())
+    }
+
     fn remove(&self, id: AssetId) -> Result<()> {
         let asset = self.load(id.clone())?;
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
@@ -184,9 +210,9 @@ impl Storage for FilesystemStorage {
 
 impl FilesystemStorage {
     fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
-        let mut path = asset
-            .asset_path(&self.project_dir).expect("foo");
-        let path = path.with_extension("toml");
+        let path = asset
+            .asset_path(&self.project_dir).expect("foo")
+            .with_extension("toml");
         Ok(path)
     }
 }

@@ -17,6 +17,7 @@ fn main() -> Result<()> {
         Commands::Add { files, .. } => storage::add(&config, files),
         Commands::List { json, .. } => storage::list(&config, json),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
+        Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
         Commands::Remove { id, .. } => storage::remove(&config, &id),
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),

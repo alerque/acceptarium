@@ -117,6 +117,18 @@ pub enum Commands {
         key: String,
     },
 
+    /// Set metadata for a specific asset by ID
+    Set {
+        /// Asset ID to modify
+        id: String,
+
+        /// Metadata key to set
+        key: String,
+
+        /// Value to set
+        value: String,
+    },
+
     /// Remove an asset and its metadata
     Remove {
         /// ID of asset to remove

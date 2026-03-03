@@ -166,11 +166,13 @@ impl Config {
                 }
             }
             Commands::Get { .. } => {}
+            Commands::Set { .. } => {}
             Commands::Remove { .. } => {}
             Commands::Run { .. } => {}
             Commands::Status {} => {}
             Commands::External(_) => {}
         }
+
         // Put it all together and deserialize it to a config struct
         let sources = builder.build()?;
         let config = sources.try_deserialize()?;

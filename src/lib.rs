@@ -42,6 +42,8 @@ pub trait Storage {
     fn list(&self) -> Result<Assets>;
     fn load(&self, id: AssetId) -> Result<Asset>;
     fn get(&self, id: AssetId, key: &str) -> Result<String>;
+    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()>;
+    fn save(&self, asset: &Asset) -> Result<()>;
     fn remove(&self, id: AssetId) -> Result<()>;
 }
 
