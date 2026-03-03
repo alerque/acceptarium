@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::cli::{Cli, Commands};
+use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::GlobPattern;
 use crate::{Result, StorageDriver};
@@ -54,6 +55,7 @@ pub struct Config {
     pub debug: bool,
     #[serde(rename(deserialize = "dry-run"))]
     pub dry_run: bool,
+    pub overwrite: bool,
     pub quiet: bool,
     pub verbose: bool,
     pub project: PathBuf,
@@ -88,8 +90,10 @@ impl Config {
         let mut builder = LayeredConfig::builder()
             .set_default("debug", false)?
             .set_default("dry-run", false)?
+            .set_default("overwrite", false)?
             .set_default("quiet", false)?
             .set_default("verbose", false)?
+            .set_default("overwrite", false)?
             .set_default("project", discovered_project.to_str().unwrap())?;
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
@@ -135,6 +139,9 @@ impl Config {
         }
         if let Some(val) = deboolify(args.dry_run, args.no_dry_run) {
             builder = builder.set_override("dry-run", val)?;
+        }
+        if let Some(val) = deboolify(args.overwrite, args.no_overwrite) {
+            builder = builder.set_override("overwrite", val)?;
         }
         match args.subcommand {
             Commands::Add {
@@ -240,15 +247,5 @@ fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, Strin
                 envs.push((prefix.to_string(), s));
             }
         }
-    }
-}
-
-// Make up for clap not having a way to negate flags with None being a possible state
-// c.f. https://github.com/clap-rs/clap/issues/815
-fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
-    match (yes, no) {
-        (Some(true), _) => yes,
-        (_, Some(false)) => no,
-        _ => None,
     }
 }

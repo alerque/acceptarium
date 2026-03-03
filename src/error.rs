@@ -82,6 +82,9 @@ pub enum Error {
     #[snafu(display("The checksum is already used by '{}'", asset_path.display()))]
     AssetHashExists { asset_path: PathBuf },
 
+    #[snafu(display("The asset already has data exctracted"))]
+    AssetProcessed {},
+
     #[snafu(display("The asset ID '{id}' is not in the storage"))]
     UnknownAssetId { id: AssetId },
 

@@ -47,6 +47,13 @@ pub struct Cli {
     #[clap(long = "no-dry-run", action = clap::ArgAction::SetFalse, hide = true)]
     pub no_dry_run: Option<bool>,
 
+    /// Overwrite existing extracted transaction data
+    #[clap(long, action = clap::ArgAction::SetTrue, overrides_with("no_overwrite"))]
+    pub overwrite: Option<bool>,
+
+    #[clap(long = "no-overwrite", action = clap::ArgAction::SetFalse, hide = true)]
+    pub no_overwrite: Option<bool>,
+
     /// Set project root path
     #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
     pub project: Option<PathBuf>,
@@ -113,6 +120,8 @@ pub enum Commands {
         /// ID of asset to process
         #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
         id: String,
+
+
     },
 
     /// Get metadata for a specific asset by ID

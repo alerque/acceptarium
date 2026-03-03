@@ -62,3 +62,13 @@ const ASSET_ID_CHARS: [char; 62] = [
     'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
     'V', 'W', 'X', 'Y', 'Z',
 ];
+
+// Make up for clap not having a way to negate flags with None being a possible state
+// c.f. https://github.com/clap-rs/clap/issues/815
+pub(crate) fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
+    match (yes, no) {
+        (Some(true), _) => yes,
+        (_, Some(false)) => no,
+        _ => None,
+    }
+}

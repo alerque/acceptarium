@@ -1,10 +1,13 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::error::AssetProcessedSnafu;
 use crate::storage::instantiate_storage;
 use crate::{Asset, AssetId};
 use crate::{Config, Error, Result};
 
+use snafu::ensure;
+use snafu::OptionExt;
 use tokio::runtime::Runtime;
 
 pub fn process<ID>(config: &Config, id: ID) -> Result<()>
@@ -15,6 +18,8 @@ where
     let storage = instantiate_storage(config)?;
     let id: AssetId = id.try_into()?;
     let asset = storage.load(id)?;
+    let has_existing = asset.transaction().is_some();
+    ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
     let res = Runtime::new()?.block_on(query_ollama_vision(asset.clone()))?;
     println!("VISION MODEL RESULTS");
     println!("{}", &res);
