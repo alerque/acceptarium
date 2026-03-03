@@ -3,14 +3,14 @@
 
 #[cfg(not(feature = "git-annex"))]
 use crate::error::UnsupportedStorageSnafu;
-use crate::error::{AssetHashExistsSnafu, NoStorageConfiguredSnafu};
+use crate::error::{AssetHashExistsSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
 use crate::ingestable::local_file::LocalFile;
 use crate::{AssetId, Storage};
 use crate::{Config, Error, OperationMode, Result, StorageDriver};
 
 use snafu::ensure;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub mod filesystem;
 #[cfg(feature = "git-annex")]
@@ -78,4 +78,32 @@ fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
         }
         None => NoStorageConfiguredSnafu {}.fail(),
     }
+}
+
+pub(crate) fn data_is_in_project(data_dir: &Path, project_dir: &Path) -> Result<()> {
+    ensure!(
+        data_dir.starts_with(project_dir),
+        FilesystemSnafu {
+            message: format!(
+                "Storage directory '{}' is not inside project root '{}'",
+                data_dir.display(),
+                project_dir.display()
+            ),
+        }
+    );
+    Ok(())
+}
+
+pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
+    let data_meta = std::fs::metadata(data_dir)?;
+    ensure!(
+        !data_meta.permissions().readonly(),
+        FilesystemSnafu {
+            message: format!(
+                "Storage directory '{}' is not writable by the current user",
+                data_dir.display()
+            ),
+        }
+    );
+    Ok(())
 }

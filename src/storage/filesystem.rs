@@ -6,6 +6,7 @@ use crate::error::{
     AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
+use crate::storage::{data_is_in_project, data_is_writable};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
@@ -35,26 +36,8 @@ impl FilesystemStorage {
             })?;
         let project_dir = config.project.canonicalize()?;
         let data_dir = project_dir.join(&fs_config.directory).canonicalize()?;
-        ensure!(
-            data_dir.starts_with(&project_dir),
-            FilesystemSnafu {
-                message: format!(
-                    "Storage directory '{}' is not inside project root '{}'",
-                    fs_config.directory.display(),
-                    project_dir.display()
-                ),
-            }
-        );
-        let data_meta = std::fs::metadata(&data_dir)?;
-        ensure!(
-            !data_meta.permissions().readonly(),
-            FilesystemSnafu {
-                message: format!(
-                    "Storage directory '{}' is not writable by the current user",
-                    fs_config.directory.display()
-                ),
-            }
-        );
+        data_is_in_project(&data_dir, &project_dir)?;
+        data_is_writable(&data_dir)?;
         Ok(Box::new(Self {
             project_dir,
             data_dir,
