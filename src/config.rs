@@ -251,6 +251,7 @@ impl Config {
             Commands::Remove { .. } => {}
             Commands::Run { .. } => {}
             Commands::Status {} => {}
+            Commands::Tui {} => {}
             Commands::External(_) => {}
         }
 

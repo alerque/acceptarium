@@ -22,6 +22,10 @@ pub mod storage;
 #[doc(hidden)]
 pub mod cli;
 
+#[cfg(feature = "tui")]
+#[doc(hidden)]
+pub mod tui;
+
 // Public structs
 pub use cli::AssetSelectors;
 pub use cli::Extractor;

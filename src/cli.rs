@@ -205,6 +205,10 @@ pub enum Commands {
     /// Show status information about configuration, and state
     Status {},
 
+    /// TUI interface for interactively managing assets
+    #[cfg(feature = "tui")]
+    Tui {},
+
     /// Run a custom command script
     #[clap(external_subcommand)]
     External(Vec<OsString>),

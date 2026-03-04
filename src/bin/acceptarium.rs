@@ -3,6 +3,8 @@
 
 use acceptarium::actions::instantiate_storage;
 use acceptarium::cli::{Cli, Commands, STYLES};
+#[cfg(feature = "tui")]
+use acceptarium::tui;
 use acceptarium::{Config, Result};
 use acceptarium::{export, process, run, status, storage};
 
@@ -69,5 +71,7 @@ fn run(logger: LoggerHandle) -> Result<()> {
             let name = args.pop().ok_or("external command without a name")?;
             run::run(&config, name, args)
         }
+        #[cfg(feature = "tui")]
+        Commands::Tui {} => tui::main(&config),
     }
 }
