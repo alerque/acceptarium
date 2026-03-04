@@ -34,6 +34,11 @@ AC_ARG_WITH([ollama],
                            [Compile with ollama support for local LLM inference operations]))
 AM_CONDITIONAL([OLLAMA], [test "x$with_ollama" == "xyes"])
 
+AC_ARG_WITH([tesseract],
+            AS_HELP_STRING([--with-tesseract],
+                           [Compile with support for tesseract as an OCR provider]))
+AM_CONDITIONAL([TESSERACT], [test "x$with_tesseract" == "xyes"])
+
 AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([just])
     # Release tooling
@@ -56,6 +61,10 @@ AM_COND_IF([GIT_ANNEX], [
 
 AM_COND_IF([OLLAMA], [
     AX_REQUIRE_PROG([ollama])
+])
+
+AM_COND_IF([TESSERACT], [
+    AX_REQUIRE_PROG([tesseract])
 ])
 
 QUE_RUST_BOILERPLATE

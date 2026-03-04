@@ -21,6 +21,7 @@
   git-annex,
   just,
   ollama,
+  tesseract,
   taplo,
   typos,
   zsh,
@@ -48,6 +49,7 @@ stdenv.mkDerivation (finalAttrs: {
     pkg-config
     rustPlatform.cargoSetupHook
     rustc
+    tesseract
     zsh
   ];
 
@@ -62,6 +64,7 @@ stdenv.mkDerivation (finalAttrs: {
     gitMinimal
     git-annex
     ollama
+    tesseract
     zsh
   ];
 
@@ -73,7 +76,10 @@ stdenv.mkDerivation (finalAttrs: {
     typos
   ];
 
-  configureFlags = [ "--with-ollama" ];
+  configureFlags = [
+    "--with-ollama"
+    "--with-tesseract"
+  ];
 
   postPatch = ''
     patchShebangs build-aux/*.sh build-aux/git-version-gen
