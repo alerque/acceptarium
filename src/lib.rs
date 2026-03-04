@@ -11,6 +11,7 @@ mod types;
 
 // Public modules
 pub mod ingestable;
+pub mod process;
 pub mod run;
 pub mod status;
 pub mod storage;

@@ -58,6 +58,7 @@ powershell = ["completions"]
 zsh = ["completions"]
 
 [dependencies]
+base64 = "0.22"
 convert_case = "0.6" # held back to match config crate's case feature
 glob = "0.3"
 nanoid = "0.4"

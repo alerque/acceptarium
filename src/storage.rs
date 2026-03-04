@@ -88,7 +88,7 @@ where
     Ok(())
 }
 
-fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
+pub(crate) fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
     match config.storage {
         Some(StorageDriver::Filesystem) => filesystem::FilesystemStorage::init(config),
         #[cfg(feature = "git-annex")]

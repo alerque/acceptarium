@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use acceptarium::cli::{Cli, Commands, STYLES};
-use acceptarium::{run, status, storage};
+use acceptarium::{process, run, status, storage};
 use acceptarium::{Config, Result};
 
 use clap::{CommandFactory, FromArgMatches};
@@ -16,6 +16,7 @@ fn main() -> Result<()> {
     match Commands::from_arg_matches(&matches)? {
         Commands::Add { files, .. } => storage::add(&config, files),
         Commands::List { json, .. } => storage::list(&config, json),
+        Commands::Process { id, .. } => process::process(&config, &id),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
         Commands::Remove { id, .. } => storage::remove(&config, &id),

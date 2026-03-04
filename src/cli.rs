@@ -108,6 +108,13 @@ pub enum Commands {
         json: bool,
     },
 
+    /// Process an asset to extract data
+    Process {
+        /// ID of asset to process
+        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
+        id: String,
+    },
+
     /// Get metadata for a specific asset by ID
     Get {
         /// Asset ID to look up
