@@ -39,6 +39,11 @@ AC_ARG_WITH([tesseract],
                            [Compile with support for tesseract as an OCR provider]))
 AM_CONDITIONAL([TESSERACT], [test "x$with_tesseract" == "xyes"])
 
+AC_ARG_WITH([imagemagick],
+            AS_HELP_STRING([--with-imagemagick],
+                           [Compile with support for using ImageMagick to add PDF support to OCR providers]))
+AM_CONDITIONAL([IMAGEMAGICK], [test "x$with_imagemagick" == "xyes"])
+
 AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([just])
     # Release tooling
@@ -65,6 +70,10 @@ AM_COND_IF([OLLAMA], [
 
 AM_COND_IF([TESSERACT], [
     AX_REQUIRE_PROG([tesseract])
+])
+
+AM_COND_IF([IMAGEMAGICK], [
+    AX_REQUIRE_PROG([magick])
 ])
 
 QUE_RUST_BOILERPLATE

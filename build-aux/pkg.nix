@@ -20,6 +20,7 @@
   cargo-deny,
   git-annex,
   just,
+  imagemagick,
   ollama,
   tesseract,
   taplo,
@@ -45,6 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
     git-annex
     gitMinimal
     jq
+    imagemagick
     ollama
     pkg-config
     rustPlatform.cargoSetupHook
@@ -63,6 +65,7 @@ stdenv.mkDerivation (finalAttrs: {
   buildInputs = [
     gitMinimal
     git-annex
+    imagemagick
     ollama
     tesseract
     zsh
@@ -78,6 +81,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   configureFlags = [
     "--with-ollama"
+    "--with-imagemagick"
     "--with-tesseract"
   ];
 

@@ -47,6 +47,10 @@ if TESSERACT
 CARGO_FEATURE_ARGS += --features ocr,tesseract
 endif
 
+if IMAGEMAGICK
+CARGO_FEATURE_ARGS += --features imagemagick
+endif
+
 DISTCLEANFILES = @AMINCLUDE@
 
 # A classical use of the autoconf-archive include macro would expand
