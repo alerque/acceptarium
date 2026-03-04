@@ -30,6 +30,7 @@ pub use types::Assets;
 pub use types::Blake3Sum;
 pub use types::OperationMode;
 pub use types::Result;
+pub use types::Transaction;
 
 // Import stuff set by autoconf/automake at build time
 pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];

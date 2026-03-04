@@ -22,6 +22,26 @@ pub enum OperationMode {
     CheckAndRun,
 }
 
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct Transaction {
+    pub payee: Option<String>,
+    pub date: Option<String>,
+    pub datetime: Option<String>,
+    pub total: Option<f64>,
+    pub payment_type: Option<String>,
+    pub payment_identifier: Option<String>,
+    pub category: Option<String>,
+    pub invoice_number: Option<String>,
+    pub items: Option<Vec<TransactionItem>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct TransactionItem {
+    pub description: Option<String>,
+    pub quantity: Option<f64>,
+    pub amount: Option<f64>,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);
 
@@ -193,6 +213,8 @@ pub struct Asset {
     asset_path: Option<PathBuf>,
     source_fname: Option<PathBuf>,
     blake3: Option<Blake3Sum>,
+    ocr: Option<String>,
+    transaction: Option<Transaction>,
 }
 
 impl Asset {
@@ -209,6 +231,8 @@ impl Asset {
             asset_path,
             source_fname,
             blake3,
+            ocr: None,
+            transaction: None,
         })
     }
     pub fn id(&self) -> &AssetId {
@@ -237,6 +261,18 @@ impl Asset {
     }
     pub fn set_blake3(&mut self, blake3: Option<Blake3Sum>) {
         self.blake3 = blake3;
+    }
+    pub fn ocr(&self) -> Option<&String> {
+        self.ocr.as_ref()
+    }
+    pub fn set_ocr(&mut self, ocr: Option<String>) {
+        self.ocr = ocr;
+    }
+    pub fn transaction(&self) -> Option<&Transaction> {
+        self.transaction.as_ref()
+    }
+    pub fn set_transaction(&mut self, transaction: Option<Transaction>) {
+        self.transaction = transaction;
     }
 }
 

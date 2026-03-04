@@ -3,7 +3,7 @@
 
 use crate::error::AssetProcessedSnafu;
 use crate::storage::instantiate_storage;
-use crate::{Asset, AssetId};
+use crate::{Asset, AssetId, Transaction};
 use crate::{Config, Error, Result};
 
 use snafu::ensure;
@@ -17,7 +17,7 @@ where
 {
     let storage = instantiate_storage(config)?;
     let id: AssetId = id.try_into()?;
-    let asset = storage.load(id)?;
+    let mut asset = storage.load(id.clone())?;
     let has_existing = asset.transaction().is_some();
     ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
     let res = Runtime::new()?.block_on(query_ollama_vision(asset.clone()))?;
@@ -26,9 +26,14 @@ where
     let ocr = ocr_tesseract(asset.clone())?;
     println!("OCR RESULTS");
     println!("{}", &ocr);
+    asset.set_ocr(Some(ocr.clone()));
     let data = Runtime::new()?.block_on(query_ollama_ocr(ocr.as_str(), ""))?;
     println!("OCR DERIVED DATA");
     println!("{}", &data);
+    let transaction: Transaction = serde_json::from_str(&data)?;
+    dbg!(&transaction);
+    asset.set_transaction(Some(transaction));
+    storage.save(&asset)?;
     Ok(())
 }
 
