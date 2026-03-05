@@ -1,83 +1,50 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+#[cfg(feature = "ollama")]
 use crate::config::{LLMConfig, VisionConfig};
-use crate::error::AssetProcessedSnafu;
+#[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
+use crate::error::FeatureNotEnabledSnafu;
+#[cfg(feature = "ollama")]
 use crate::error::MissingProcessorConfigSnafu;
-use crate::storage::instantiate_storage;
-use crate::{Asset, AssetId, Transaction};
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Asset;
+use crate::AssetId;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Extractor;
+#[cfg(feature = "ollama")]
+use crate::Processor;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Transaction;
 use crate::{Config, Error, Result};
-use crate::{Extractor, Processor};
 
-use snafu::ensure;
+#[cfg(feature = "ollama")]
+use base64::engine::{general_purpose, Engine as _};
+#[cfg(feature = "ollama")]
+use rig::{
+    client::{CompletionClient, Nothing},
+    completion::message::ImageMediaType,
+    completion::Prompt,
+    message::{Message, UserContent},
+    providers::ollama,
+    OneOrMany,
+};
+#[cfg(feature = "ollama")]
 use snafu::OptionExt;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use std::env::current_dir;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use std::fs::read;
+#[cfg(feature = "ollama")]
+use std::path::PathBuf;
+#[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process<ID>(config: &Config, id: ID) -> Result<()>
-where
-    ID: TryInto<AssetId>,
-    Error: From<ID::Error>,
-{
-    let storage = instantiate_storage(config)?;
-    let id: AssetId = id.try_into()?;
-    let mut asset = storage.load(id.clone())?;
-    let has_existing = asset.transaction().is_some();
-    ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
-    let data = match config.processor {
-        Processor::Vision => {
-            let vision_config = config.vision.clone().context(MissingProcessorConfigSnafu {
-                processor: "vision",
-            })?;
-            println!("VISION MODEL RESULTS:");
-            let data =
-                Runtime::new()?.block_on(query_ollama_vision(&vision_config, asset.clone()))?;
-            println!("{}", &data);
-            data
-        }
-        Processor::OCR => {
-            println!("OCR RESULTS:");
-            let ocr = ocr_tesseract(asset.clone())?;
-            println!("{}", &ocr);
-            asset.set_ocr(Some(ocr.clone()));
-            match config.extractor {
-                Extractor::LLM => {
-                    let llm_config = config
-                        .llm
-                        .clone()
-                        .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
-                    println!("OCR DERIVED DATA:");
-                    let data =
-                        Runtime::new()?.block_on(query_ollama_ocr(&llm_config, ocr.as_str()))?;
-                    println!("{}", &data);
-                    data
-                }
-                _ => unimplemented!(),
-            }
-        }
-        Processor::Manual => unimplemented!(),
-    };
-    let transaction: Transaction = serde_json::from_str(&data)?;
-    dbg!(&transaction);
-    asset.set_transaction(Some(transaction));
-    storage.save(&asset)?;
-    Ok(())
-}
-
-use base64::engine::{general_purpose, Engine as _};
-use rig::client::{CompletionClient, Nothing};
-use rig::completion::message::ImageMediaType;
-use rig::completion::Prompt;
-use rig::message::Message;
-use rig::message::UserContent;
-use rig::providers::ollama;
-use rig::OneOrMany;
-use std::env::current_dir;
-use std::fs;
-use std::path::PathBuf;
-
+#[cfg(feature = "ollama")]
 const PREAMBLE: &str = r#"You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
 Always respond with valid JSON only, no additional text."#;
 
+#[cfg(feature = "ollama")]
 const FIELDS: &str = r#"
 Look for and extract the following fields in the receipt:
 - payee: The vendor or merchant name
@@ -107,13 +74,94 @@ Return a JSON object with as many of those fields as were positively detected, f
 }
 "#;
 
+pub fn process<ID>(config: &Config, id: ID) -> Result<()>
+where
+    ID: TryInto<AssetId>,
+    Error: From<ID::Error>,
+{
+    #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
+    return FeatureNotEnabledSnafu {
+        feature: "ollama,tesseract,imagemagick",
+    }
+    .fail();
+    #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+    {
+        use crate::error::AssetProcessedSnafu;
+        use crate::storage::instantiate_storage;
+        use snafu::ensure;
+        let storage = instantiate_storage(config)?;
+        let id: AssetId = id.try_into()?;
+        let mut asset = storage.load(id.clone())?;
+        let has_existing = asset.transaction().is_some();
+        ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
+        let data: String = match config.processor {
+            Processor::Vision => {
+                #[cfg(not(feature = "ollama"))]
+                return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
+                #[cfg(feature = "ollama")]
+                {
+                    let vision_config =
+                        config.vision.clone().context(MissingProcessorConfigSnafu {
+                            processor: "vision",
+                        })?;
+                    println!("VISION MODEL RESULTS:");
+                    let data = Runtime::new()?
+                        .block_on(query_ollama_vision(&vision_config, asset.clone()))?;
+                    println!("{}", &data);
+                    data
+                }
+            }
+            Processor::OCR => {
+                #[cfg(not(any(feature = "tesseract", feature = "imagemagick")))]
+                FeatureNotEnabledSnafu {
+                    feature: "tesseract,imagemagick",
+                }
+                .fail()?;
+                #[cfg(all(feature = "tesseract", feature = "imagemagick"))]
+                {
+                    println!("OCR RESULTS:");
+                    let ocr = ocr_tesseract(asset.clone())?;
+                    println!("{}", &ocr);
+                    asset.set_ocr(Some(ocr.clone()));
+                    match config.extractor {
+                        Extractor::LLM => {
+                            #[cfg(not(feature = "ollama"))]
+                            return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
+                            #[cfg(feature = "ollama")]
+                            {
+                                let llm_config = config
+                                    .llm
+                                    .clone()
+                                    .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
+                                println!("OCR DERIVED DATA:");
+                                let data = Runtime::new()?
+                                    .block_on(query_ollama_ocr(&llm_config, ocr.as_str()))?;
+                                println!("{}", &data);
+                                data
+                            }
+                        }
+                        _ => unimplemented!(),
+                    }
+                }
+            }
+            Processor::Manual => unimplemented!(),
+        };
+        let transaction: Transaction = serde_json::from_str(&data)?;
+        dbg!(&transaction);
+        asset.set_transaction(Some(transaction));
+        storage.save(&asset)?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "ollama")]
 async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<String> {
     let model = &config.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
     let llm = client.agent(model).preamble(PREAMBLE).build();
-    let image_bytes = fs::read(&file)?;
+    let image_bytes = read(&file)?;
     let ext = file
         .extension()
         .and_then(|e| e.to_str())
@@ -146,6 +194,7 @@ async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<Stri
     Ok(response)
 }
 
+#[cfg(all(feature = "tesseract", feature = "imagemagick"))]
 fn ocr_tesseract(asset: Asset) -> Result<String> {
     use subprocess::Exec;
     let file = asset.asset_path(&current_dir()?).unwrap();
@@ -155,7 +204,7 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
         .map(|e| e.to_lowercase())
         .unwrap_or_default();
     let is_pdf = ext == "pdf";
-    let file_content = fs::read(&file)?;
+    let file_content = read(&file)?;
     let output = if is_pdf {
         Exec::shell("magick -density 300 - -flatten png:- | tesseract - - -l tur")
             .stdin(file_content)
@@ -176,6 +225,7 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
     Ok(output)
 }
 
+#[cfg(feature = "ollama")]
 async fn query_ollama_ocr(config: &LLMConfig, ocr: &str) -> Result<String> {
     let model = &config.model;
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
