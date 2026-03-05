@@ -7,11 +7,31 @@ use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize, Serialize, Clone, ValueEnum)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum StorageDriver {
+    #[default]
     Filesystem,
     GitAnnex,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum Processor {
+    Vision,
+    OCR,
+    #[default]
+    Manual,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum Extractor {
+    Vision,
+    LLM,
+    Regex,
+    #[default]
+    Manual,
 }
 
 /// Ingest, process, store, analyze, and export receipts from raster scans to plain text accounting
@@ -121,7 +141,13 @@ pub enum Commands {
         #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
         id: String,
 
+        /// Choose a specific image processor
+        #[clap(short, long)]
+        processor: Option<Processor>,
 
+        /// Choose a specific data extractor
+        #[clap(short, long)]
+        extractor: Option<Extractor>,
     },
 
     /// Get metadata for a specific asset by ID

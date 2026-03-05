@@ -90,6 +90,9 @@ pub enum Error {
 
     #[snafu(display("The field '{key}' is not a known meta data key"))]
     UnknownMetaKey { key: String },
+
+    #[snafu(display("The processor `{processor}` requires a valid configuration"))]
+    MissingProcessorConfig { processor: String },
 }
 
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.

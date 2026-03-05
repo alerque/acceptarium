@@ -21,6 +21,8 @@ pub mod storage;
 pub mod cli;
 
 // Public structs
+pub use cli::Extractor;
+pub use cli::Processor;
 pub use cli::StorageDriver;
 pub use config::Config;
 pub use error::Error;

@@ -5,8 +5,9 @@ use crate::cli::{Cli, Commands};
 use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::GlobPattern;
-use crate::{Result, StorageDriver};
+use crate::{Extractor, Processor, Result, StorageDriver};
 
+use clap::ValueEnum;
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
@@ -49,7 +50,43 @@ pub struct GitAnnexConfig {
     pub directory: PathBuf,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+fn default_vision_model() -> String {
+    String::from("qwen3.5:9b")
+    // String::from("bakllava:7b")
+    // String::from("gemma3:27b")
+    // String::from("gemma3:4b")
+    // String::from("glm-ocr:bf16")
+    // String::from("granite3.2-vision:latest")
+    // String::from("llama3.2-vision")
+    // String::from("qwen3.5:35b")
+}
+
+fn default_llm_model() -> String {
+    String::from("qwen3.5:9b")
+    // String::from("bakllava:7b")
+    // String::from("gemma3:27b")
+    // String::from("gemma3:4b")
+    // String::from("glm-ocr:bf16")
+    // String::from("granite3.2-vision:latest")
+    // String::from("llama3.2-vision")
+    // String::from("qwen3.5:35b")
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct VisionConfig {
+    #[serde(default = "default_vision_model")]
+    pub model: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct LLMConfig {
+    #[serde(default = "default_llm_model")]
+    pub model: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct Config {
     pub debug: bool,
@@ -61,12 +98,18 @@ pub struct Config {
     pub project: PathBuf,
     #[serde(rename(deserialize = "config-file"))]
     pub config_file: Option<PathBuf>,
+    #[serde(default)]
+    pub processor: Processor,
+    #[serde(default)]
+    pub extractor: Extractor,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.
     // #[serde(alias = "GITANNEX")]
     #[serde(rename(deserialize = "git-annex"))]
     pub(crate) git_annex: Option<GitAnnexConfig>,
+    pub(crate) vision: Option<VisionConfig>,
+    pub(crate) llm: Option<LLMConfig>,
 }
 
 impl Config {
@@ -94,6 +137,8 @@ impl Config {
             .set_default("quiet", false)?
             .set_default("verbose", false)?
             .set_default("overwrite", false)?
+            .set_default("processor", "manual")?
+            .set_default("extractor", "manual")?
             .set_default("project", discovered_project.to_str().unwrap())?;
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
@@ -172,7 +217,20 @@ impl Config {
                     builder = builder.set_override("filesystem.tracked", val)?;
                 }
             }
-            Commands::Process { .. } => {}
+            Commands::Process {
+                processor,
+                extractor,
+                ..
+            } => {
+                if let Some(val) = processor {
+                    let val: String = val.to_possible_value().unwrap().get_name().into();
+                    builder = builder.set_override("processor", val)?;
+                }
+                if let Some(val) = extractor {
+                    let val: String = val.to_possible_value().unwrap().get_name().into();
+                    builder = builder.set_override("extractor", val)?;
+                }
+            }
             Commands::Get { .. } => {}
             Commands::Set { .. } => {}
             Commands::Remove { .. } => {}

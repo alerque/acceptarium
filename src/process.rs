@@ -1,10 +1,13 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::config::{LLMConfig, VisionConfig};
 use crate::error::AssetProcessedSnafu;
+use crate::error::MissingProcessorConfigSnafu;
 use crate::storage::instantiate_storage;
 use crate::{Asset, AssetId, Transaction};
 use crate::{Config, Error, Result};
+use crate::{Extractor, Processor};
 
 use snafu::ensure;
 use snafu::OptionExt;
@@ -20,16 +23,39 @@ where
     let mut asset = storage.load(id.clone())?;
     let has_existing = asset.transaction().is_some();
     ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
-    let res = Runtime::new()?.block_on(query_ollama_vision(asset.clone()))?;
-    println!("VISION MODEL RESULTS");
-    println!("{}", &res);
-    let ocr = ocr_tesseract(asset.clone())?;
-    println!("OCR RESULTS");
-    println!("{}", &ocr);
-    asset.set_ocr(Some(ocr.clone()));
-    let data = Runtime::new()?.block_on(query_ollama_ocr(ocr.as_str(), ""))?;
-    println!("OCR DERIVED DATA");
-    println!("{}", &data);
+    let data = match config.processor {
+        Processor::Vision => {
+            let vision_config = config.vision.clone().context(MissingProcessorConfigSnafu {
+                processor: "vision",
+            })?;
+            println!("VISION MODEL RESULTS:");
+            let data =
+                Runtime::new()?.block_on(query_ollama_vision(&vision_config, asset.clone()))?;
+            println!("{}", &data);
+            data
+        }
+        Processor::OCR => {
+            println!("OCR RESULTS:");
+            let ocr = ocr_tesseract(asset.clone())?;
+            println!("{}", &ocr);
+            asset.set_ocr(Some(ocr.clone()));
+            match config.extractor {
+                Extractor::LLM => {
+                    let llm_config = config
+                        .llm
+                        .clone()
+                        .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
+                    println!("OCR DERIVED DATA:");
+                    let data =
+                        Runtime::new()?.block_on(query_ollama_ocr(&llm_config, ocr.as_str()))?;
+                    println!("{}", &data);
+                    data
+                }
+                _ => unimplemented!(),
+            }
+        }
+        Processor::Manual => unimplemented!(),
+    };
     let transaction: Transaction = serde_json::from_str(&data)?;
     dbg!(&transaction);
     asset.set_transaction(Some(transaction));
@@ -81,21 +107,12 @@ Return a JSON object with as many of those fields as were positively detected, f
 }
 "#;
 
-async fn query_ollama_vision(asset: Asset) -> Result<String> {
+async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<String> {
+    let model = &config.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let llm = client
-        // .agent("bakllava:7b")
-        // .agent("gemma3:27b")
-        // .agent("gemma3:4b")
-        // .agent("glm-ocr:bf16")
-        // .agent("granite3.2-vision:latest")
-        // .agent("llama3.2-vision")
-        // .agent("qwen3.5:35b")
-        .agent("qwen3.5:9b")
-        .preamble(PREAMBLE)
-        .build();
+    let llm = client.agent(model).preamble(PREAMBLE).build();
     let image_bytes = fs::read(&file)?;
     let ext = file
         .extension()
@@ -159,9 +176,10 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
     Ok(output)
 }
 
-async fn query_ollama_ocr(ocr: &str, _query: &str) -> Result<String> {
+async fn query_ollama_ocr(config: &LLMConfig, ocr: &str) -> Result<String> {
+    let model = &config.model;
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let llm = client.agent("qwen3.5:35b").preamble(PREAMBLE).build();
+    let llm = client.agent(model).preamble(PREAMBLE).build();
     let message = format!(
         r#"The following content is a scanned receipt or invoice in Turkish read with OCR.
 
