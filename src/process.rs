@@ -50,7 +50,7 @@ Look for and extract the following fields in the receipt:
 - payee: The vendor or merchant name
 - date: The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available
 - total: The total amount as a number (without currency symbols)
-- currency: The curreny used a it's ISO code, for example "TRY" ur "USD"
+- currency: The currency used a it's ISO code, for example "TRY" or "USD"
 - payment_type: The payment method used - "cash", "card", or "other"
 - payment_identifier: The last 4 digits of card or other identifier if visible (can be null)
 - category: "receipt" or "invoice" depending on document type
