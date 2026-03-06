@@ -10,6 +10,7 @@ use crate::storage::{data_is_in_project, data_is_writable};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
+use blake3::Hash as Blake3;
 use glob::glob;
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
@@ -17,7 +18,6 @@ use std::env::current_dir;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
-use blake3::Hash as Blake3;
 
 pub struct FilesystemStorage {
     project_dir: PathBuf,
@@ -211,7 +211,8 @@ impl Storage for FilesystemStorage {
 impl FilesystemStorage {
     fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
         let path = asset
-            .asset_path(&self.project_dir).expect("foo")
+            .asset_path(&self.project_dir)
+            .expect("foo")
             .with_extension("toml");
         Ok(path)
     }

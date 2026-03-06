@@ -12,7 +12,7 @@ use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_value, Value};
+use serde_json::{Value, to_value};
 use snafu::OptionExt;
 
 use std::env;

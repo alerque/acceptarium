@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use acceptarium::cli::{Cli, Commands, STYLES};
-use acceptarium::{process, run, status, storage};
 use acceptarium::{Config, Result};
+use acceptarium::{process, run, status, storage};
 
 use clap::{CommandFactory, FromArgMatches};
 

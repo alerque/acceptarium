@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::Ingestable;
 use crate::error::{FilesystemSnafu, IoSnafu};
 use crate::types::{Blake3Sum, Result};
-use crate::Ingestable;
 
-use snafu::ensure;
 use snafu::ResultExt;
+use snafu::ensure;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};

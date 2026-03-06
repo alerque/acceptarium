@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-#[cfg(feature = "ollama")]
-use crate::config::{LLMConfig, VisionConfig};
-#[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
-use crate::error::FeatureNotEnabledSnafu;
-#[cfg(feature = "ollama")]
-use crate::error::MissingProcessorConfigSnafu;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Asset;
 use crate::AssetId;
@@ -16,18 +10,24 @@ use crate::Extractor;
 use crate::Processor;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Transaction;
+#[cfg(feature = "ollama")]
+use crate::config::{LLMConfig, VisionConfig};
+#[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
+use crate::error::FeatureNotEnabledSnafu;
+#[cfg(feature = "ollama")]
+use crate::error::MissingProcessorConfigSnafu;
 use crate::{Config, Error, Result};
 
 #[cfg(feature = "ollama")]
-use base64::engine::{general_purpose, Engine as _};
+use base64::engine::{Engine as _, general_purpose};
 #[cfg(feature = "ollama")]
 use rig::{
+    OneOrMany,
     client::{CompletionClient, Nothing},
-    completion::message::ImageMediaType,
     completion::Prompt,
+    completion::message::ImageMediaType,
     message::{Message, UserContent},
     providers::ollama,
-    OneOrMany,
 };
 #[cfg(feature = "ollama")]
 use snafu::OptionExt;

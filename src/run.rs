@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::error::{BufferSnafu, CurrentExecutableSnafu};
 use crate::CONFIGURE_DATADIR;
+use crate::error::{BufferSnafu, CurrentExecutableSnafu};
 use crate::{Config, Result};
 
 use snafu::{OptionExt, ResultExt};
