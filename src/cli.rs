@@ -3,6 +3,7 @@
 
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand, ValueEnum};
+use clap_verbosity_flag::Verbosity;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -39,26 +40,8 @@ pub enum Extractor {
 #[derive(Parser, Debug)]
 #[clap(author, bin_name = "acceptarium")]
 pub struct Cli {
-    /// Enable extra debug output from tooling
-    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_debug"))]
-    pub debug: Option<bool>,
-
-    #[clap(long, action = clap::ArgAction::SetFalse, hide = true, overrides_with("debug"))]
-    pub no_debug: Option<bool>,
-
-    /// Discard all non-error output messages
-    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_quiet"))]
-    pub quiet: Option<bool>,
-
-    #[clap(long = "no-quiet", action = clap::ArgAction::SetFalse, hide = true)]
-    pub no_quiet: Option<bool>,
-
-    /// Enable extra verbose output from tooling
-    #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_verbose"))]
-    pub verbose: Option<bool>,
-
-    #[clap(long = "no-verbose", action = clap::ArgAction::SetFalse, hide = true)]
-    pub no_verbose: Option<bool>,
+    #[command(flatten)]
+    pub verbosity: Verbosity,
 
     /// Run actions in dry run mode that checks everything but makes no changes
     #[clap(short = 'n', long, action = clap::ArgAction::SetTrue, overrides_with("no_dry_run"))]

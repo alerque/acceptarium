@@ -11,6 +11,8 @@ use clap::ValueEnum;
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File};
 use convert_case::Casing;
+use log::LevelFilter;
+use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, to_value};
 use snafu::OptionExt;
@@ -18,12 +20,52 @@ use snafu::OptionExt;
 use std::env;
 use std::path::{Path, PathBuf};
 
+struct LevelFilterVisitor;
+
+impl<'de> Visitor<'de> for LevelFilterVisitor {
+    type Value = LevelFilter;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("a log level string (error, warn, info, debug, trace, or off)")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let lower = value.to_lowercase();
+        match lower.as_str() {
+            "error" => Ok(LevelFilter::Error),
+            "warn" => Ok(LevelFilter::Warn),
+            "info" => Ok(LevelFilter::Info),
+            "debug" => Ok(LevelFilter::Debug),
+            "trace" => Ok(LevelFilter::Trace),
+            "off" => Ok(LevelFilter::Off),
+            _ => Err(de::Error::unknown_variant(
+                value,
+                &["error", "warn", "info", "debug", "trace", "off"],
+            )),
+        }
+    }
+}
+
+fn deserialize_level_filter<'de, D>(deserializer: D) -> Result<LevelFilter, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_str(LevelFilterVisitor)
+}
+
 fn default_directory() -> PathBuf {
     PathBuf::from("./acceptarium")
 }
 
 fn default_glob() -> GlobPattern {
     GlobPattern::new("*.toml").unwrap()
+}
+
+fn default_verbosity() -> LevelFilter {
+    LevelFilter::Warn
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
@@ -86,16 +128,18 @@ pub struct LLMConfig {
     pub model: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(unused)]
 pub struct Config {
-    pub debug: bool,
+    pub project: PathBuf,
+    #[serde(
+        default = "default_verbosity",
+        deserialize_with = "deserialize_level_filter"
+    )]
+    pub verbosity: LevelFilter,
     #[serde(rename(deserialize = "dry-run"))]
     pub dry_run: bool,
     pub overwrite: bool,
-    pub quiet: bool,
-    pub verbose: bool,
-    pub project: PathBuf,
     #[serde(rename(deserialize = "config-file"))]
     pub config_file: Option<PathBuf>,
     #[serde(default)]
@@ -131,15 +175,12 @@ impl Config {
             .canonicalize()?;
         // Setup default config values
         let mut builder = LayeredConfig::builder()
-            .set_default("debug", false)?
+            .set_default("project", discovered_project.to_str().unwrap())?
+            .set_default("verbosity", "warn")?
             .set_default("dry-run", false)?
             .set_default("overwrite", false)?
-            .set_default("quiet", false)?
-            .set_default("verbose", false)?
-            .set_default("overwrite", false)?
             .set_default("processor", "manual")?
-            .set_default("extractor", "manual")?
-            .set_default("project", discovered_project.to_str().unwrap())?;
+            .set_default("extractor", "manual")?;
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
             .config_file
@@ -173,14 +214,9 @@ impl Config {
             builder = builder.set_override(&key, value)?;
         }
         // Layer in command line flags
-        if let Some(val) = deboolify(args.debug, args.no_debug) {
-            builder = builder.set_override("debug", val)?;
-        }
-        if let Some(val) = deboolify(args.quiet, args.no_quiet) {
-            builder = builder.set_override("quiet", val)?;
-        }
-        if let Some(val) = deboolify(args.verbose, args.no_verbose) {
-            builder = builder.set_override("verbose", val)?;
+        if args.verbosity.is_present() {
+            let val = args.verbosity.log_level_filter().to_string().to_lowercase();
+            builder = builder.set_override("verbosity", val)?;
         }
         if let Some(val) = deboolify(args.dry_run, args.no_dry_run) {
             builder = builder.set_override("dry-run", val)?;
