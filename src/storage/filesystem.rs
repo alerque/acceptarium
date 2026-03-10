@@ -198,10 +198,19 @@ impl Storage for FilesystemStorage {
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
             && asset_path.exists()
         {
-            std::fs::remove_file(&asset_path)?;
+            if asset_path.starts_with(&self.project_dir) {
+                log::info!("Removing asset file {:?}", &asset_path);
+                std::fs::remove_file(&asset_path)?;
+            } else {
+                log::warn!(
+                    "Not removing asset file {:?} outside of project directory.",
+                    &asset_path
+                );
+            }
         }
         let metadata_path = self.metadata_path(&asset)?;
         if metadata_path.exists() {
+            log::info!("Removing metadata file {:?}", &metadata_path);
             std::fs::remove_file(&metadata_path)?;
         }
         Ok(())
