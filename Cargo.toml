@@ -86,14 +86,18 @@ features = ["derive", "color", "wrap_help"]
 [dependencies.clap-verbosity-flag]
 version = "3.0"
 
-[dependencies.log]
-version = "0.4"
-features = ["serde"]
+[dependencies.flexi_logger]
+version = "0.28"
+features = ["colors"]
 
 [dependencies.git2]
 version = "0.20"
 optional = true
 default-features = false
+
+[dependencies.log]
+version = "0.4"
+features = ["serde"]
 
 [dependencies.rig-core]
 version = "0.31"

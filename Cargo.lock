@@ -15,6 +15,7 @@ dependencies = [
  "clap_mangen",
  "config",
  "convert_case 0.6.0",
+ "flexi_logger",
  "git2",
  "glob",
  "log",
@@ -853,6 +854,20 @@ checksum = "843fba2746e448b37e26a819579957415c8cef339bf08564fe8b7ddbd959573c"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
+]
+
+[[package]]
+name = "flexi_logger"
+version = "0.28.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cca927478b3747ba47f98af6ba0ac0daea4f12d12f55e9104071b3dc00276310"
+dependencies = [
+ "chrono",
+ "glob",
+ "log",
+ "nu-ansi-term",
+ "regex",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -2499,6 +2514,15 @@ dependencies = [
  "bytecount",
  "memchr",
  "nom 8.0.0",
+]
+
+[[package]]
+name = "nu-ansi-term"
+version = "0.50.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
+dependencies = [
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

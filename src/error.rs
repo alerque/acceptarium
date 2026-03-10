@@ -11,6 +11,7 @@ use std::path::PathBuf;
 // Error types we wrap
 use clap::error::Error as ClapError;
 use config::ConfigError;
+use flexi_logger::FlexiLoggerError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
 use std::io::Error as IoError;
@@ -33,6 +34,9 @@ pub enum Error {
 
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
+
+    #[snafu(display("Logger error: {source}"))]
+    Logger { source: FlexiLoggerError },
 
     #[snafu(display("IO buffer error in {stream} stream"))]
     Buffer { stream: String },
@@ -171,5 +175,11 @@ impl From<PatternError> for Error {
 impl From<StripPrefixError> for Error {
     fn from(source: StripPrefixError) -> Self {
         Error::StripPrefix { source }
+    }
+}
+
+impl From<FlexiLoggerError> for Error {
+    fn from(source: FlexiLoggerError) -> Self {
+        Error::Logger { source }
     }
 }
