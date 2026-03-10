@@ -28,6 +28,7 @@ pub struct FilesystemStorage {
     copy: bool,
     rename: bool,
     track: bool,
+    commit: bool,
 }
 
 impl FilesystemStorage {
@@ -60,6 +61,7 @@ impl FilesystemStorage {
             copy: fs_config.copy,
             rename: fs_config.rename,
             track: fs_config.track,
+            commit: fs_config.commit,
         }))
     }
 }
@@ -138,7 +140,12 @@ impl Storage for FilesystemStorage {
                     vec![metadata_path]
                 };
                 #[cfg(feature = "git")]
-                stage_in_git(&self.project_dir, &paths_to_stage)?;
+                {
+                    stage_in_git(&self.project_dir, &paths_to_stage)?;
+                    if self.commit {
+                        commit_staged(&self.project_dir)?;
+                    }
+                }
             }
         }
         Ok(asset)
@@ -277,5 +284,26 @@ fn stage_in_git(project_dir: &Path, paths: &[PathBuf]) -> Result<()> {
         .collect();
     index.add_all(rel_paths, git2::IndexAddOption::DEFAULT, None)?;
     index.write()?;
+    Ok(())
+}
+
+#[cfg(feature = "git")]
+fn commit_staged(project_dir: &Path) -> Result<()> {
+    use git2::Repository;
+    let repo = Repository::discover(project_dir)?;
+    let mut index = repo.index()?;
+    let oid = index.write_tree()?;
+    let tree = repo.find_tree(oid)?;
+    let signature = repo.signature()?;
+    let parent = repo.head().ok().map(|h| h.peel_to_commit()).transpose()?;
+    let msg = "Track new asset(s)\n\nAssisted-by: Acceptarium";
+    repo.commit(
+        Some("HEAD"),
+        &signature,
+        &signature,
+        msg,
+        &tree,
+        &parent.iter().collect::<Vec<_>>(),
+    )?;
     Ok(())
 }

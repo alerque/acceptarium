@@ -135,7 +135,7 @@ pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
 #[cfg(feature = "git")]
 pub(crate) fn project_is_workdir(project_dir: &Path) -> Result<()> {
     use git2::Repository;
-    let git_repo = Repository::discover(&project_dir)?;
+    let git_repo = Repository::discover(project_dir)?;
     let git_root = git_repo.workdir().and_then(|p| p.canonicalize().ok());
     ensure!(
         git_root == Some(project_dir.to_path_buf()),
