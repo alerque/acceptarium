@@ -7,6 +7,8 @@ use crate::error::{
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
 use crate::storage::{data_is_in_project, data_is_writable};
+#[cfg(feature = "git")]
+use crate::storage::{project_is_workdir, staging_is_empty};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
@@ -25,6 +27,7 @@ pub struct FilesystemStorage {
     glob_pattern: String,
     copy: bool,
     rename: bool,
+    track: bool,
 }
 
 impl FilesystemStorage {
@@ -39,18 +42,34 @@ impl FilesystemStorage {
         let data_dir = project_dir.join(&fs_config.directory).canonicalize()?;
         data_is_in_project(&data_dir, &project_dir)?;
         data_is_writable(&data_dir)?;
+        if fs_config.track {
+            #[cfg(not(feature = "git"))]
+            ensure!(
+                false,
+                FilesystemSnafu {
+                    message: "Filesystem tracking requires the 'git' feature to be enabled",
+                }
+            );
+            #[cfg(feature = "git")]
+            project_is_workdir(&project_dir)?;
+        }
         Ok(Box::new(Self {
             project_dir,
             data_dir,
             glob_pattern: fs_config.glob.to_string(),
             copy: fs_config.copy,
             rename: fs_config.rename,
+            track: fs_config.track,
         }))
     }
 }
 
 impl Storage for FilesystemStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
+        if self.track {
+            #[cfg(feature = "git")]
+            staging_is_empty(&self.project_dir)?;
+        }
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;

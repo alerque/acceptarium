@@ -131,3 +131,42 @@ pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
     );
     Ok(())
 }
+
+#[cfg(feature = "git")]
+pub(crate) fn project_is_workdir(project_dir: &Path) -> Result<()> {
+    use git2::Repository;
+    let git_repo = Repository::discover(&project_dir)?;
+    let git_root = git_repo.workdir().and_then(|p| p.canonicalize().ok());
+    ensure!(
+        git_root == Some(project_dir.to_path_buf()),
+        FilesystemSnafu {
+            message: format!(
+                "Project directory '{}' is not the root of a git repository",
+                project_dir.display()
+            ),
+        }
+    );
+    Ok(())
+}
+
+#[cfg(feature = "git")]
+pub(crate) fn staging_is_empty(project_dir: &Path) -> Result<()> {
+    use git2::Repository;
+    let repo = Repository::discover(project_dir)?;
+    let statuses = repo.statuses(None).map_err(|_| {
+        FilesystemSnafu {
+            message: "Failed to get git status".to_string(),
+        }
+        .build()
+    })?;
+    let has_staged = statuses.iter().any(|s| {
+        s.status().is_index_new() || s.status().is_index_modified() || s.status().is_index_deleted()
+    });
+    ensure!(
+        !has_staged,
+        FilesystemSnafu {
+            message: "Git repository has staged changes. Please commit or unstage them first.",
+        }
+    );
+    Ok(())
+}

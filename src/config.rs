@@ -82,7 +82,7 @@ pub struct FilesystemConfig {
     #[serde(default)]
     pub rename: bool,
     #[serde(default)]
-    pub tracked: bool,
+    pub track: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
@@ -245,13 +245,13 @@ impl Config {
                 }
             }
             Commands::List {
-                tracked,
-                no_tracked,
+                // tracked,
+                // no_tracked,
                 ..
             } => {
-                if let Some(val) = deboolify(tracked, no_tracked) {
-                    builder = builder.set_override("filesystem.tracked", val)?;
-                }
+                // if let Some(val) = deboolify(tracked, no_tracked) {
+                //     builder = builder.set_override("filesystem.tracked", val)?;
+                // }
             }
             Commands::Process {
                 processor,
