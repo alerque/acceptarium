@@ -1,6 +1,6 @@
 # acceptarium
 
-A collection of CLI tooling to facilitate scanning receipts, extracting useful data, archiving the assets, and importing the results into [Plain Text Accounting][pta] systems.
+A collection of tooling to facilitate scanning receipts, extracting useful data, archiving the assets, and importing the results into [Plain Text Accounting][pta] systems.
 
 acceptarium
 :   (*Latin*) allotment-holding
@@ -47,8 +47,9 @@ flowchart LR
 
 ## Goals
 
-* Automate as many steps as possible to make it easy to handle receipts, invoices, etc. in bulk.
-* Use only local-first privacy-preserving tooling by default even where LLMs may be involved.
+* Automate as many steps as possible to make it easy to handle receipts (and possibly invoices, etc.) in bulk.
+* Disable all LLM related features by default and remain functional without them requiring explicit opt-in for use.
+* Use only local-first privacy-preserving tooling by default — even where LLMs may be involved.
 * Facilitate human review/approval and fully featured editing for any non-deterministic steps like LLM or OCR based meta-data extraction.
 * Allow re-processing data from initial assets in the event of improved tooling (better OCR, more journal import rules, etc.).
 
