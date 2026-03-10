@@ -210,10 +210,17 @@ impl Storage for FilesystemStorage {
 
 impl FilesystemStorage {
     fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
-        let path = asset
-            .asset_path(&self.project_dir)
-            .expect("foo")
-            .with_extension("toml");
+        let base_name: PathBuf = if self.copy {
+            asset.id().to_string().into()
+        } else {
+            let path = asset
+                .asset_path(&self.project_dir)
+                .expect("an asset without an asset path is a liability");
+            path.file_name()
+                .expect("asset path has no file name")
+                .into()
+        };
+        let path = self.data_dir.join(base_name).with_extension("toml");
         Ok(path)
     }
 }
