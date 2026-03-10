@@ -63,10 +63,10 @@ convert_case = "0.6" # held back to match config crate's case feature
 glob = "0.3"
 nanoid = "0.4"
 serde_json = "1.0"
-snafu = "0.8"
+snafu = "0.9"
 subprocess = "1.0"
 sugar_path = "2.0"
-toml = "0.8"
+toml = "1.0"
 which = "8.0"
 
 [dependencies.blake3]
@@ -87,7 +87,7 @@ features = ["derive", "color", "wrap_help"]
 version = "3.0"
 
 [dependencies.flexi_logger]
-version = "0.28"
+version = "0.31"
 features = ["colors"]
 
 [dependencies.git2]
@@ -100,7 +100,7 @@ version = "0.4"
 features = ["serde"]
 
 [dependencies.rig-core]
-version = "0.31"
+version = "0.32"
 optional = true
 features = ["all"]
 
@@ -114,7 +114,7 @@ optional = true
 features = ["full"]
 
 [build-dependencies]
-snafu = "0.8"
+snafu = "0.9"
 
 [build-dependencies.serde]
 version = "1.0"
