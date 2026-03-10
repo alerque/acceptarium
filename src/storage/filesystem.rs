@@ -131,6 +131,15 @@ impl Storage for FilesystemStorage {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
             std::fs::write(&metadata_path, toml_content)?;
+            if self.track {
+                let paths_to_stage = if self.copy {
+                    vec![asset_path_abs.clone(), metadata_path]
+                } else {
+                    vec![metadata_path]
+                };
+                #[cfg(feature = "git")]
+                stage_in_git(&self.project_dir, &paths_to_stage)?;
+            }
         }
         Ok(asset)
     }
@@ -251,4 +260,22 @@ impl FilesystemStorage {
         let path = self.data_dir.join(base_name).with_extension("toml");
         Ok(path)
     }
+}
+
+#[cfg(feature = "git")]
+fn stage_in_git(project_dir: &Path, paths: &[PathBuf]) -> Result<()> {
+    use git2::Repository;
+    let repo = Repository::discover(project_dir)?;
+    let mut index = repo.index()?;
+    let rel_paths: Vec<std::ffi::OsString> = paths
+        .iter()
+        .map(|p| {
+            p.strip_prefix(project_dir)
+                .map(|p| p.as_os_str().to_owned())
+                .unwrap_or_else(|_| p.as_os_str().to_owned())
+        })
+        .collect();
+    index.add_all(rel_paths, git2::IndexAddOption::DEFAULT, None)?;
+    index.write()?;
+    Ok(())
 }
