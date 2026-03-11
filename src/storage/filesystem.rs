@@ -6,13 +6,15 @@ use crate::error::{
     AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
     UnknownAssetIdSnafu, UnknownMetaKeySnafu,
 };
-use crate::storage::{data_is_in_project, data_is_writable};
 #[cfg(feature = "git")]
-use crate::storage::{project_is_workdir, staging_is_empty};
+use crate::storage::git_tracker::GitTracker;
+use crate::storage::{data_is_in_project, data_is_writable, is_in_project};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 use blake3::Hash as Blake3;
+#[cfg(feature = "git")]
+use git2::Repository;
 use glob::glob;
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
@@ -29,6 +31,8 @@ pub struct FilesystemStorage {
     rename: bool,
     track: bool,
     commit: bool,
+    #[cfg(feature = "git")]
+    repo: Option<Repository>,
 }
 
 impl FilesystemStorage {
@@ -43,17 +47,19 @@ impl FilesystemStorage {
         let data_dir = project_dir.join(&fs_config.directory).canonicalize()?;
         data_is_in_project(&data_dir, &project_dir)?;
         data_is_writable(&data_dir)?;
-        if fs_config.track {
-            #[cfg(not(feature = "git"))]
-            ensure!(
-                false,
-                FilesystemSnafu {
-                    message: "Filesystem tracking requires the 'git' feature to be enabled",
-                }
-            );
-            #[cfg(feature = "git")]
-            project_is_workdir(&project_dir)?;
-        }
+        #[cfg(feature = "git")]
+        let repo = if fs_config.track {
+            Some(Repository::discover(&project_dir)?)
+        } else {
+            None
+        };
+        #[cfg(not(feature = "git"))]
+        ensure!(
+            !fs_config.track,
+            FilesystemSnafu {
+                message: "This project is configured to track assets in Git, but the 'git' feature to be enabled",
+            }
+        );
         Ok(Box::new(Self {
             project_dir,
             data_dir,
@@ -62,15 +68,41 @@ impl FilesystemStorage {
             rename: fs_config.rename,
             track: fs_config.track,
             commit: fs_config.commit,
+            #[cfg(feature = "git")]
+            repo,
         }))
+    }
+
+    fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
+        let base_name: PathBuf = if self.copy {
+            asset.id().to_string().into()
+        } else {
+            let path = asset
+                .asset_path(&self.project_dir)
+                .expect("an asset without an asset path is a liability");
+            path.file_name()
+                .expect("asset path has no file name")
+                .into()
+        };
+        let path = self.data_dir.join(base_name).with_extension("toml");
+        Ok(path)
+    }
+}
+
+#[cfg(feature = "git")]
+impl GitTracker for FilesystemStorage {
+    fn repo(&self) -> Result<&Repository> {
+        self.repo.as_ref().context(FilesystemSnafu {
+            message: "Git repository not initialized".to_string(),
+        })
     }
 }
 
 impl Storage for FilesystemStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
+        #[cfg(feature = "git")]
         if self.track {
-            #[cfg(feature = "git")]
-            staging_is_empty(&self.project_dir)?;
+            self.ensure_staging_empty()?;
         }
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
@@ -133,18 +165,20 @@ impl Storage for FilesystemStorage {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
             std::fs::write(&metadata_path, toml_content)?;
+            #[cfg(feature = "git")]
             if self.track {
-                let paths_to_stage = if self.copy {
-                    vec![asset_path_abs.clone(), metadata_path]
+                let mut to_stage = vec![metadata_path];
+                if self.copy || is_in_project(&asset_path_abs, &self.project_dir) {
+                    to_stage.push(asset_path_abs);
                 } else {
-                    vec![metadata_path]
-                };
-                #[cfg(feature = "git")]
-                {
-                    stage_in_git(&self.project_dir, &paths_to_stage)?;
-                    if self.commit {
-                        commit_staged(&self.project_dir)?;
-                    }
+                    log::warn!(
+                        "Not staging asset file {:?} outside of project directory.",
+                        &asset_path_abs
+                    );
+                }
+                self.stage_paths(&to_stage)?;
+                if self.commit {
+                    self.commit_staged("Track new asset(s)")?;
                 }
             }
         }
@@ -222,13 +256,28 @@ impl Storage for FilesystemStorage {
     }
 
     fn save(&self, asset: &Asset) -> Result<()> {
+        #[cfg(feature = "git")]
+        if self.track {
+            self.ensure_staging_empty()?;
+        }
         let toml_content = toml::to_string_pretty(asset)?;
         let metadata_path = self.metadata_path(asset)?;
         std::fs::write(&metadata_path, toml_content)?;
+        #[cfg(feature = "git")]
+        if self.track {
+            self.stage_paths(&[metadata_path])?;
+            if self.commit {
+                self.commit_staged("Update existing asset(s)")?;
+            }
+        }
         Ok(())
     }
 
     fn remove(&self, id: AssetId) -> Result<()> {
+        #[cfg(feature = "git")]
+        if self.track {
+            self.ensure_staging_empty()?;
+        }
         let asset = self.load(id.clone())?;
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
             && asset_path.exists()
@@ -236,6 +285,10 @@ impl Storage for FilesystemStorage {
             if asset_path.starts_with(&self.project_dir) {
                 log::info!("Removing asset file {:?}", &asset_path);
                 std::fs::remove_file(&asset_path)?;
+                #[cfg(feature = "git")]
+                if self.track {
+                    self.stage_paths(&[asset_path])?;
+                }
             } else {
                 log::warn!(
                     "Not removing asset file {:?} outside of project directory.",
@@ -247,63 +300,15 @@ impl Storage for FilesystemStorage {
         if metadata_path.exists() {
             log::info!("Removing metadata file {:?}", &metadata_path);
             std::fs::remove_file(&metadata_path)?;
+            #[cfg(feature = "git")]
+            if self.track {
+                self.stage_paths(&[metadata_path])?;
+            }
+        }
+        #[cfg(feature = "git")]
+        if self.track && self.commit {
+            self.commit_staged("Remove asset(s)")?;
         }
         Ok(())
     }
-}
-
-impl FilesystemStorage {
-    fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
-        let base_name: PathBuf = if self.copy {
-            asset.id().to_string().into()
-        } else {
-            let path = asset
-                .asset_path(&self.project_dir)
-                .expect("an asset without an asset path is a liability");
-            path.file_name()
-                .expect("asset path has no file name")
-                .into()
-        };
-        let path = self.data_dir.join(base_name).with_extension("toml");
-        Ok(path)
-    }
-}
-
-#[cfg(feature = "git")]
-fn stage_in_git(project_dir: &Path, paths: &[PathBuf]) -> Result<()> {
-    use git2::Repository;
-    let repo = Repository::discover(project_dir)?;
-    let mut index = repo.index()?;
-    let rel_paths: Vec<std::ffi::OsString> = paths
-        .iter()
-        .map(|p| {
-            p.strip_prefix(project_dir)
-                .map(|p| p.as_os_str().to_owned())
-                .unwrap_or_else(|_| p.as_os_str().to_owned())
-        })
-        .collect();
-    index.add_all(rel_paths, git2::IndexAddOption::DEFAULT, None)?;
-    index.write()?;
-    Ok(())
-}
-
-#[cfg(feature = "git")]
-fn commit_staged(project_dir: &Path) -> Result<()> {
-    use git2::Repository;
-    let repo = Repository::discover(project_dir)?;
-    let mut index = repo.index()?;
-    let oid = index.write_tree()?;
-    let tree = repo.find_tree(oid)?;
-    let signature = repo.signature()?;
-    let parent = repo.head().ok().map(|h| h.peel_to_commit()).transpose()?;
-    let msg = "Track new asset(s)\n\nAssisted-by: Acceptarium";
-    repo.commit(
-        Some("HEAD"),
-        &signature,
-        &signature,
-        msg,
-        &tree,
-        &parent.iter().collect::<Vec<_>>(),
-    )?;
-    Ok(())
 }

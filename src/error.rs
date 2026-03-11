@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use flexi_logger::FlexiLoggerError;
+#[cfg(feature = "git")]
 use git2::Error as GitError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
@@ -102,6 +103,7 @@ pub enum Error {
     #[snafu(display("The feature '{feature}' was not enabled in this build."))]
     FeatureNotEnabled { feature: String },
 
+    #[cfg(feature = "git")]
     #[snafu(display("Git error: {source}"))]
     Git { source: GitError },
 }
@@ -188,6 +190,7 @@ impl From<FlexiLoggerError> for Error {
     }
 }
 
+#[cfg(feature = "git")]
 impl From<GitError> for Error {
     fn from(source: GitError) -> Self {
         Error::Git { source }
