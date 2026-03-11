@@ -43,43 +43,43 @@ pub struct FilesystemStorage {
 impl FilesystemStorage {
     pub fn init(config: &Config) -> Result<Box<dyn Storage>> {
         log::info!("Initializing storage");
-        let fs_config = config
+        let storage_config = config
             .filesystem
             .as_ref()
             .context(MissingStorageConfigSnafu {
                 driver: "filesystem",
             })?;
         let project_dir = config.project.canonicalize()?;
-        let data_dir = project_dir.join(&fs_config.directory).canonicalize()?;
+        let data_dir = project_dir.join(&storage_config.directory).canonicalize()?;
         data_is_in_project(&data_dir, &project_dir)?;
         data_is_writable(&data_dir)?;
         #[cfg(feature = "git")]
-        let repo = if fs_config.track {
+        let repo = if storage_config.track {
             log::info!("Tracking is enabled, discovering VCS repo");
             Some(Repository::discover(&project_dir)?)
         } else {
             None
         };
-        let fs = Box::new(Self {
+        let store = Box::new(Self {
             project_dir,
             data_dir,
-            glob_pattern: fs_config.glob.to_string(),
-            copy: fs_config.copy,
-            rename: fs_config.rename,
-            track: fs_config.track,
-            commit: fs_config.commit,
+            glob_pattern: storage_config.glob.to_string(),
+            copy: storage_config.copy,
+            rename: storage_config.rename,
+            track: storage_config.track,
+            commit: storage_config.commit,
             #[cfg(feature = "git")]
             repo,
         });
         #[cfg(not(feature = "git"))]
         ensure!(
-            !fs.track && !fs.commit,
+            !store.track && !store.commit,
             FilesystemSnafu {
                 message: "This project is configured to track assets in Git, but the 'git' feature to be enabled",
             }
         );
-        log::debug!("Completed initialization: {:?}", fs);
-        Ok(fs)
+        log::debug!("Completed initialization: {:?}", store);
+        Ok(store)
     }
 
     fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {

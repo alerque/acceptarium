@@ -77,6 +77,12 @@ pub struct FilesystemConfig {
 #[allow(unused)]
 pub struct GitAnnexConfig {
     pub directory: PathBuf,
+    #[serde(default)]
+    pub commit: bool,
+    #[serde(default)]
+    pub copy: bool,
+    #[serde(default)]
+    pub rename: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
