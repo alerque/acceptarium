@@ -96,10 +96,13 @@ where
         let storage = instantiate_storage(config)?;
         let id: AssetId = id.try_into()?;
         let mut asset = storage.load(id.clone())?;
+        log::info!("Processing asset {id}");
         let has_existing = asset.transaction().is_some();
+        log::debug!("Checking for previously processed: {has_existing}");
         ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
         let data: String = match config.processor {
             Processor::Vision => {
+                log::info!("Using vision processor");
                 #[cfg(not(feature = "ollama"))]
                 return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
                 #[cfg(feature = "ollama")]
@@ -116,6 +119,7 @@ where
                 }
             }
             Processor::OCR => {
+                log::info!("Using OCR processor");
                 #[cfg(not(any(feature = "tesseract", feature = "imagemagick")))]
                 FeatureNotEnabledSnafu {
                     feature: "tesseract,imagemagick",
@@ -129,6 +133,7 @@ where
                     asset.set_ocr(Some(ocr.clone()));
                     match config.extractor {
                         Extractor::LLM => {
+                            log::info!("Using LLM extractor");
                             #[cfg(not(feature = "ollama"))]
                             return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
                             #[cfg(feature = "ollama")]
@@ -163,8 +168,10 @@ async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<Stri
     let model = &config.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
+    log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
     let llm = client.agent(model).preamble(PREAMBLE).build();
+    log::debug!("Using preamble: {}", PREAMBLE);
     let image_bytes = read(&file)?;
     let ext = file
         .extension()
@@ -180,6 +187,7 @@ async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<Stri
         "jpg" | "jpeg" => Some(ImageMediaType::JPEG),
         _ => None,
     };
+    log::debug!("Detected media type: {:?}", media_type);
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
     let message = format!(
@@ -188,9 +196,9 @@ async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<Stri
 {}"#,
         FIELDS,
     );
+    log::debug!("Sending message: {}", &message);
     let text_content = UserContent::text(&message);
     let content = vec![image_content, text_content];
-    // let content = vec![text_content, image_content];
     let content: OneOrMany<UserContent> =
         OneOrMany::many(content).expect("Unable to create user message");
     let content: Message = content.into();
@@ -210,12 +218,14 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
     let is_pdf = ext == "pdf";
     let file_content = read(&file)?;
     let output = if is_pdf {
+        log::info!("Processing PDF file via ImageMagick, then tesseract");
         Exec::shell("magick -density 300 - -flatten png:- | tesseract - - -l tur")
             .stdin(file_content)
             .stdout(subprocess::Redirection::Pipe)
             .capture()?
             .stdout_str()
     } else {
+        log::info!("Processing image file via tesseract");
         Exec::cmd("tesseract")
             .arg("stdin")
             .arg("stdout")
@@ -232,8 +242,10 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
 #[cfg(feature = "ollama")]
 async fn query_ollama_ocr(config: &LLMConfig, ocr: &str) -> Result<String> {
     let model = &config.model;
+    log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
     let llm = client.agent(model).preamble(PREAMBLE).build();
+    log::debug!("Using preamble: {}", PREAMBLE);
     let message = format!(
         r#"The following content is a scanned receipt or invoice in Turkish read with OCR.
 
@@ -244,6 +256,7 @@ Receipt content:
 "#,
         FIELDS, ocr
     );
+    log::debug!("Sending message: {}", &message);
     let response = llm.prompt(message).await.expect("Failed to prompt");
     Ok(response)
 }

@@ -86,6 +86,10 @@ features = ["derive", "color", "wrap_help"]
 [dependencies.clap-verbosity-flag]
 version = "3.0"
 
+[dependencies.derive_more]
+version = "2.1"
+features = ["debug"]
+
 [dependencies.flexi_logger]
 version = "0.31"
 features = ["colors"]

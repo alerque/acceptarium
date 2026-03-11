@@ -26,6 +26,7 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
         .collect::<Result<_>>()?;
     let mut seen_hashes = HashSet::new();
     for ingestable in &ingestables {
+        log::debug!("Attempting dry run add for {:?}", ingestable);
         let _ = storage.add(ingestable, OperationMode::JustCheck)?;
         ensure!(
             seen_hashes.insert(&ingestable.blake3),
@@ -36,6 +37,7 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     }
     if !config.dry_run {
         for ingestable in &ingestables {
+            log::debug!("Adding {:?}", ingestable);
             let asset = storage.add(ingestable, OperationMode::JustRun)?;
             println!("{}", asset);
         }

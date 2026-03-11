@@ -15,6 +15,7 @@ use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 use blake3::Hash as Blake3;
+use derive_more::Debug;
 #[cfg(feature = "git")]
 use git2::Repository;
 use glob::glob;
@@ -25,6 +26,7 @@ use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
 
+#[derive(Debug)]
 pub struct FilesystemStorage {
     project_dir: PathBuf,
     data_dir: PathBuf,
@@ -34,11 +36,13 @@ pub struct FilesystemStorage {
     track: bool,
     commit: bool,
     #[cfg(feature = "git")]
+    #[debug(skip)]
     repo: Option<Repository>,
 }
 
 impl FilesystemStorage {
     pub fn init(config: &Config) -> Result<Box<dyn Storage>> {
+        log::info!("Initializing storage");
         let fs_config = config
             .filesystem
             .as_ref()
@@ -51,6 +55,7 @@ impl FilesystemStorage {
         data_is_writable(&data_dir)?;
         #[cfg(feature = "git")]
         let repo = if fs_config.track {
+            log::info!("Tracking is enabled, discovering VCS repo");
             Some(Repository::discover(&project_dir)?)
         } else {
             None
@@ -73,6 +78,7 @@ impl FilesystemStorage {
                 message: "This project is configured to track assets in Git, but the 'git' feature to be enabled",
             }
         );
+        log::debug!("Completed initialization: {:?}", fs);
         Ok(fs)
     }
 
@@ -103,6 +109,7 @@ impl GitTracker for FilesystemStorage {
 
 impl Storage for FilesystemStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
+        log::info!("Ingesting new asset");
         #[cfg(feature = "git")]
         if self.track {
             self.ensure_staging_empty()?;
@@ -189,6 +196,7 @@ impl Storage for FilesystemStorage {
     }
 
     fn list(&self) -> Result<Assets> {
+        log::info!("Listing known assets");
         let matcher = self.data_dir.join(&self.glob_pattern);
         let entries: Vec<PathBuf> = glob(matcher.to_str().context(NonUnicodePathSnafu)?)?
             .flatten()
