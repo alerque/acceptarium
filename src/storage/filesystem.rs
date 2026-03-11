@@ -100,10 +100,18 @@ impl FilesystemStorage {
 
 #[cfg(feature = "git")]
 impl GitTracker for FilesystemStorage {
+    fn project_dir(&self) -> &Path {
+        &self.project_dir
+    }
+
     fn repo(&self) -> Result<&Repository> {
         self.repo.as_ref().context(FilesystemSnafu {
             message: "Git repository not initialized".to_string(),
         })
+    }
+
+    fn commit(&self) -> bool {
+        self.commit
     }
 }
 

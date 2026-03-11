@@ -5,10 +5,12 @@ use crate::Result;
 use crate::error::FilesystemSnafu;
 use git2::Repository;
 use snafu::ensure;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait GitTracker {
+    fn project_dir(&self) -> &Path;
     fn repo(&self) -> Result<&Repository>;
+    fn commit(&self) -> bool;
 
     fn ensure_staging_empty(&self) -> Result<()> {
         let statuses = self.repo()?.statuses(None).map_err(|_| {
