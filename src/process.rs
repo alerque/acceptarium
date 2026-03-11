@@ -80,8 +80,12 @@ where
     Error: From<ID::Error>,
 {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
-    return FeatureNotEnabledSnafu {
-        feature: "ollama,tesseract,imagemagick",
+    return {
+        let _ = config;
+        let _ = id;
+        FeatureNotEnabledSnafu {
+            feature: "ollama,tesseract,imagemagick",
+        }
     }
     .fail();
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]

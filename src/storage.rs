@@ -134,6 +134,7 @@ pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "git")]
 pub(crate) fn is_in_project(path: &Path, project_dir: &Path) -> bool {
     path.starts_with(project_dir)
 }

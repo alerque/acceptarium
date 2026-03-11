@@ -8,7 +8,9 @@ use crate::error::{
 };
 #[cfg(feature = "git")]
 use crate::storage::git_tracker::GitTracker;
-use crate::storage::{data_is_in_project, data_is_writable, is_in_project};
+#[cfg(feature = "git")]
+use crate::storage::is_in_project;
+use crate::storage::{data_is_in_project, data_is_writable};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
@@ -53,14 +55,7 @@ impl FilesystemStorage {
         } else {
             None
         };
-        #[cfg(not(feature = "git"))]
-        ensure!(
-            !fs_config.track,
-            FilesystemSnafu {
-                message: "This project is configured to track assets in Git, but the 'git' feature to be enabled",
-            }
-        );
-        Ok(Box::new(Self {
+        let fs = Box::new(Self {
             project_dir,
             data_dir,
             glob_pattern: fs_config.glob.to_string(),
@@ -70,7 +65,15 @@ impl FilesystemStorage {
             commit: fs_config.commit,
             #[cfg(feature = "git")]
             repo,
-        }))
+        });
+        #[cfg(not(feature = "git"))]
+        ensure!(
+            !fs.track && !fs.commit,
+            FilesystemSnafu {
+                message: "This project is configured to track assets in Git, but the 'git' feature to be enabled",
+            }
+        );
+        Ok(fs)
     }
 
     fn metadata_path(&self, asset: &Asset) -> Result<PathBuf> {
