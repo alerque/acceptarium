@@ -4,7 +4,7 @@
 use crate::cli::{Cli, Commands};
 use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
-use crate::types::GlobPattern;
+use crate::types::{GlobPattern, TemplateString};
 use crate::{Extractor, Processor, Result, StorageDriver};
 
 use clap::ValueEnum;
@@ -83,12 +83,18 @@ pub struct GitAnnexConfig {
 #[allow(unused)]
 pub struct VisionConfig {
     pub model: String,
+    pub preamble: TemplateString,
+    pub fields: TemplateString,
+    pub prompt: TemplateString,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct LLMConfig {
     pub model: String,
+    pub preamble: TemplateString,
+    pub fields: TemplateString,
+    pub prompt: TemplateString,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

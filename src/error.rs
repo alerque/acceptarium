@@ -172,6 +172,12 @@ impl From<&str> for Error {
     }
 }
 
+impl From<String> for Error {
+    fn from(source: String) -> Self {
+        Error::ExternalCommand { message: source }
+    }
+}
+
 impl From<PatternError> for Error {
     fn from(source: PatternError) -> Self {
         Error::Glob { source }

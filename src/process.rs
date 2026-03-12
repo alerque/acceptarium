@@ -31,6 +31,9 @@ use rig::{
 };
 #[cfg(feature = "ollama")]
 use snafu::OptionExt;
+
+#[cfg(feature = "ollama")]
+use serde_json::to_value;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use std::env::current_dir;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
@@ -39,40 +42,6 @@ use std::fs::read;
 use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
-
-#[cfg(feature = "ollama")]
-const PREAMBLE: &str = r#"You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
-Always respond with valid JSON only, no additional text."#;
-
-#[cfg(feature = "ollama")]
-const FIELDS: &str = r#"
-Look for and extract the following fields in the receipt:
-- payee: The vendor or merchant name
-- date: The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available
-- total: The total amount as a number (without currency symbols)
-- currency: The currency used a it's ISO code, for example "TRY" or "USD"
-- payment_type: The payment method used - "cash", "card", or "other"
-- payment_identifier: The last 4 digits of card or other identifier if visible (can be null)
-- category: "receipt" or "invoice" depending on document type
-- invoice_number: The invoice or receipt number if visible (can be null)
-- items: An array of items with description, quantity, and total amount for each line item
-
-Return a JSON object with as many of those fields as were positively detected, for example:
-{
-  "payee": "Store Name",
-  "date": "2024-01-15T14:30:00",
-  "total": 125.50,
-  "currency": "TRY",
-  "payment_type": "card",
-  "payment_identifier": "**** **** **** 1234",
-  "category": "receipt",
-  "invoice_number": "A12345",
-  "items": [
-    {"description": "Item 1", "quantity": 1, "amount": 50.00},
-    {"description": "Item 2", "quantity": 2, "amount": 37.75}
-  ]
-}
-"#;
 
 pub fn process<ID>(config: &Config, id: ID) -> Result<()>
 where
@@ -112,8 +81,23 @@ where
                             processor: "vision",
                         })?;
                     println!("VISION MODEL RESULTS:");
-                    let data = Runtime::new()?
-                        .block_on(query_ollama_vision(&vision_config, asset.clone()))?;
+                    let mut context_map = serde_json::Map::new();
+                    context_map.insert(
+                        "config".to_string(),
+                        to_value(config).map_err(|e| format!("{}", e))?,
+                    );
+                    context_map.insert(
+                        "asset".to_string(),
+                        serde_json::json!({
+                            "id": asset.id().to_string(),
+                        }),
+                    );
+                    let context = serde_json::Value::Object(context_map);
+                    let data = Runtime::new()?.block_on(query_ollama_vision(
+                        &vision_config,
+                        asset.clone(),
+                        &context,
+                    ))?;
                     println!("{}", &data);
                     data
                 }
@@ -143,8 +127,23 @@ where
                                     .clone()
                                     .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
                                 println!("OCR DERIVED DATA:");
-                                let data = Runtime::new()?
-                                    .block_on(query_ollama_ocr(&llm_config, ocr.as_str()))?;
+                                let mut context_map = serde_json::Map::new();
+                                context_map.insert(
+                                    "config".to_string(),
+                                    to_value(config).map_err(|e| format!("{}", e))?,
+                                );
+                                context_map.insert(
+                                    "asset".to_string(),
+                                    serde_json::json!({
+                                        "id": asset.id().to_string(),
+                                    }),
+                                );
+                                let context = serde_json::Value::Object(context_map);
+                                let data = Runtime::new()?.block_on(query_ollama_ocr(
+                                    &llm_config,
+                                    ocr.as_str(),
+                                    &context,
+                                ))?;
                                 println!("{}", &data);
                                 data
                             }
@@ -164,14 +163,22 @@ where
 }
 
 #[cfg(feature = "ollama")]
-async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<String> {
+async fn query_ollama_vision(
+    config: &VisionConfig,
+    asset: Asset,
+    context: &serde_json::Value,
+) -> Result<String> {
     let model = &config.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let llm = client.agent(model).preamble(PREAMBLE).build();
-    log::debug!("Using preamble: {}", PREAMBLE);
+    let preamble = config
+        .preamble
+        .render(&context)
+        .map_err(|e| format!("{}", e))?;
+    log::debug!("Using preamble: {}", preamble);
+    let llm = client.agent(model).preamble(&preamble).build();
     let image_bytes = read(&file)?;
     let ext = file
         .extension()
@@ -190,19 +197,19 @@ async fn query_ollama_vision(config: &VisionConfig, asset: Asset) -> Result<Stri
     log::debug!("Detected media type: {:?}", media_type);
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
-    let message = format!(
-        r#"The attached image is a scanned receipt or invoice in Turkish.
-
-{}"#,
-        FIELDS,
-    );
-    log::debug!("Sending message: {}", &message);
-    let text_content = UserContent::text(&message);
+    dbg!(&context);
+    let prompt = config
+        .prompt
+        .render(&context)
+        .map_err(|e| format!("{}", e))?;
+    log::debug!("Sending prompt: {}", &prompt);
+    let text_content = UserContent::text(&prompt);
     let content = vec![image_content, text_content];
     let content: OneOrMany<UserContent> =
         OneOrMany::many(content).expect("Unable to create user message");
     let content: Message = content.into();
-    let response = llm.prompt(content).await.expect("Failed to prompt");
+    // let response = llm.prompt(content).await.expect("Failed to prompt");
+    let response = String::from("dummy");
     Ok(response)
 }
 
@@ -240,23 +247,31 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
 }
 
 #[cfg(feature = "ollama")]
-async fn query_ollama_ocr(config: &LLMConfig, ocr: &str) -> Result<String> {
+async fn query_ollama_ocr(
+    config: &LLMConfig,
+    ocr: &str,
+    context: &serde_json::Value,
+) -> Result<String> {
     let model = &config.model;
     log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let llm = client.agent(model).preamble(PREAMBLE).build();
-    log::debug!("Using preamble: {}", PREAMBLE);
-    let message = format!(
-        r#"The following content is a scanned receipt or invoice in Turkish read with OCR.
-
-{}
-
-Receipt content:
-{}
-"#,
-        FIELDS, ocr
+    let preamble = config
+        .preamble
+        .render(context)
+        .map_err(|e| format!("{}", e))?;
+    let llm = client.agent(model).preamble(&preamble).build();
+    log::debug!("Using preamble: {}", preamble);
+    let mut message_ctx = context.as_object().cloned().unwrap_or_default();
+    message_ctx.insert(
+        "ocr".to_string(),
+        serde_json::Value::String(ocr.to_string()),
     );
-    log::debug!("Sending message: {}", &message);
-    let response = llm.prompt(message).await.expect("Failed to prompt");
+    let message_ctx_value = serde_json::Value::Object(message_ctx);
+    let prompt = config
+        .prompt
+        .render(&message_ctx_value)
+        .map_err(|e| format!("{}", e))?;
+    log::debug!("Sending prompt: {}", &prompt);
+    let response = llm.prompt(prompt).await.expect("Failed to prompt");
     Ok(response)
 }

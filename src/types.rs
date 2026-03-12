@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
+use tera::{Context, Tera};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum OperationMode {
@@ -20,6 +21,44 @@ pub enum OperationMode {
     JustRun,
     #[default]
     CheckAndRun,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct TemplateString(String);
+
+impl TemplateString {
+    pub fn render(&self, context: &serde_json::Value) -> Result<String, tera::Error> {
+        let mut tera = Tera::default();
+        tera.add_raw_template("template", &self.0)?;
+        let ctx = Context::from_value(context.clone())?;
+        tera.render("template", &ctx)
+    }
+}
+
+impl From<String> for TemplateString {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
+impl From<&str> for TemplateString {
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}
+
+impl std::ops::Deref for TemplateString {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl AsRef<str> for TemplateString {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
