@@ -19,20 +19,20 @@ pub enum StorageDriver {
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum Processor {
-    Vision,
-    OCR,
     #[default]
     Manual,
+    OCR,
+    Vision,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum Extractor {
-    Vision,
-    LLM,
-    Regex,
     #[default]
     Manual,
+    LLM,
+    Regex,
+    Vision,
 }
 
 /// Ingest, process, store, analyze, and export receipts from raster scans to plain text accounting

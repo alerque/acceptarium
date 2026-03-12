@@ -9,7 +9,7 @@ use crate::{Extractor, Processor, Result, StorageDriver};
 
 use clap::ValueEnum;
 use config::Case;
-use config::{Config as LayeredConfig, Environment, File};
+use config::{Config as LayeredConfig, Environment, File, FileFormat};
 use convert_case::Casing;
 use log::LevelFilter;
 use serde::de::{self, Deserializer, Visitor};
@@ -56,24 +56,12 @@ where
     deserializer.deserialize_str(LevelFilterVisitor)
 }
 
-fn default_directory() -> PathBuf {
-    PathBuf::from("./acceptarium")
-}
-
-fn default_glob() -> GlobPattern {
-    GlobPattern::new("*.toml").unwrap()
-}
-
-fn default_verbosity() -> LevelFilter {
-    LevelFilter::Warn
-}
+const DEFAULTS_TOML: &str = include_str!("defaults.toml");
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct FilesystemConfig {
-    #[serde(default = "default_directory")]
     pub directory: PathBuf,
-    #[serde(default = "default_glob")]
     pub glob: GlobPattern,
     #[serde(default)]
     pub commit: bool,
@@ -88,42 +76,18 @@ pub struct FilesystemConfig {
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct GitAnnexConfig {
-    #[serde(default = "default_directory")]
     pub directory: PathBuf,
-}
-
-/* VISION MODEL NOTES
-    String::from("gemma3:27b") // some data, but many mistakes
-    String::from("granite3.2-vision:latest") // many fields wrong
-    String::from("llama3.2-vision") // good extraction, bogus json
-    String::from("qwen3.5:35b") // slow and best
-    String::from("qwen3.5:9b") // fast and pretty good
-
-    String::from("bakllava:7b") // summary of example with no json
-    String::from("deepseek-ocr:3b") // no results
-    String::from("gemma3:4b") // made up everything
-    String::from("gemma3n:e4b") // made up some, used example for some
-    String::from("glm-ocr:bf16") / used example
-*/
-fn default_vision_model() -> String {
-    String::from("qwen3.5:9b") // fast and pretty good
-}
-
-fn default_llm_model() -> String {
-    String::from("qwen3.5:9b")
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct VisionConfig {
-    #[serde(default = "default_vision_model")]
     pub model: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct LLMConfig {
-    #[serde(default = "default_llm_model")]
     pub model: String,
 }
 
@@ -131,10 +95,7 @@ pub struct LLMConfig {
 #[allow(unused)]
 pub struct Config {
     pub project: PathBuf,
-    #[serde(
-        default = "default_verbosity",
-        deserialize_with = "deserialize_level_filter"
-    )]
+    #[serde(deserialize_with = "deserialize_level_filter")]
     pub verbosity: LevelFilter,
     #[serde(rename(deserialize = "dry-run"))]
     pub dry_run: bool,
@@ -175,11 +136,7 @@ impl Config {
         // Setup default config values
         let mut builder = LayeredConfig::builder()
             .set_default("project", discovered_project.to_str().unwrap())?
-            .set_default("verbosity", "warn")?
-            .set_default("dry-run", false)?
-            .set_default("overwrite", false)?
-            .set_default("processor", "manual")?
-            .set_default("extractor", "manual")?;
+            .add_source(File::from_str(DEFAULTS_TOML, FileFormat::Toml).required(true));
         // Layer in project level or manually specified config file
         let project_config: Option<PathBuf> = args
             .config_file

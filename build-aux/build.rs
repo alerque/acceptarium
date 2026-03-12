@@ -37,6 +37,7 @@ fn main() -> AnyhowResult<()> {
         builder.add_instructions(&GixBuilder::all_git()?)?;
     }
     builder.emit()?;
+    println!("cargo:rerun-if-changed=src/defaults.toml");
     pass_on_configure_details();
     #[cfg(feature = "manpage")]
     generate_manpage();

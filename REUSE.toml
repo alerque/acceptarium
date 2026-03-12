@@ -20,6 +20,11 @@ SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
+path = ["src/defaults.toml"]
+SPDX-FileCopyrightText = "© 2026 Caleb Maclennan <caleb@alerque.com>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
 path = [
   ".cargo/config.toml",
   ".editorconfig",

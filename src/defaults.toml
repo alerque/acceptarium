@@ -1,0 +1,49 @@
+# off, error, warn, info, debug, or trace
+verbosity = "info"
+dry-run = false
+overwrite = false
+# filesystem, git-annex
+storage = "filesystem"
+# manual, ocr, vision
+processor = "manual"
+# manual, llm, regex, vision
+extractor = "manual"
+
+[filesystem]
+directory = "acceptarium"
+glob = "*.toml"
+copy = false
+rename = false
+track = false
+
+[git-annex]
+directory = "acceptarium"
+
+[vision]
+model = "qwen3.5:9b"
+
+## VISION MODEL NOTES
+## some data, but many mistakes
+# model = "gemma3:27b"
+## many fields wrong
+# model = "granite3.2-vision:latest"
+## good extraction, bogus json
+# model = "llama3.2-vision"
+## slow and best
+# model = "qwen3.5:35b"
+## fast and pretty good
+# model = "qwen3.5:9b"
+#
+## summary of example with no json
+# model = "bakllava:7b"
+## no results
+# model = "deepseek-ocr:3b"
+## made up everything
+# model = "gemma3:4b"
+## made up some, used example for some
+# model = "gemma3n:e4b"
+## used example
+# model = "glm-ocr:bf16"
+
+[llm]
+model = "qwen3.5:9b"

@@ -89,11 +89,11 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 #[derive(Clone, Debug)]
 pub struct GlobPattern(Pattern);
 
-impl GlobPattern {
-    pub fn new(pattern: &str) -> Result<Self> {
-        Ok(Self(Pattern::new(pattern)?))
-    }
-}
+// impl GlobPattern {
+//     pub fn new(pattern: &str) -> Result<Self> {
+//         Ok(Self(Pattern::new(pattern)?))
+//     }
+// }
 
 impl Default for GlobPattern {
     fn default() -> Self {

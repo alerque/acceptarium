@@ -17,6 +17,7 @@ acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.r
 acceptarium_SOURCES += src/process.rs src/run.rs src/status.rs
 acceptarium_SOURCES += src/storage.rs src/storage/filesystem.rs src/storage/git_annex.rs src/storage/git_tracker.rs
 acceptarium_SOURCES += src/ingestable.rs src/ingestable/local_file.rs
+acceptarium_SOURCES += src/defaults.toml
 EXTRA_acceptarium_SOURCES =
 EXTRA_DIST =
 dist_doc_DATA = README.md CHANGELOG.md
