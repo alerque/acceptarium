@@ -92,26 +92,25 @@ pub struct GitAnnexConfig {
     pub directory: PathBuf,
 }
 
+/* VISION MODEL NOTES
+    String::from("gemma3:27b") // some data, but many mistakes
+    String::from("granite3.2-vision:latest") // many fields wrong
+    String::from("llama3.2-vision") // good extraction, bogus json
+    String::from("qwen3.5:35b") // slow and best
+    String::from("qwen3.5:9b") // fast and pretty good
+
+    String::from("bakllava:7b") // summary of example with no json
+    String::from("deepseek-ocr:3b") // no results
+    String::from("gemma3:4b") // made up everything
+    String::from("gemma3n:e4b") // made up some, used example for some
+    String::from("glm-ocr:bf16") / used example
+*/
 fn default_vision_model() -> String {
-    String::from("qwen3.5:9b")
-    // String::from("bakllava:7b")
-    // String::from("gemma3:27b")
-    // String::from("gemma3:4b")
-    // String::from("glm-ocr:bf16")
-    // String::from("granite3.2-vision:latest")
-    // String::from("llama3.2-vision")
-    // String::from("qwen3.5:35b")
+    String::from("qwen3.5:9b") // fast and pretty good
 }
 
 fn default_llm_model() -> String {
     String::from("qwen3.5:9b")
-    // String::from("bakllava:7b")
-    // String::from("gemma3:27b")
-    // String::from("gemma3:4b")
-    // String::from("glm-ocr:bf16")
-    // String::from("granite3.2-vision:latest")
-    // String::from("llama3.2-vision")
-    // String::from("qwen3.5:35b")
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
