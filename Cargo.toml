@@ -117,6 +117,10 @@ version = "1.50"
 optional = true
 features = ["full"]
 
+[dependencies.tera]
+version = "1.0"
+default-features = false
+
 [build-dependencies]
 snafu = "0.9"
 
