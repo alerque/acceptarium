@@ -156,7 +156,7 @@ where
             Processor::Manual => unimplemented!(),
         };
         let transaction: Transaction = serde_json::from_str(&data)?;
-        dbg!(&transaction);
+        log::debug!("Saving transaction data: {:?}", transaction);
         asset.set_transaction(Some(transaction));
         storage.save(&asset)?;
         Ok(())
