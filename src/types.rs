@@ -29,10 +29,20 @@ pub struct TemplateString(String);
 
 impl TemplateString {
     pub fn render(&self, context: &serde_json::Value) -> Result<String, tera::Error> {
+        let mut template = String::new();
+        let mut output = self.0.clone();
+        let max_iterations = 10;
         let mut tera = Tera::default();
-        tera.add_raw_template("template", &self.0)?;
         let ctx = Context::from_value(context.clone())?;
-        tera.render("template", &ctx)
+        for i in 0..max_iterations {
+            log::info!("Rendering Tera template, pass {i}");
+            if output == template {
+                break;
+            }
+            template = output.clone();
+            output = tera.render_str(&template, &ctx)?;
+        }
+        Ok(output)
     }
 }
 

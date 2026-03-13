@@ -73,7 +73,7 @@ Look for and extract the following fields in the receipt:
 {{ config.extra.fields }}
 
 Return a JSON object with as many of those fields as were positively detected, for example:
-{{ config.extra.sample-json }}\
+{{ config.extra.sample_json }}\
 """
 fields = """
 - payee: The vendor or merchant name
@@ -86,7 +86,7 @@ fields = """
 - invoice_number: The invoice or receipt number if visible (can be null)
 - items: An array of items with description, quantity, and total amount for each line item\
 """
-sample-json = """
+sample_json = """
 {
   "payee": "Store Name",
   "date": "2024-01-15T14:30:00",

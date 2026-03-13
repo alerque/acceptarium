@@ -208,7 +208,6 @@ async fn query_ollama_vision(
         OneOrMany::many(content).expect("Unable to create user message");
     let content: Message = content.into();
     let response = llm.prompt(content).await.expect("Failed to prompt");
-    // let response = String::from("dummy");
     Ok(response)
 }
 
