@@ -5,7 +5,7 @@
 use crate::error::UnsupportedStorageSnafu;
 use crate::error::{AssetHashExistsSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
 use crate::ingestable::local_file::LocalFile;
-use crate::{AssetId, Storage};
+use crate::{AssetId, Assets, Storage};
 use crate::{Config, Error, OperationMode, Result, StorageDriver};
 
 use snafu::ensure;
@@ -45,15 +45,9 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-pub fn list(config: &Config, json: bool) -> Result<()> {
+pub fn list(config: &Config) -> Result<Assets> {
     let storage = instantiate_storage(config)?;
-    let assets = storage.list()?;
-    if json {
-        println!("{}", assets.to_json()?);
-    } else {
-        print!("{}", assets);
-    }
-    Ok(())
+    storage.list()
 }
 
 pub fn get<ID>(config: &Config, id: ID, key: &str) -> Result<()>

@@ -36,7 +36,15 @@ fn run(logger: LoggerHandle) -> Result<()> {
     log::debug!("Passing subcommand to matched handler");
     match Commands::from_arg_matches(&matches)? {
         Commands::Add { files, .. } => storage::add(&config, files),
-        Commands::List { json, .. } => storage::list(&config, json),
+        Commands::List { json, .. } => {
+            let assets = storage::list(&config)?;
+            if json {
+                println!("{}", assets.to_json()?);
+            } else {
+                print!("{}", assets);
+            }
+            Ok(())
+        }
         Commands::Process { id, .. } => process::process(&config, &id),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
