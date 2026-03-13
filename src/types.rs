@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::Config;
 use crate::error::Error;
 use crate::error::InvalidAssetIdSnafu;
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
@@ -9,7 +10,7 @@ use blake3::Hash as Blake3;
 use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value as SerializableValue};
+use serde_json::{Map, Value as SerializableValue, to_value};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
@@ -28,12 +29,13 @@ pub enum OperationMode {
 pub struct TemplateString(String);
 
 impl TemplateString {
-    pub fn render(&self, context: &SerializableValue) -> Result<String> {
+    pub fn render(&self, config: &Config, asset: &Asset) -> Result<String> {
         let mut template = String::new();
         let mut output = self.0.clone();
         let max_iterations = 10;
         let mut tera = Tera::default();
-        let ctx = Context::from_value(context.clone())?;
+        let context = build_context(config, asset)?;
+        let ctx = Context::from_value(context)?;
         for i in 0..max_iterations {
             log::info!("Rendering Tera template, pass {i}");
             if output == template {
@@ -46,30 +48,11 @@ impl TemplateString {
     }
 }
 
-impl From<String> for TemplateString {
-    fn from(s: String) -> Self {
-        Self(s)
-    }
-}
-
-impl From<&str> for TemplateString {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
-    }
-}
-
-impl std::ops::Deref for TemplateString {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl AsRef<str> for TemplateString {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
+fn build_context(config: &Config, asset: &Asset) -> Result<SerializableValue> {
+    let mut context = Map::new();
+    context.insert("config".to_string(), to_value(config)?);
+    context.insert("asset".to_string(), to_value(asset)?);
+    Ok(SerializableValue::Object(context))
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

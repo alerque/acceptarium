@@ -10,8 +10,6 @@ use crate::Extractor;
 use crate::Processor;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Transaction;
-#[cfg(feature = "ollama")]
-use crate::config::{LLMConfig, VisionConfig};
 #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
 use crate::error::FeatureNotEnabledSnafu;
 #[cfg(feature = "ollama")]
@@ -32,10 +30,6 @@ use rig::{
 #[cfg(feature = "ollama")]
 use snafu::OptionExt;
 
-#[cfg(feature = "ollama")]
-use serde_json::Value as SeriazizeableValue;
-#[cfg(feature = "ollama")]
-use serde_json::to_value;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use std::env::current_dir;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
@@ -78,17 +72,8 @@ where
                 return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
                 #[cfg(feature = "ollama")]
                 {
-                    let vision_config =
-                        config.vision.clone().context(MissingProcessorConfigSnafu {
-                            processor: "vision",
-                        })?;
                     println!("VISION MODEL RESULTS:");
-                    let context = build_context(config, &asset)?;
-                    let data = Runtime::new()?.block_on(query_ollama_vision(
-                        &vision_config,
-                        asset.clone(),
-                        &context,
-                    ))?;
+                    let data = Runtime::new()?.block_on(query_ollama_vision(config, &asset))?;
                     println!("{}", &data);
                     data
                 }
@@ -113,24 +98,9 @@ where
                             return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
                             #[cfg(feature = "ollama")]
                             {
-                                let llm_config = config
-                                    .llm
-                                    .clone()
-                                    .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
                                 println!("OCR DERIVED DATA:");
-                                let mut context = build_context(config, &asset)?;
-                                if let Some(obj) = context.as_object_mut() {
-                                    obj.get_mut("asset")
-                                        .and_then(|a| a.as_object_mut())
-                                        .map(|a| {
-                                            a.insert(
-                                                "ocr".to_string(),
-                                                SeriazizeableValue::String(ocr.clone()),
-                                            )
-                                        });
-                                }
-                                let data = Runtime::new()?
-                                    .block_on(query_ollama_ocr(&llm_config, &context))?;
+                                let data =
+                                    Runtime::new()?.block_on(query_ollama_ocr(config, &asset))?;
                                 println!("{}", &data);
                                 data
                             }
@@ -150,17 +120,16 @@ where
 }
 
 #[cfg(feature = "ollama")]
-async fn query_ollama_vision(
-    config: &VisionConfig,
-    asset: Asset,
-    context: &SeriazizeableValue,
-) -> Result<String> {
-    let model = &config.model;
+async fn query_ollama_vision(config: &Config, asset: &Asset) -> Result<String> {
+    let vision = config.vision.clone().context(MissingProcessorConfigSnafu {
+        processor: "vision",
+    })?;
+    let model = vision.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let preamble = config.preamble.render(context)?;
+    let preamble = vision.preamble.render(config, asset)?;
     log::debug!("Using preamble: {}", preamble);
     let llm = client.agent(model).preamble(&preamble).build();
     let image_bytes = read(&file)?;
@@ -181,7 +150,7 @@ async fn query_ollama_vision(
     log::debug!("Detected media type: {:?}", media_type);
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
-    let prompt = config.prompt.render(context)?;
+    let prompt = vision.prompt.render(config, asset)?;
     log::debug!("Sending prompt: {}", &prompt);
     let text_content = UserContent::text(&prompt);
     let content = vec![image_content, text_content];
@@ -226,28 +195,18 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
 }
 
 #[cfg(feature = "ollama")]
-async fn query_ollama_ocr(config: &LLMConfig, context: &SeriazizeableValue) -> Result<String> {
-    let model = &config.model;
-    log::info!("Creating LLM agent for model {}", model);
+async fn query_ollama_ocr(config: &Config, asset: &Asset) -> Result<String> {
+    let llm = config
+        .llm
+        .clone()
+        .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
+    log::info!("Creating LLM agent for model {}", &llm.model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let preamble = config.preamble.render(context)?;
-    let llm = client.agent(model).preamble(&preamble).build();
+    let preamble = llm.preamble.render(config, asset)?;
+    let agent = client.agent(llm.model).preamble(&preamble).build();
     log::debug!("Using preamble: {}", preamble);
-    let prompt = config.prompt.render(context)?;
+    let prompt = llm.prompt.render(config, asset)?;
     log::debug!("Sending prompt: {}", &prompt);
-    let response = llm.prompt(prompt).await.expect("Failed to prompt");
+    let response = agent.prompt(prompt).await.expect("Failed to prompt");
     Ok(response)
-}
-
-#[cfg(feature = "ollama")]
-fn build_context(config: &Config, asset: &Asset) -> Result<SeriazizeableValue> {
-    let mut context_map = serde_json::Map::new();
-    context_map.insert("config".to_string(), to_value(config)?);
-    context_map.insert(
-        "asset".to_string(),
-        serde_json::json!({
-            "id": asset.id().to_string(),
-        }),
-    );
-    Ok(SeriazizeableValue::Object(context_map))
 }
