@@ -18,6 +18,7 @@ use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
 use std::io::Error as IoError;
 use std::path::StripPrefixError;
+use tera::Error as TeraError;
 use toml::de::Error as DeserializeError;
 use toml::ser::Error as SerializeError;
 use which::Error as WhichError;
@@ -36,6 +37,9 @@ pub enum Error {
 
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
+
+    #[snafu(display("Tera error: {source}"))]
+    Tera { source: TeraError },
 
     #[snafu(display("Logger error: {source}"))]
     Logger { source: FlexiLoggerError },
@@ -143,6 +147,12 @@ impl From<SerdeJsonError> for Error {
 impl From<WhichError> for Error {
     fn from(source: WhichError) -> Self {
         Error::Which { source }
+    }
+}
+
+impl From<TeraError> for Error {
+    fn from(source: TeraError) -> Self {
+        Error::Tera { source }
     }
 }
 

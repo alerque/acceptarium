@@ -9,7 +9,7 @@ use blake3::Hash as Blake3;
 use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::{Map, Value as SerializableValue};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
@@ -28,7 +28,7 @@ pub enum OperationMode {
 pub struct TemplateString(String);
 
 impl TemplateString {
-    pub fn render(&self, context: &serde_json::Value) -> Result<String, tera::Error> {
+    pub fn render(&self, context: &SerializableValue) -> Result<String> {
         let mut template = String::new();
         let mut output = self.0.clone();
         let max_iterations = 10;
@@ -266,7 +266,7 @@ pub struct Asset {
     ocr: Option<String>,
     transaction: Option<Transaction>,
     #[serde(default)]
-    extra: Map<String, Value>,
+    extra: Map<String, SerializableValue>,
 }
 
 impl Asset {

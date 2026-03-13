@@ -33,6 +33,8 @@ use rig::{
 use snafu::OptionExt;
 
 #[cfg(feature = "ollama")]
+use serde_json::Value as SeriazizeableValue;
+#[cfg(feature = "ollama")]
 use serde_json::to_value;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use std::env::current_dir;
@@ -81,18 +83,7 @@ where
                             processor: "vision",
                         })?;
                     println!("VISION MODEL RESULTS:");
-                    let mut context_map = serde_json::Map::new();
-                    context_map.insert(
-                        "config".to_string(),
-                        to_value(config).map_err(|e| format!("{}", e))?,
-                    );
-                    context_map.insert(
-                        "asset".to_string(),
-                        serde_json::json!({
-                            "id": asset.id().to_string(),
-                        }),
-                    );
-                    let context = serde_json::Value::Object(context_map);
+                    let context = build_context(config, &asset)?;
                     let data = Runtime::new()?.block_on(query_ollama_vision(
                         &vision_config,
                         asset.clone(),
@@ -127,23 +118,19 @@ where
                                     .clone()
                                     .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
                                 println!("OCR DERIVED DATA:");
-                                let mut context_map = serde_json::Map::new();
-                                context_map.insert(
-                                    "config".to_string(),
-                                    to_value(config).map_err(|e| format!("{}", e))?,
-                                );
-                                context_map.insert(
-                                    "asset".to_string(),
-                                    serde_json::json!({
-                                        "id": asset.id().to_string(),
-                                    }),
-                                );
-                                let context = serde_json::Value::Object(context_map);
-                                let data = Runtime::new()?.block_on(query_ollama_ocr(
-                                    &llm_config,
-                                    ocr.as_str(),
-                                    &context,
-                                ))?;
+                                let mut context = build_context(config, &asset)?;
+                                if let Some(obj) = context.as_object_mut() {
+                                    obj.get_mut("asset")
+                                        .and_then(|a| a.as_object_mut())
+                                        .map(|a| {
+                                            a.insert(
+                                                "ocr".to_string(),
+                                                SeriazizeableValue::String(ocr.clone()),
+                                            )
+                                        });
+                                }
+                                let data = Runtime::new()?
+                                    .block_on(query_ollama_ocr(&llm_config, &context))?;
                                 println!("{}", &data);
                                 data
                             }
@@ -166,17 +153,14 @@ where
 async fn query_ollama_vision(
     config: &VisionConfig,
     asset: Asset,
-    context: &serde_json::Value,
+    context: &SeriazizeableValue,
 ) -> Result<String> {
     let model = &config.model;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let preamble = config
-        .preamble
-        .render(&context)
-        .map_err(|e| format!("{}", e))?;
+    let preamble = config.preamble.render(context)?;
     log::debug!("Using preamble: {}", preamble);
     let llm = client.agent(model).preamble(&preamble).build();
     let image_bytes = read(&file)?;
@@ -197,10 +181,7 @@ async fn query_ollama_vision(
     log::debug!("Detected media type: {:?}", media_type);
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
-    let prompt = config
-        .prompt
-        .render(&context)
-        .map_err(|e| format!("{}", e))?;
+    let prompt = config.prompt.render(context)?;
     log::debug!("Sending prompt: {}", &prompt);
     let text_content = UserContent::text(&prompt);
     let content = vec![image_content, text_content];
@@ -245,31 +226,28 @@ fn ocr_tesseract(asset: Asset) -> Result<String> {
 }
 
 #[cfg(feature = "ollama")]
-async fn query_ollama_ocr(
-    config: &LLMConfig,
-    ocr: &str,
-    context: &serde_json::Value,
-) -> Result<String> {
+async fn query_ollama_ocr(config: &LLMConfig, context: &SeriazizeableValue) -> Result<String> {
     let model = &config.model;
     log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
-    let preamble = config
-        .preamble
-        .render(context)
-        .map_err(|e| format!("{}", e))?;
+    let preamble = config.preamble.render(context)?;
     let llm = client.agent(model).preamble(&preamble).build();
     log::debug!("Using preamble: {}", preamble);
-    let mut message_ctx = context.as_object().cloned().unwrap_or_default();
-    message_ctx.insert(
-        "ocr".to_string(),
-        serde_json::Value::String(ocr.to_string()),
-    );
-    let message_ctx_value = serde_json::Value::Object(message_ctx);
-    let prompt = config
-        .prompt
-        .render(&message_ctx_value)
-        .map_err(|e| format!("{}", e))?;
+    let prompt = config.prompt.render(context)?;
     log::debug!("Sending prompt: {}", &prompt);
     let response = llm.prompt(prompt).await.expect("Failed to prompt");
     Ok(response)
+}
+
+#[cfg(feature = "ollama")]
+fn build_context(config: &Config, asset: &Asset) -> Result<SeriazizeableValue> {
+    let mut context_map = serde_json::Map::new();
+    context_map.insert("config".to_string(), to_value(config)?);
+    context_map.insert(
+        "asset".to_string(),
+        serde_json::json!({
+            "id": asset.id().to_string(),
+        }),
+    );
+    Ok(SeriazizeableValue::Object(context_map))
 }
