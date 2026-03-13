@@ -197,7 +197,6 @@ async fn query_ollama_vision(
     log::debug!("Detected media type: {:?}", media_type);
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
-    dbg!(&context);
     let prompt = config
         .prompt
         .render(&context)
@@ -208,8 +207,8 @@ async fn query_ollama_vision(
     let content: OneOrMany<UserContent> =
         OneOrMany::many(content).expect("Unable to create user message");
     let content: Message = content.into();
-    // let response = llm.prompt(content).await.expect("Failed to prompt");
-    let response = String::from("dummy");
+    let response = llm.prompt(content).await.expect("Failed to prompt");
+    // let response = String::from("dummy");
     Ok(response)
 }
 

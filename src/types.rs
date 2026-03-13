@@ -9,6 +9,7 @@ use blake3::Hash as Blake3;
 use glob::Pattern;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
@@ -254,6 +255,8 @@ pub struct Asset {
     blake3: Option<Blake3Sum>,
     ocr: Option<String>,
     transaction: Option<Transaction>,
+    #[serde(default)]
+    extra: Map<String, Value>,
 }
 
 impl Asset {
@@ -272,6 +275,7 @@ impl Asset {
             blake3,
             ocr: None,
             transaction: None,
+            extra: Map::new(),
         })
     }
     pub fn id(&self) -> &AssetId {

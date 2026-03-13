@@ -14,7 +14,7 @@ use convert_case::Casing;
 use log::LevelFilter;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, to_value};
+use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
 
 use std::env;
@@ -84,7 +84,6 @@ pub struct GitAnnexConfig {
 pub struct VisionConfig {
     pub model: String,
     pub preamble: TemplateString,
-    pub fields: TemplateString,
     pub prompt: TemplateString,
 }
 
@@ -93,7 +92,6 @@ pub struct VisionConfig {
 pub struct LLMConfig {
     pub model: String,
     pub preamble: TemplateString,
-    pub fields: TemplateString,
     pub prompt: TemplateString,
 }
 
@@ -120,6 +118,7 @@ pub struct Config {
     pub(crate) git_annex: Option<GitAnnexConfig>,
     pub(crate) vision: Option<VisionConfig>,
     pub(crate) llm: Option<LLMConfig>,
+    pub extra: Map<String, Value>,
 }
 
 impl Config {

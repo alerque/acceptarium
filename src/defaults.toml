@@ -25,37 +25,9 @@ preamble = """
 You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
 Always respond with valid JSON only, no additional text.\
 """
-fields = """
-Look for and extract the following fields in the receipt:
-- payee: The vendor or merchant name
-- date: The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available
-- total: The total amount as a number (without currency symbols)
-- currency: The currency used a it's ISO code, for example "TRY" or "USD"
-- payment_type: The payment method used - "cash", "card", or "other"
-- payment_identifier: The last 4 digits of card or other identifier if visible (can be null)
-- category: "receipt" or "invoice" depending on document type
-- invoice_number: The invoice or receipt number if visible (can be null)
-- items: An array of items with description, quantity, and total amount for each line item
+prompt = """The attached image is a scanned receipt or invoice in {{ config.extra.language }}.
 
-Return a JSON object with as many of those fields as were positively detected, for example:
-{
-  "payee": "Store Name",
-  "date": "2024-01-15T14:30:00",
-  "total": 125.50,
-  "currency": "TRY",
-  "payment_type": "card",
-  "payment_identifier": "**** **** **** 1234",
-  "category": "receipt",
-  "invoice_number": "A12345",
-  "items": [
-    {"description": "Item 1", "quantity": 1, "amount": 50.00},
-    {"description": "Item 2", "quantity": 2, "amount": 37.75}
-  ]
-}
-"""
-prompt = """The attached image is a scanned receipt or invoice in Turkish.
-
-{{ config.vision.fields }}
+{{ config.extra.prompt }}
 """
 
 ## VISION MODEL NOTES
@@ -87,8 +59,23 @@ preamble = """
 You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
 Always respond with valid JSON only, no additional text.\
 """
-fields = """
+prompt = """The following content is a scanned receipt or invoice in {{ config.extra.language }} read with OCR.
+
+{{ config.extra.prompt }}
+
+Receipt content:
+{{ asset.ocr }}\
+"""
+
+[extra]
+prompt = """
 Look for and extract the following fields in the receipt:
+{{ config.extra.fields }}
+
+Return a JSON object with as many of those fields as were positively detected, for example:
+{{ config.extra.sample-json }}\
+"""
+fields = """
 - payee: The vendor or merchant name
 - date: The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available
 - total: The total amount as a number (without currency symbols)
@@ -97,9 +84,9 @@ Look for and extract the following fields in the receipt:
 - payment_identifier: The last 4 digits of card or other identifier if visible (can be null)
 - category: "receipt" or "invoice" depending on document type
 - invoice_number: The invoice or receipt number if visible (can be null)
-- items: An array of items with description, quantity, and total amount for each line item
-
-Return a JSON object with as many of those fields as were positively detected, for example:
+- items: An array of items with description, quantity, and total amount for each line item\
+"""
+sample-json = """
 {
   "payee": "Store Name",
   "date": "2024-01-15T14:30:00",
@@ -113,12 +100,6 @@ Return a JSON object with as many of those fields as were positively detected, f
     {"description": "Item 1", "quantity": 1, "amount": 50.00},
     {"description": "Item 2", "quantity": 2, "amount": 37.75}
   ]
-}
+}\
 """
-prompt = """The following content is a scanned receipt or invoice in Turkish read with OCR.
-
-{{ config.vision.fields }}
-
-Receipt content:
-{{ asset.ocr }}
-"""
+language = "Turkish"
