@@ -92,13 +92,13 @@ language = "Turkish"
 
 [[extra.fields]]
 key = "payee"
-desc = "The vendor or merchant name"
+desc = "The vendor, merchant, or payee name, prefering the common business name over corporate divisions"
 sample = "My Store Name"
 
 [[extra.fields]]
 key = "date"
-desc = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available"
-sample = "2024-01-15T14:30:00"
+desc = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if the transaction time can be determined"
+sample = 2024-01-15T14:30:00
 
 [[extra.fields]]
 key = "type"
@@ -107,27 +107,27 @@ sample = "receipt"
 
 [[extra.fields]]
 key = "invoice_number"
-desc = "The receipt or invoice number if visible (can be null)"
+desc = "A receipt or invoice number if visible (can be null) that would uniquely identify the transaction to the merchant"
 sample = "A000012345"
 
 [[extra.fields]]
 key = "items"
-desc = "An array of items with description, quantity, and total amount for each line item"
+desc = "An array of items with description, quantity, and total amount (as a number) for each line item"
 sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
 
 [[extra.fields]]
 key = "total"
-desc = "The total amount as a number (without currency symbols)"
+desc = "The final total amount with all items, taxes, discounts, fees, etc. as a number without currency symbols"
 sample = 125.50
 
 [[extra.fields]]
 key = "currency"
-desc = "The currency used a it's ISO code, for example 'TRY' or 'USD'"
+desc = "The currency used as its ISO code, for example 'TRY' or 'USD'"
 sample = "TRY"
 
 [[extra.fields]]
 key = "payment_type"
-desc = "The payment method used - 'cash', 'card', or 'other'"
+desc = "The payment method used - 'cash', 'credit', 'debt', 'check', or 'other'"
 sample = "card"
 
 [[extra.fields]]
