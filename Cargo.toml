@@ -120,6 +120,7 @@ features = ["full"]
 [dependencies.tera]
 version = "1.0"
 default-features = false
+features = ["builtins", "preserve_order"]
 
 [build-dependencies]
 snafu = "0.9"

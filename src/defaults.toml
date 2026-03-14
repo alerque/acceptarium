@@ -20,7 +20,7 @@ track = false
 directory = "acceptarium"
 
 [vision]
-model = "qwen3.5:9b"
+model = "{{ config.extra.model }}"
 preamble = """
 You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
 Always respond with valid JSON only, no additional text.\
@@ -30,31 +30,8 @@ prompt = """The attached image is a scanned receipt or invoice in {{ config.extr
 {{ config.extra.prompt }}
 """
 
-## VISION MODEL NOTES
-## some data, but many mistakes
-# model = "gemma3:27b"
-## many fields wrong
-# model = "granite3.2-vision:latest"
-## good extraction, bogus json
-# model = "llama3.2-vision"
-## slow and best
-# model = "qwen3.5:35b"
-## fast and pretty good
-# model = "qwen3.5:9b"
-#
-## summary of example with no json
-# model = "bakllava:7b"
-## no results
-# model = "deepseek-ocr:3b"
-## made up everything
-# model = "gemma3:4b"
-## made up some, used example for some
-# model = "gemma3n:e4b"
-## used example
-# model = "glm-ocr:bf16"
-
 [llm]
-model = "qwen3.5:9b"
+model = "{{ config.extra.model }}"
 preamble = """
 You are a data extraction agent that analyzes scanned receipts and derives structured transaction data.
 Always respond with valid JSON only, no additional text.\
@@ -68,38 +45,102 @@ Receipt content:
 """
 
 [extra]
+## some data, but many mistakes
+# model = "gemma3:27b"
+## many fields wrong
+# model = "granite3.2-vision:latest"
+## good extraction, bogus json
+# model = "llama3.2-vision"
+## slow and best
+# model = "qwen3.5:35b"
+## fast and pretty good
+model = "qwen3.5:9b"
+
+## summary of example with no json
+# model = "bakllava:7b"
+## no results
+# model = "deepseek-ocr:3b"
+## made up everything
+# model = "gemma3:4b"
+## made up some, used example for some
+# model = "gemma3n:e4b"
+## used example
+# model = "glm-ocr:bf16"
+
 prompt = """
 Look for and extract the following fields in the receipt:
-{{ config.extra.fields }}
+{{ config.extra.field_descriptions }}
 
 Return a JSON object with as many of those fields as were positively detected, for example:
 {{ config.extra.sample_json }}\
 """
-fields = """
-- payee: The vendor or merchant name
-- date: The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available
-- total: The total amount as a number (without currency symbols)
-- currency: The currency used a it's ISO code, for example "TRY" or "USD"
-- payment_type: The payment method used - "cash", "card", or "other"
-- payment_identifier: The last 4 digits of card or other identifier if visible (can be null)
-- category: "receipt" or "invoice" depending on document type
-- invoice_number: The invoice or receipt number if visible (can be null)
-- items: An array of items with description, quantity, and total amount for each line item\
+field_descriptions = """
+{% for field in config.extra.fields -%}
+- **{{ field.key }}**: {{ field.desc }}
+{% endfor -%}
 """
+# Note when Tera 2 is released we should be able to directly encode the map we want and json_encode it
 sample_json = """
 {
-  "payee": "Store Name",
-  "date": "2024-01-15T14:30:00",
-  "total": 125.50,
-  "currency": "TRY",
-  "payment_type": "card",
-  "payment_identifier": "**** **** **** 1234",
-  "category": "receipt",
-  "invoice_number": "A12345",
-  "items": [
-    {"description": "Item 1", "quantity": 1, "amount": 50.00},
-    {"description": "Item 2", "quantity": 2, "amount": 37.75}
-  ]
-}\
+{% for field in config.extra.fields -%}
+  "{{ field.key }}": {{ field.sample | json_encode(pretty=true) | safe }}
+{%- if not loop.last -%},{%- endif %}
+{% endfor -%}
+}
 """
 language = "Turkish"
+
+[[extra.fields]]
+key = "payee"
+desc = "The vendor or merchant name"
+sample = "My Store Name"
+
+[[extra.fields]]
+key = "date"
+desc = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if available"
+sample = "2024-01-15T14:30:00"
+
+[[extra.fields]]
+key = "type"
+desc = "The financial document type, most likely 'receipt' or 'invoice'"
+sample = "receipt"
+
+[[extra.fields]]
+key = "invoice_number"
+desc = "The receipt or invoice number if visible (can be null)"
+sample = "A000012345"
+
+[[extra.fields]]
+key = "items"
+desc = "An array of items with description, quantity, and total amount for each line item"
+sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
+
+[[extra.fields]]
+key = "total"
+desc = "The total amount as a number (without currency symbols)"
+sample = 125.50
+
+[[extra.fields]]
+key = "currency"
+desc = "The currency used a it's ISO code, for example 'TRY' or 'USD'"
+sample = "TRY"
+
+[[extra.fields]]
+key = "payment_type"
+desc = "The payment method used - 'cash', 'card', or 'other'"
+sample = "card"
+
+[[extra.fields]]
+key = "payment_identifier"
+desc = "The last 4 digits of card or other identifier if visible (can be null)"
+sample = "**** **** **** 1234"
+
+[[extra.items]]
+description = "Item A"
+quantity = 1
+ammount = 50.00
+
+[[extra.items]]
+description = "Thing B"
+quantity = 2
+ammount = 37.75
