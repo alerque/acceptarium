@@ -111,6 +111,7 @@ pub struct Config {
     #[serde(default)]
     pub extractor: Extractor,
     pub format: LedgerFormat,
+    pub template: TemplateString,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.

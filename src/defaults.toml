@@ -10,6 +10,7 @@ processor = "manual"
 extractor = "manual"
 # hledger, ledger-cli, beancount, csv, json
 format = "hledger"
+template = "{{ config.extra.templates[config.format] }}"
 
 [filesystem]
 directory = "acceptarium"
@@ -91,6 +92,15 @@ sample_json = """
 }
 """
 language = "Turkish"
+
+[extra.templates]
+hledger = """
+{{ asset.transaction.date }} ({{ asset.transaction.invoice_number }}) {{ asset.transaction.payee }}
+{%- for posting in asset.transaction.items %}
+  dst  {{ posting.quantity }} @@ {{ posting.amount }}  ; {{ posting.description }}
+{%- endfor %}
+  src  {{ asset.transaction.total }}  ; type:{{ asset.transaction.payment_type }}, {{ asset.transaction.payment_identifier }}
+"""
 
 [[extra.fields]]
 key = "payee"
