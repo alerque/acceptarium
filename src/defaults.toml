@@ -92,7 +92,7 @@ language = "Turkish"
 
 [[extra.fields]]
 key = "payee"
-desc = "The vendor, merchant, or payee name, prefering the common business name over corporate divisions"
+desc = "The vendor, merchant, or payee name, preferring the common business name over corporate divisions"
 sample = "My Store Name"
 
 [[extra.fields]]
@@ -138,9 +138,9 @@ sample = "**** **** **** 1234"
 [[extra.items]]
 description = "Item A"
 quantity = 1
-ammount = 50.00
+amount = 50.00
 
 [[extra.items]]
 description = "Thing B"
 quantity = 2
-ammount = 37.75
+amount = 37.75
