@@ -10,6 +10,7 @@ mod error;
 mod types;
 
 // Public modules
+pub mod export;
 pub mod ingestable;
 pub mod process;
 pub mod run;
@@ -22,6 +23,7 @@ pub mod cli;
 
 // Public structs
 pub use cli::Extractor;
+pub use cli::LedgerFormat;
 pub use cli::Processor;
 pub use cli::StorageDriver;
 pub use config::Config;

@@ -5,7 +5,7 @@ use crate::cli::{Cli, Commands};
 use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
-use crate::{Extractor, Processor, Result, StorageDriver};
+use crate::{Extractor, LedgerFormat, Processor, Result, StorageDriver};
 
 use clap::ValueEnum;
 use config::Case;
@@ -110,6 +110,7 @@ pub struct Config {
     pub processor: Processor,
     #[serde(default)]
     pub extractor: Extractor,
+    pub format: LedgerFormat,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.
@@ -226,6 +227,12 @@ impl Config {
                 if let Some(val) = extractor {
                     let val: String = val.to_possible_value().unwrap().get_name().into();
                     builder = builder.set_override("extractor", val)?;
+                }
+            }
+            Commands::Export { format, .. } => {
+                if let Some(val) = format {
+                    let val: String = val.to_possible_value().unwrap().get_name().into();
+                    builder = builder.set_override("format", val)?;
                 }
             }
             Commands::Get { .. } => {}

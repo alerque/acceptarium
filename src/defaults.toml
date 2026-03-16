@@ -8,6 +8,8 @@ storage = "filesystem"
 processor = "manual"
 # manual, llm, regex, vision
 extractor = "manual"
+# hledger, ledger-cli, beancount, csv, json
+format = "hledger"
 
 [filesystem]
 directory = "acceptarium"

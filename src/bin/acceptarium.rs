@@ -3,7 +3,7 @@
 
 use acceptarium::cli::{Cli, Commands, STYLES};
 use acceptarium::{Config, Result};
-use acceptarium::{process, run, status, storage};
+use acceptarium::{export, process, run, status, storage};
 
 use clap::{CommandFactory, FromArgMatches};
 use flexi_logger::{Logger, LoggerHandle};
@@ -46,6 +46,7 @@ fn run(logger: LoggerHandle) -> Result<()> {
             Ok(())
         }
         Commands::Process { id, .. } => process::process(&config, &id),
+        Commands::Export { id, .. } => export::run(&config, &id),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
         Commands::Remove { id, .. } => storage::remove(&config, &id),

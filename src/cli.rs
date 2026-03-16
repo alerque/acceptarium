@@ -35,6 +35,18 @@ pub enum Extractor {
     Vision,
 }
 
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum LedgerFormat {
+    #[default]
+    HLedger,
+    #[serde(rename = "ledger-cli")]
+    LedgerCli,
+    BeanCount,
+    CSV,
+    JSON,
+}
+
 /// Ingest, process, store, analyze, and export receipts from raster scans to plain text accounting
 /// tools.
 #[derive(Parser, Debug)]
@@ -131,6 +143,16 @@ pub enum Commands {
         /// Choose a specific data extractor
         #[clap(short, long)]
         extractor: Option<Extractor>,
+    },
+
+    /// Output an asset to a PTA format
+    Export {
+        /// ID of asset to export
+        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
+        id: String,
+
+        /// Ledger format to target
+        format: Option<LedgerFormat>,
     },
 
     /// Get metadata for a specific asset by ID
