@@ -49,8 +49,8 @@ Receipt content:
 # model = "gemma3:27b"
 ## many fields wrong
 # model = "granite3.2-vision:latest"
-## good extraction, bogus json
-# model = "llama3.2-vision"
+## solid results at medium speed, line items for tax entries, sometimes bogus json
+# model = "llama3.2-vision:11b"
 ## slow and best
 # model = "qwen3.5:35b"
 ## fast and pretty good
