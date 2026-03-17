@@ -1,7 +1,14 @@
-
+[env]
 # Since autotools sets these and we are *not* forcing them here, this will not
 # affect release builds. It will affect `cargo run`, `cargo clippy` and others
 # making it easier to test locally since resources other than the main binary
 # will be relative to the current sources.
-[env]
+CONFIGURE_PREFIX = { value = "", relative = true }
+CONFIGURE_BINDIR = { value = "", relative = true }
 CONFIGURE_DATADIR = { value = "", relative = true }
+
+# The rig crate requires reqwest, reqwest with the rusttls featule uses the
+# aws-lc-sys library, which in turn does not build with LTO enabled inside a
+# chroot because it tries to derive jitter from low level CPU access. We don't
+# need it so avoid downstream packagers having to discover and solve this wrinkle.
+AWS_LC_SYS_NO_JITTER_ENTROPY = { value = "1" }
