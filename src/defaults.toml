@@ -95,11 +95,15 @@ language = "Turkish"
 
 [extra.templates]
 hledger = """
-{{ asset.transaction.datetime }} ({{ asset.transaction.invoice_number }}) {{ asset.transaction.payee }}
+{{- asset.transaction.datetime | date(format="%Y-%m-%d") }}
+{{- " (" ~ asset.id }}{% if asset.transaction.invoice_number %}{{ "|" ~ asset.transaction.invoice_number }}{% endif %})
+{{- " " }}{{ asset.transaction.payee | default(value="Unknown") }}
+{%- if asset.transaction.items %}
 {%- for posting in asset.transaction.items %}
-  dst  {{ posting.quantity }} @@ {{ posting.amount }}  ; {{ posting.description }}
+    dst          {{ posting.quantity | default(value=1)}} @@ {{ posting.amount | default(value=0) }}  ; {{ posting.description | default(value="") }}
 {%- endfor %}
-  src  {{ asset.transaction.total }}  ; type:{{ asset.transaction.payment_type }}, {{ asset.transaction.payment_identifier }}
+{%- endif %}
+    src          {{ asset.transaction.total | default(value=0) }}  ; type:{{ asset.transaction.payment_type | default(value="") }}, {{ asset.transaction.payment_identifier | default(value="") }}
 """
 
 [[extra.fields]]
