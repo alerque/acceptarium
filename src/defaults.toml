@@ -95,7 +95,7 @@ language = "Turkish"
 
 [extra.templates]
 hledger = """
-{{ asset.transaction.date }} ({{ asset.transaction.invoice_number }}) {{ asset.transaction.payee }}
+{{ asset.transaction.datetime }} ({{ asset.transaction.invoice_number }}) {{ asset.transaction.payee }}
 {%- for posting in asset.transaction.items %}
   dst  {{ posting.quantity }} @@ {{ posting.amount }}  ; {{ posting.description }}
 {%- endfor %}
@@ -108,7 +108,7 @@ desc = "The vendor, merchant, or payee name, preferring the common business name
 sample = "My Store Name"
 
 [[extra.fields]]
-key = "date"
+key = "datetime"
 desc = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if the transaction time can be determined"
 sample = 2024-01-15T14:30:00
 
