@@ -368,6 +368,45 @@ impl Asset {
             _ => {}
         }
     }
+
+    #[cfg(feature = "git-annex")]
+    pub fn from_annex_metadata_json(json: &str) -> Result<Self> {
+        #[derive(Deserialize)]
+        struct AnnexMetadata {
+            fields: Map<String, SerializableValue>,
+        }
+        let annex: AnnexMetadata = serde_json::from_str(json)?;
+        let prefix = format!("{}.", ANNEX_META_PREFIX);
+        // Build a JSON object from the prefixed fields
+        let mut asset_obj = serde_json::Map::new();
+        for (key, values) in annex.fields {
+            // Handle OCR special case (no prefix)
+            if key == "ocr" {
+                if let Some(arr) = values.as_array()
+                    && let Some(first) = arr.first()
+                {
+                    asset_obj.insert(key, first.clone());
+                }
+                continue;
+            }
+            // Only process keys with our prefix
+            if !key.starts_with(&prefix) {
+                continue;
+            }
+            let local_key = &key[prefix.len()..];
+            // Extract first value from array (git-annex stores values as arrays)
+            let value = if let Some(arr) = values.as_array() {
+                arr.first().cloned().unwrap_or(serde_json::Value::Null)
+            } else {
+                values
+            };
+            // Reconstruct nested structure from dotted keys
+            insert_nested_value(&mut asset_obj, local_key, value);
+        }
+        // Deserialize the reconstructed object
+        let asset: Asset = serde_json::from_value(serde_json::Value::Object(asset_obj))?;
+        Ok(asset)
+    }
 }
 
 impl Display for Asset {
@@ -419,5 +458,61 @@ impl Display for Assets {
             writeln!(f, "{}", asset)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(feature = "git-annex")]
+fn insert_nested_value(
+    obj: &mut serde_json::Map<String, serde_json::Value>,
+    key: &str,
+    value: serde_json::Value,
+) {
+    let numeric_fields = ["total", "quantity", "amount"];
+    let value = if let Some(s) = value.as_str() {
+        if numeric_fields.iter().any(|&field| key.ends_with(field)) {
+            s.parse::<f64>()
+                .map(|n| serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap()))
+                .unwrap_or(value)
+        } else {
+            value
+        }
+    } else {
+        value
+    };
+    if let Some(dot_pos) = key.find('.') {
+        let (first, rest) = key.split_at(dot_pos);
+        let rest = &rest[1..]; // skip the dot
+        let nested = obj
+            .entry(first.to_string())
+            .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+        if let Some(nested_obj) = nested.as_object_mut() {
+            insert_nested_value(nested_obj, rest, value);
+        }
+    } else if key.contains(|c: char| c.is_ascii_digit() && key.contains('_')) {
+        // Handle array items like "items0_description"
+        if let Some(underscore_pos) = key.rfind('_') {
+            let (array_part, field) = key.split_at(underscore_pos);
+            let field = &field[1..]; // skip underscore
+            // Extract array name and index
+            let idx_start = array_part
+                .chars()
+                .position(|c| c.is_ascii_digit())
+                .unwrap_or(0);
+            let array_name = &array_part[..idx_start];
+            let idx: usize = array_part[idx_start..].parse().unwrap_or(0);
+            let arr = obj
+                .entry(array_name.to_string())
+                .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+            if let Some(arr_vec) = arr.as_array_mut() {
+                while arr_vec.len() <= idx {
+                    arr_vec.push(serde_json::Value::Object(serde_json::Map::new()));
+                }
+                if let Some(item_obj) = arr_vec[idx].as_object_mut() {
+                    item_obj.insert(field.to_string(), value);
+                }
+            }
+        }
+    } else {
+        obj.insert(key.to_string(), value);
     }
 }
