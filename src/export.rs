@@ -18,7 +18,11 @@ where
     log::debug!("Attempting to format {} with as {:?}", &asset.id(), &format);
     match format {
         LedgerFormat::HLedger => {
-            log::debug!("Using template {:?}", &config.template);
+            log::debug!(
+                "Using template {:?} for format {:?}",
+                &config.template,
+                &config.format
+            );
             let transaction = config.template.render(config, &asset)?;
             println!("{transaction}");
         }

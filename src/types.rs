@@ -35,16 +35,17 @@ impl TemplateString {
     pub fn render(&self, config: &Config, asset: &Asset) -> Result<String> {
         let mut template = String::new();
         let mut output = self.0.clone();
+        log::info!("Rendering template {} for asset {}", &output, &asset);
         let max_iterations = 10;
         let mut tera = Tera::default();
         let context = build_context(config, asset)?;
         let ctx = Context::from_value(context)?;
         for i in 0..max_iterations {
-            log::info!("Rendering Tera template, pass {i}");
             if output == template {
                 break;
             }
             template = output.clone();
+            log::debug!("Rendering Tera pass {i} template: {}", &template);
             output = tera.render_str(&template, &ctx)?;
         }
         Ok(output)
