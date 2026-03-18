@@ -58,7 +58,6 @@ fn build_context(config: &Config, asset: &Asset) -> Result<SerializableValue> {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Transaction {
     pub payee: Option<String>,
-    pub date: Option<String>,
     pub datetime: Option<String>,
     pub total: Option<f64>,
     pub payment_type: Option<String>,
