@@ -1,5 +1,5 @@
 # off, error, warn, info, debug, or trace
-verbosity = "info"
+verbosity = "warn"
 dry-run = false
 overwrite = false
 # filesystem, git-annex

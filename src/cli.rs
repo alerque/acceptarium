@@ -3,7 +3,7 @@
 
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Parser, Subcommand, ValueEnum};
-use clap_verbosity_flag::Verbosity;
+use clap_verbosity_flag::{Verbosity, WarnLevel};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -53,7 +53,7 @@ pub enum LedgerFormat {
 #[clap(author, bin_name = "acceptarium")]
 pub struct Cli {
     #[command(flatten)]
-    pub verbosity: Verbosity,
+    pub verbosity: Verbosity<WarnLevel>,
 
     /// Run actions in dry run mode that checks everything but makes no changes
     #[clap(short = 'n', long, action = clap::ArgAction::SetTrue, overrides_with("no_dry_run"))]
