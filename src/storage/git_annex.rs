@@ -239,12 +239,32 @@ impl Storage for GitAnnexStorage {
         Ok(assets)
     }
 
-    fn load(&self, _id: AssetId) -> Result<Asset> {
-        unimplemented!("git-annex storage driver is not implemented yet")
+    fn load(&self, id: AssetId) -> Result<Asset> {
+        let args: Vec<String> = vec![
+            "--json".to_string(),
+            "--metadata".to_string(),
+            format!("acceptarium.id={}", id),
+        ];
+        let output = self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
+        Asset::from_annex_metadata_json(&output)
     }
 
-    fn get(&self, _id: AssetId, _key: &str) -> Result<String> {
-        unimplemented!("git-annex storage driver is not implemented yet")
+    fn get(&self, id: AssetId, key: &str) -> Result<String> {
+        let asset = self.load(id)?;
+        let value = match key {
+            "id" => asset.id().to_string(),
+            "asset_path" => asset
+                .asset_path(&self.project_dir)
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default(),
+            "source_fname" => asset
+                .source_fname()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default(),
+            "blake3" => asset.blake3().map(|h| h.to_string()).unwrap_or_default(),
+            _ => UnknownMetaKeySnafu { key }.fail()?,
+        };
+        Ok(value)
     }
 
     fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
@@ -270,7 +290,19 @@ impl Storage for GitAnnexStorage {
         Ok(())
     }
 
-    fn remove(&self, _id: AssetId) -> Result<()> {
-        unimplemented!("git-annex storage driver is not implemented yet")
+    fn remove(&self, id: AssetId) -> Result<()> {
+        self.ensure_staging_empty()?;
+        let asset = self.load(id.clone())?;
+        if let Some(asset_path) = asset.asset_path(&self.project_dir)
+            && asset_path.exists()
+        {
+            log::info!("Removing asset file {:?}", &asset_path);
+            std::fs::remove_file(&asset_path)?;
+            self.stage_paths(&[asset_path])?;
+        }
+        if self.commit {
+            self.commit_staged("Remove asset(s)")?;
+        }
+        Ok(())
     }
 }
