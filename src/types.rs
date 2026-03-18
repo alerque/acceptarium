@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+#[cfg(feature = "git-annex")]
+use crate::ANNEX_META_PREFIX;
 use crate::Config;
+
 use crate::error::Error;
 use crate::error::InvalidAssetIdSnafu;
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
@@ -308,6 +311,62 @@ impl Asset {
     }
     pub fn set_transaction(&mut self, transaction: Option<Transaction>) {
         self.transaction = transaction;
+    }
+
+    #[cfg(feature = "git-annex")]
+    pub fn to_annex_metadata(&self) -> Vec<String> {
+        let mut result = Vec::new();
+        let p = format!("{}.", ANNEX_META_PREFIX);
+        if let Ok(value) = serde_json::to_value(self)
+            && let Some(obj) = value.as_object()
+        {
+            for (key, val) in obj {
+                if key == "extra" {
+                    continue;
+                }
+                self.append_metadata(&mut result, &p, key, val);
+            }
+        }
+        result
+    }
+
+    #[cfg(feature = "git-annex")]
+    fn append_metadata(
+        &self,
+        result: &mut Vec<String>,
+        prefix: &str,
+        key: &str,
+        value: &serde_json::Value,
+    ) {
+        match value {
+            serde_json::Value::Null => {}
+            serde_json::Value::String(s) => {
+                let field_key = if key == "ocr" {
+                    key.to_string()
+                } else {
+                    format!("{}{}", prefix, key)
+                };
+                result.push(format!("{}={}", field_key, s));
+            }
+            serde_json::Value::Number(n) => {
+                result.push(format!("{}{}={}", prefix, key, n));
+            }
+            serde_json::Value::Object(obj) => {
+                for (k, v) in obj {
+                    self.append_metadata(result, prefix, &format!("{}.{}", key, k), v);
+                }
+            }
+            serde_json::Value::Array(arr) => {
+                for (i, item) in arr.iter().enumerate() {
+                    if let Some(obj) = item.as_object() {
+                        for (k, v) in obj {
+                            self.append_metadata(result, prefix, &format!("{}{}_{}", key, i, k), v);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }
 

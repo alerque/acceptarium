@@ -68,6 +68,9 @@ const ASSET_ID_CHARS: [char; 62] = [
     'V', 'W', 'X', 'Y', 'Z',
 ];
 
+#[cfg(feature = "git-annex")]
+const ANNEX_META_PREFIX: &str = "acceptarium";
+
 // Make up for clap not having a way to negate flags with None being a possible state
 // c.f. https://github.com/clap-rs/clap/issues/815
 pub(crate) fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {

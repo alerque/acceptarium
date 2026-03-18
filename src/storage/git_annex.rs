@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::config::Config;
-use crate::error::{AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
+use crate::error::{
+    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, UnknownMetaKeySnafu,
+};
 use crate::storage::git_tracker::GitTracker;
 use crate::storage::{data_is_in_project, data_is_writable, is_in_project};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
+use blake3::Hash as Blake3;
 use derive_more::Debug;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
@@ -32,6 +35,7 @@ pub struct GitAnnexStorage {
 #[serde(rename_all = "lowercase")]
 enum AnnexCommand {
     Add,
+    Metadata,
 }
 
 impl From<AnnexCommand> for OsString {
@@ -96,6 +100,21 @@ impl GitAnnexStorage {
             .build());
         }
         Ok(stdout)
+    }
+
+    fn set_asset_metadata(&self, asset: &Asset) -> Result<()> {
+        let kvpairs = asset.to_annex_metadata();
+        let mut args: Vec<OsString> = kvpairs
+            .iter()
+            .flat_map(|kv| [OsString::from("-s"), OsString::from(kv)])
+            .collect();
+        let asset_path = asset
+            .asset_path(&self.project_dir)
+            .ok_or("Asset has no asset path")?;
+        args.insert(0, "--remove-all".into());
+        args.insert(0, asset_path.into());
+        self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
+        Ok(())
     }
 }
 
@@ -183,8 +202,10 @@ impl Storage for GitAnnexStorage {
                 );
             }
             self.stage_paths(&to_stage)?;
-            // TODO: set metadata for staged asset
-            // TODO: implement commit
+            self.set_asset_metadata(&asset)?;
+            if self.commit {
+                self.commit_staged("Track new asset(s)")?;
+            }
         }
         Ok(asset)
     }
@@ -201,12 +222,27 @@ impl Storage for GitAnnexStorage {
         unimplemented!("git-annex storage driver is not implemented yet")
     }
 
-    fn set(&self, _id: AssetId, _key: &str, _value: &str) -> Result<()> {
-        unimplemented!("git-annex storage driver is not implemented yet")
+    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
+        let mut asset = self.load(id.clone())?;
+        match key {
+            "asset_path" => {
+                asset.set_asset_path(Some(Path::new(value)));
+            }
+            "source_fname" => {
+                asset.set_source_fname(Some(Path::new(value)));
+            }
+            "blake3" => {
+                asset.set_blake3(Some(Blake3::from_hex(value).expect("bad hash").into()));
+            }
+            _ => return UnknownMetaKeySnafu { key }.fail(),
+        }
+        self.save(&asset)?;
+        Ok(())
     }
 
-    fn save(&self, _asset: &Asset) -> Result<()> {
-        unimplemented!("git-annex storage driver is not implemented yet")
+    fn save(&self, asset: &Asset) -> Result<()> {
+        self.set_asset_metadata(asset)?;
+        Ok(())
     }
 
     fn remove(&self, _id: AssetId) -> Result<()> {
