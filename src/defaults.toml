@@ -130,7 +130,12 @@ sample = "A000012345"
 
 [[extra.fields]]
 key = "items"
-desc = "An array of items with description, quantity, and total amount (as a number) for each line item"
+desc = """
+An array of items with description, quantity, and total amount (as a number) for each line item. \
+Note many line items will not have a quantity at all, in which case leave this blank. \
+Many lines will have a % number that is a tax rate or tax amount. \
+Do not mistake percentages or currency amounts that might be tax values as this quantity field.\
+"""
 sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
 
 [[extra.fields]]
@@ -140,7 +145,11 @@ sample = 125.50
 
 [[extra.fields]]
 key = "currency"
-desc = "The currency used as its ISO code, for example 'TRY' or 'USD'. If not explicitly noted, use the business name or address to guess the country's default currency (e.g. the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD)."
+desc = """
+The currency used as its ISO code, for example 'TRY' or 'USD'. \
+If not explicitly noted, use the business name or address to guess the country's default currency. \
+For exampl the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD.\
+"""
 sample = "USD"
 
 [[extra.fields]]
