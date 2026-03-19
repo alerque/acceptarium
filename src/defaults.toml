@@ -100,12 +100,12 @@ hledger = """
 {{- " (" ~ asset.id }}{% if asset.transaction.invoice_number %}{{ "|" ~ asset.transaction.invoice_number }}{% endif %})
 {{- " " }}{{ asset.transaction.payee | default(value="Unknown") }}  ; acceptarium:{{ asset.id }}
 {%- if not asset.transaction.items %}
-    Expenses:Unknown          -{{ asset.transaction.total | default(value=0) }}  {{ asset.transaction.currency | default(value="") }}
+    Expenses:Unknown           {{ asset.transaction.total | default(value=0) }}  {{ asset.transaction.currency | default(value="") }}
 {%- endif %}
 {%- for posting in asset.transaction.items | default(value=[]) %}
     Expenses:Unknown           {{ posting.quantity | default(value=1) }} @@ {{ posting.amount | default(value=0) }} {{ asset.transaction.currency | default(value="") }} ; {{ posting.description | default(value="") }}
 {%- endfor %}
-    Assets:Unknown             {{ asset.transaction.total | default(value=0) }} {{ asset.transaction.currency | default(value="") }} ; type:{{ asset.transaction.payment_type | default(value="") }}, payment_identifier:{{ asset.transaction.payment_identifier | default(value="") }}
+    Assets:Unknown            -{{ asset.transaction.total | default(value=0) }} {{ asset.transaction.currency | default(value="") }} ; type:{{ asset.transaction.payment_type | default(value="") }}, payment_identifier:{{ asset.transaction.payment_identifier | default(value="") }}
 """
 
 [[extra.fields]]
