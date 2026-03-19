@@ -140,8 +140,8 @@ sample = 125.50
 
 [[extra.fields]]
 key = "currency"
-desc = "The currency used as its ISO code, for example 'TRY' or 'USD'"
-sample = "TRY"
+desc = "The currency used as its ISO code, for example 'TRY' or 'USD'. If not explicitly noted, use the business name or address to guess the country's default currency (e.g. the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD)."
+sample = "USD"
 
 [[extra.fields]]
 key = "payment_type"
