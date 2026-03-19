@@ -36,8 +36,14 @@ fn run(logger: LoggerHandle) -> Result<()> {
     log::debug!("Passing subcommand to matched handler");
     match Commands::from_arg_matches(&matches)? {
         Commands::Add { files, .. } => storage::add(&config, files),
-        Commands::List { json, .. } => {
-            let assets = storage::list(&config)?;
+        Commands::List {
+            json,
+            all,
+            unprocessed,
+            ids,
+            ..
+        } => {
+            let assets = storage::list(&config, all, unprocessed, ids.as_deref())?;
             if json {
                 println!("{}", assets.to_json()?);
             } else {
@@ -51,7 +57,12 @@ fn run(logger: LoggerHandle) -> Result<()> {
             ids,
             ..
         } => process::process(&config, all, unprocessed, ids.as_deref()),
-        Commands::Export { all, ids, .. } => export::run(&config, all, ids.as_deref()),
+        Commands::Export {
+            all,
+            unprocessed,
+            ids,
+            ..
+        } => export::run(&config, all, unprocessed, ids.as_deref()),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
         Commands::Remove { id, .. } => storage::remove(&config, &id),

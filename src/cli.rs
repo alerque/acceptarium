@@ -135,6 +135,18 @@ pub enum Commands {
         /// Output assets as JSON
         #[clap(short, long)]
         json: bool,
+
+        /// List all assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        all: bool,
+
+        /// List unprocessed assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        unprocessed: bool,
+
+        /// IDs of assets to list
+        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
+        ids: Option<Vec<String>>,
     },
 
     /// Process an asset to extract data
@@ -170,8 +182,12 @@ pub enum Commands {
         #[clap(short, long, action = clap::ArgAction::SetTrue)]
         all: bool,
 
+        /// Export all unprocessed assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        unprocessed: bool,
+
         /// Asset ID(s) to export
-        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present = "all", num_args(1..))]
+        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
         ids: Option<Vec<String>>,
     },
 

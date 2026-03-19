@@ -452,6 +452,31 @@ impl Assets {
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string_pretty(&self.inner)
     }
+
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&AssetId, &Asset) -> bool,
+    {
+        self.inner.retain(|id, asset| f(id, asset))
+    }
+}
+
+impl IntoIterator for Assets {
+    type Item = Asset;
+    type IntoIter = std::collections::hash_map::IntoValues<AssetId, Asset>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_values()
+    }
+}
+
+impl<'a> IntoIterator for &'a Assets {
+    type Item = (&'a AssetId, &'a Asset);
+    type IntoIter = std::collections::hash_map::Iter<'a, AssetId, Asset>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.iter()
+    }
 }
 
 impl Display for Assets {

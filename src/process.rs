@@ -3,7 +3,6 @@
 
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Asset;
-use crate::AssetId;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Extractor;
 #[cfg(feature = "ollama")]
@@ -14,7 +13,7 @@ use crate::Transaction;
 use crate::error::FeatureNotEnabledSnafu;
 #[cfg(feature = "ollama")]
 use crate::error::MissingProcessorConfigSnafu;
-use crate::{Config, Error, Result};
+use crate::{AssetId, Config, Error, Result};
 
 #[cfg(feature = "ollama")]
 use base64::engine::{Engine as _, general_purpose};
@@ -55,39 +54,12 @@ where
     .fail();
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
     {
-        use crate::Assets;
         use crate::error::AssetProcessedSnafu;
+        use crate::storage;
         use crate::storage::instantiate_storage;
         use snafu::ensure;
-        let storage = instantiate_storage(config)?;
-        let assets = if all {
-            storage.list()?
-        } else if unprocessed {
-            let all_assets = storage.list()?;
-            let mut assets = Assets::new();
-            for (_, asset) in all_assets.iter() {
-                let asset = asset.clone();
-                if asset.transaction().is_some() {
-                    continue;
-                }
-                assets.add(asset.clone());
-            }
-            assets
-        } else {
-            let mut assets = Assets::new();
-            if let Some(ids) = ids {
-                for id in ids {
-                    let asset_id: AssetId = id.try_into()?;
-                    let asset = storage.load(asset_id)?;
-                    if unprocessed && asset.transaction().is_some() {
-                        continue;
-                    }
-                    assets.add(asset);
-                }
-            }
-            assets
-        };
-        for (_, asset) in assets.iter() {
+        let assets = storage::list(config, all, unprocessed, ids)?;
+        for (_, asset) in &assets {
             let mut asset = asset.clone();
             log::info!("Processing asset {}", &asset.id());
             let has_existing = asset.transaction().is_some();
@@ -142,6 +114,7 @@ where
             let transaction: Transaction = serde_json::from_str(&data)?;
             log::debug!("Saving transaction data: {:?}", transaction);
             asset.set_transaction(Some(transaction));
+            let storage = instantiate_storage(config)?;
             storage.save(&asset)?;
         }
         Ok(())
