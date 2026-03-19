@@ -34,6 +34,7 @@ path = [
   "Justfile",
   "deny.toml",
   "rust-toolchain",
+  ".bacon-socket",
 ]
 SPDX-FileCopyrightText = "© 2023 Caleb Maclennan <caleb@alerque.com>"
 SPDX-License-Identifier = "0BSD"

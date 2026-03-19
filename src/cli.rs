@@ -9,6 +9,7 @@ use clap_verbosity_flag::{Verbosity, WarnLevel};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::PathBuf;
+use types::AssetId;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
@@ -254,7 +255,7 @@ pub struct AssetSelectors {
 
     /// Operate on a list of asset ID(s)
     #[clap(value_hint = Unknown, num_args(1..))]
-    pub ids: Option<Vec<String>>,
+    pub ids: Option<Vec<AssetId>>,
 }
 
 pub const STYLES: Styles = Styles::styled()
@@ -265,3 +266,108 @@ pub const STYLES: Styles = Styles::styled()
     .error(AnsiColor::BrightRed.on_default().bold())
     .valid(AnsiColor::BrightGreen.on_default().bold())
     .invalid(AnsiColor::BrightYellow.on_default().bold());
+
+pub mod types {
+    #[cfg(build)]
+    include!("../src/error.rs");
+
+    #[cfg(not(build))]
+    use crate::error::InvalidAssetIdSnafu;
+    #[cfg(not(build))]
+    use crate::{Error, Result};
+    #[cfg(not(build))]
+    use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
+    #[cfg(not(build))]
+    use crate::{Error, Result};
+    #[cfg(not(build))]
+    use crate::{Error, Result};
+
+    use nanoid::nanoid;
+    use serde::{Deserialize, Serialize};
+    use std::convert::TryFrom;
+    use std::fmt::{Debug, Display};
+
+    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+    pub struct AssetId(String);
+
+    impl AssetId {
+        pub fn new() -> Self {
+            let id = nanoid!(ASSET_ID_LEN, &ASSET_ID_CHARS);
+            Self(id.to_string())
+        }
+
+        pub fn parse(s: &str) -> Result<Self> {
+            if s.len() != ASSET_ID_LEN {
+                return InvalidAssetIdSnafu {
+                    message: format!("Asset ID must be exactly {} characters", ASSET_ID_LEN),
+                }
+                .fail();
+            }
+            if !s.chars().all(|c| ASSET_ID_CHARS.contains(&c)) {
+                return InvalidAssetIdSnafu {
+                    message: "Asset ID must only contain alphanumeric characters".to_string(),
+                }
+                .fail();
+            }
+            Ok(Self(s.to_string()))
+        }
+    }
+
+    impl Default for AssetId {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
+    impl Display for AssetId {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+
+    impl Serialize for AssetId {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            serializer.serialize_str(&self.0)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for AssetId {
+        fn deserialize<D>(deserializer: D) -> Result<AssetId, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let s = String::deserialize(deserializer)?;
+            AssetId::parse(&s).map_err(serde::de::Error::custom)
+        }
+    }
+
+    impl TryFrom<String> for AssetId {
+        type Error = Error;
+        fn try_from(s: String) -> Result<Self> {
+            Self::parse(&s)
+        }
+    }
+
+    impl TryFrom<&String> for AssetId {
+        type Error = Error;
+        fn try_from(s: &String) -> Result<Self> {
+            Self::parse(s)
+        }
+    }
+
+    impl From<AssetId> for String {
+        fn from(id: AssetId) -> Self {
+            id.0
+        }
+    }
+
+    impl std::str::FromStr for AssetId {
+        type Err = Error;
+        fn from_str(s: &str) -> Result<Self> {
+            Self::parse(s)
+        }
+    }
+}

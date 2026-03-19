@@ -36,7 +36,6 @@ pub use cli::StorageDriver;
 pub use config::Config;
 pub use error::Error;
 pub use types::Asset;
-pub use types::AssetId;
 pub use types::Assets;
 pub use types::Blake3Sum;
 pub use types::OperationMode;

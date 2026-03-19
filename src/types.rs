@@ -6,19 +6,17 @@ use crate::ANNEX_META_PREFIX;
 use crate::Config;
 
 use crate::error::Error;
-use crate::error::InvalidAssetIdSnafu;
-use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 
 use blake3::Hash as Blake3;
 use glob::Pattern;
-use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as SerializableValue, to_value};
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
+
+pub use crate::AssetId;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum OperationMode {
@@ -164,83 +162,6 @@ impl<'de> Deserialize<'de> for GlobPattern {
         Pattern::new(&s)
             .map(GlobPattern)
             .map_err(|e| serde::de::Error::custom(e.to_string()))
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct AssetId(String);
-
-impl AssetId {
-    pub fn new() -> Self {
-        let id = nanoid!(ASSET_ID_LEN, &ASSET_ID_CHARS);
-        Self(id.to_string())
-    }
-
-    pub fn parse(s: &str) -> Result<Self> {
-        if s.len() != ASSET_ID_LEN {
-            return InvalidAssetIdSnafu {
-                message: format!("Asset ID must be exactly {} characters", ASSET_ID_LEN),
-            }
-            .fail();
-        }
-        if !s.chars().all(|c| ASSET_ID_CHARS.contains(&c)) {
-            return InvalidAssetIdSnafu {
-                message: "Asset ID must only contain alphanumeric characters".to_string(),
-            }
-            .fail();
-        }
-        Ok(Self(s.to_string()))
-    }
-}
-
-impl Default for AssetId {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Display for AssetId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Serialize for AssetId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for AssetId {
-    fn deserialize<D>(deserializer: D) -> Result<AssetId, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        AssetId::parse(&s).map_err(serde::de::Error::custom)
-    }
-}
-
-impl TryFrom<String> for AssetId {
-    type Error = Error;
-    fn try_from(s: String) -> Result<Self> {
-        Self::parse(&s)
-    }
-}
-
-impl TryFrom<&String> for AssetId {
-    type Error = Error;
-    fn try_from(s: &String) -> Result<Self> {
-        Self::parse(s)
-    }
-}
-
-impl From<AssetId> for String {
-    fn from(id: AssetId) -> Self {
-        id.0
     }
 }
 
