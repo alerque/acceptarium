@@ -139,9 +139,13 @@ pub enum Commands {
 
     /// Process an asset to extract data
     Process {
-        /// IDs of assets to process
-        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
-        ids: Vec<String>,
+        /// Process all assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        all: bool,
+
+        /// Process all unprocessed assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        unprocessed: bool,
 
         /// Choose a specific image processor
         #[clap(short, long)]
@@ -150,6 +154,10 @@ pub enum Commands {
         /// Choose a specific data extractor
         #[clap(short, long)]
         extractor: Option<Extractor>,
+
+        /// IDs of assets to proces
+        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
+        ids: Option<Vec<String>>,
     },
 
     /// Output an asset to a PTA format
@@ -158,7 +166,7 @@ pub enum Commands {
         #[clap(short, long)]
         format: Option<LedgerFormat>,
 
-        /// Export all known assets
+        /// Export all assets
         #[clap(short, long, action = clap::ArgAction::SetTrue)]
         all: bool,
 

@@ -39,7 +39,7 @@ use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process<ID>(config: &Config, ids: &Vec<ID>) -> Result<()>
+pub fn process<ID>(config: &Config, all: bool, unprocessed: bool, ids: Option<&[ID]>) -> Result<()>
 where
     for<'a> &'a ID: TryInto<AssetId>,
     for<'a> Error: From<<&'a ID as TryInto<AssetId>>::Error>,
@@ -55,17 +55,40 @@ where
     .fail();
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
     {
+        use crate::Assets;
         use crate::error::AssetProcessedSnafu;
         use crate::storage::instantiate_storage;
         use snafu::ensure;
         let storage = instantiate_storage(config)?;
-        let mut assets = Vec::new();
-        for id in ids {
-            let asset_id: AssetId = id.try_into()?;
-            let asset = storage.load(asset_id)?;
-            assets.push(asset);
-        }
-        for mut asset in assets {
+        let assets = if all {
+            storage.list()?
+        } else if unprocessed {
+            let all_assets = storage.list()?;
+            let mut assets = Assets::new();
+            for (_, asset) in all_assets.iter() {
+                let asset = asset.clone();
+                if asset.transaction().is_some() {
+                    continue;
+                }
+                assets.add(asset.clone());
+            }
+            assets
+        } else {
+            let mut assets = Assets::new();
+            if let Some(ids) = ids {
+                for id in ids {
+                    let asset_id: AssetId = id.try_into()?;
+                    let asset = storage.load(asset_id)?;
+                    if unprocessed && asset.transaction().is_some() {
+                        continue;
+                    }
+                    assets.add(asset);
+                }
+            }
+            assets
+        };
+        for (_, asset) in assets.iter() {
+            let mut asset = asset.clone();
             log::info!("Processing asset {}", &asset.id());
             let has_existing = asset.transaction().is_some();
             log::debug!("Checking for previously processed: {has_existing}");

@@ -45,7 +45,12 @@ fn run(logger: LoggerHandle) -> Result<()> {
             }
             Ok(())
         }
-        Commands::Process { ids, .. } => process::process(&config, &ids),
+        Commands::Process {
+            all,
+            unprocessed,
+            ids,
+            ..
+        } => process::process(&config, all, unprocessed, ids.as_deref()),
         Commands::Export { all, ids, .. } => export::run(&config, all, ids.as_deref()),
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
