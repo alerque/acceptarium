@@ -319,10 +319,15 @@ impl Storage for FilesystemStorage {
         Ok(())
     }
 
-    fn is_clean(&self) -> Result<()> {
+    fn is_clean(&self, dirty: &bool) -> Result<()> {
         #[cfg(feature = "git")]
         if self.track {
-            return self.ensure_staging_empty();
+            let cleanish = self.ensure_staging_empty();
+            if *dirty && cleanish.is_err() {
+                log::warn!("Operating on dirty repository");
+                return Ok(());
+            }
+            return cleanish;
         }
         Ok(())
     }

@@ -1,6 +1,7 @@
 # off, error, warn, info, debug, or trace
 verbosity = "warn"
 dry-run = false
+dirty = false
 overwrite = false
 # filesystem, git-annex
 storage = "filesystem"

@@ -20,7 +20,7 @@ pub mod git_tracker;
 
 pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
-    storage.is_clean()?;
+    storage.is_clean(&config.dirty)?;
     let ingestables: Vec<_> = sources
         .iter()
         .map(|source| LocalFile::from_path(source.as_path()))

@@ -51,7 +51,7 @@ pub trait Storage {
     fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()>;
     fn save(&self, asset: &Asset) -> Result<()>;
     fn remove(&self, id: AssetId) -> Result<()>;
-    fn is_clean(&self) -> Result<()>;
+    fn is_clean(&self, diry: &bool) -> Result<()>;
 }
 
 pub trait Ingestable: Send {

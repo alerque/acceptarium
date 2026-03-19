@@ -62,6 +62,13 @@ pub struct Cli {
     #[clap(long = "no-dry-run", action = clap::ArgAction::SetFalse, hide = true)]
     pub no_dry_run: Option<bool>,
 
+    /// Allow changing Git state even when repository is dirty
+    #[clap(short = 'd', long, action = clap::ArgAction::SetTrue, overrides_with("no_dirty"))]
+    pub dirty: Option<bool>,
+
+    #[clap(long, action = clap::ArgAction::SetFalse, hide = true)]
+    pub no_dirty: Option<bool>,
+
     /// Overwrite existing extracted transaction data
     #[clap(long, action = clap::ArgAction::SetTrue, overrides_with("no_overwrite"))]
     pub overwrite: Option<bool>,

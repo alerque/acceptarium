@@ -304,7 +304,12 @@ impl Storage for GitAnnexStorage {
         Ok(())
     }
 
-    fn is_clean(&self) -> Result<()> {
-        self.ensure_staging_empty()
+    fn is_clean(&self, dirty: &bool) -> Result<()> {
+        let cleanish = self.ensure_staging_empty();
+        if *dirty && cleanish.is_err() {
+            log::warn!("Operating on dirty repository");
+            return Ok(());
+        }
+        cleanish
     }
 }

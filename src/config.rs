@@ -109,6 +109,7 @@ pub struct Config {
     pub verbosity: LevelFilter,
     #[serde(rename(deserialize = "dry-run"))]
     pub dry_run: bool,
+    pub dirty: bool,
     pub overwrite: bool,
     #[serde(rename(deserialize = "config-file"))]
     pub config_file: Option<PathBuf>,
@@ -189,6 +190,9 @@ impl Config {
         }
         if let Some(val) = deboolify(args.dry_run, args.no_dry_run) {
             builder = builder.set_override("dry-run", val)?;
+        }
+        if let Some(val) = deboolify(args.dirty, args.no_dirty) {
+            builder = builder.set_override("dirty", val)?;
         }
         if let Some(val) = deboolify(args.overwrite, args.no_overwrite) {
             builder = builder.set_override("overwrite", val)?;
