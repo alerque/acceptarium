@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use acceptarium::cli::{Cli, Commands, STYLES};
+use acceptarium::storage::instantiate_storage;
 use acceptarium::{Config, Result};
 use acceptarium::{export, process, run, status, storage};
 
@@ -34,16 +35,13 @@ fn run(logger: LoggerHandle) -> Result<()> {
     logger.set_new_spec(config.verbosity.into());
     log::debug!("Completed config: {:?}", &config);
     log::debug!("Passing subcommand to matched handler");
+    let storage = instantiate_storage(&config)?;
     match Commands::from_arg_matches(&matches)? {
         Commands::Add { files, .. } => storage::add(&config, files),
         Commands::List {
-            json,
-            all,
-            unprocessed,
-            ids,
-            ..
+            json, selectors, ..
         } => {
-            let assets = storage::list(&config, all, unprocessed, ids.as_deref())?;
+            let assets = storage.select(&selectors)?;
             if json {
                 println!("{}", assets.to_json()?);
             } else {
@@ -51,21 +49,20 @@ fn run(logger: LoggerHandle) -> Result<()> {
             }
             Ok(())
         }
-        Commands::Process {
-            all,
-            unprocessed,
-            ids,
-            ..
-        } => process::process(&config, all, unprocessed, ids.as_deref()),
-        Commands::Export {
-            all,
-            unprocessed,
-            ids,
-            ..
-        } => export::run(&config, all, unprocessed, ids.as_deref()),
+        Commands::Process { selectors, .. } => {
+            let assets = storage.select(&selectors)?;
+            process::process(&config, assets)
+        }
+        Commands::Export { selectors, .. } => {
+            let assets = storage.select(&selectors)?;
+            export::run(&config, assets)
+        }
         Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
-        Commands::Remove { id, .. } => storage::remove(&config, &id),
+        Commands::Remove { selectors } => {
+            let assets = storage.select(&selectors)?;
+            storage::remove(&config, assets)
+        }
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),
         Commands::External(mut args) => {

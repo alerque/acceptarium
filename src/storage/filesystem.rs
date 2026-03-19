@@ -200,7 +200,7 @@ impl Storage for FilesystemStorage {
     }
 
     fn list(&self) -> Result<Assets> {
-        log::info!("Listing known assets");
+        log::info!("Listing all assets");
         let matcher = self.data_dir.join(&self.glob_pattern);
         let entries: Vec<PathBuf> = glob(matcher.to_str().context(NonUnicodePathSnafu)?)?
             .flatten()

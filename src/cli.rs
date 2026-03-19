@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use clap::builder::styling::{AnsiColor, Styles};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_verbosity_flag::{Verbosity, WarnLevel};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
@@ -136,29 +136,12 @@ pub enum Commands {
         #[clap(short, long)]
         json: bool,
 
-        /// List all assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        all: bool,
-
-        /// List unprocessed assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        unprocessed: bool,
-
-        /// IDs of assets to list
-        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
-        ids: Option<Vec<String>>,
+        #[command(flatten)]
+        selectors: AssetSelectors,
     },
 
     /// Process an asset to extract data
     Process {
-        /// Process all assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        all: bool,
-
-        /// Process all unprocessed assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        unprocessed: bool,
-
         /// Choose a specific image processor
         #[clap(short, long)]
         processor: Option<Processor>,
@@ -167,9 +150,8 @@ pub enum Commands {
         #[clap(short, long)]
         extractor: Option<Extractor>,
 
-        /// IDs of assets to process
-        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
-        ids: Option<Vec<String>>,
+        #[command(flatten)]
+        selectors: AssetSelectors,
     },
 
     /// Output an asset to a PTA format
@@ -178,17 +160,8 @@ pub enum Commands {
         #[clap(short, long)]
         format: Option<LedgerFormat>,
 
-        /// Export all assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        all: bool,
-
-        /// Export all unprocessed assets
-        #[clap(short, long, action = clap::ArgAction::SetTrue)]
-        unprocessed: bool,
-
-        /// Asset ID(s) to export
-        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
-        ids: Option<Vec<String>>,
+        #[command(flatten)]
+        selectors: AssetSelectors,
     },
 
     /// Get metadata for a specific asset by ID
@@ -214,9 +187,8 @@ pub enum Commands {
 
     /// Remove an asset and its metadata
     Remove {
-        /// ID of asset to remove
-        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
-        id: String,
+        #[command(flatten)]
+        selectors: AssetSelectors,
     },
 
     /// Execute a script as a child process that inherits Acceptarium environment
@@ -236,6 +208,23 @@ pub enum Commands {
     /// Run a custom command script
     #[clap(external_subcommand)]
     External(Vec<OsString>),
+}
+
+/// Asset selector arguments
+#[derive(Args, Debug)]
+#[group()]
+pub struct AssetSelectors {
+    /// Operate on all known assets
+    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    pub all: bool,
+
+    /// Operate on assets that have not been marked as processed
+    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    pub unprocessed: bool,
+
+    /// Operate on a list of asset ID(s)
+    #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
+    pub ids: Option<Vec<String>>,
 }
 
 pub const STYLES: Styles = Styles::styled()

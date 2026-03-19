@@ -46,33 +46,6 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-pub fn list<ID>(config: &Config, all: bool, unprocessed: bool, ids: Option<&[ID]>) -> Result<Assets>
-where
-    for<'a> &'a ID: TryInto<AssetId>,
-    for<'a> Error: From<<&'a ID as TryInto<AssetId>>::Error>,
-{
-    let storage = instantiate_storage(config)?;
-    if all {
-        let mut assets = storage.list()?;
-        if unprocessed {
-            assets.retain(|_, asset| asset.transaction().is_none());
-        }
-        return Ok(assets);
-    }
-    let mut assets = Assets::new();
-    if let Some(ids) = ids {
-        for id in ids {
-            let asset_id: AssetId = id.try_into()?;
-            let asset = storage.load(asset_id)?;
-            if unprocessed && asset.transaction().is_some() {
-                continue;
-            }
-            assets.add(asset);
-        }
-    }
-    Ok(assets)
-}
-
 pub fn get<ID>(config: &Config, id: ID, key: &str) -> Result<()>
 where
     ID: TryInto<AssetId>,
@@ -98,20 +71,19 @@ where
     Ok(())
 }
 
-pub fn remove<ID>(config: &Config, id: ID) -> Result<()>
-where
-    ID: TryInto<AssetId>,
-    Error: From<ID::Error>,
-{
+pub fn remove(config: &Config, assets: Assets) -> Result<()> {
     let storage = instantiate_storage(config)?;
     storage.is_clean(&config.dirty)?;
-    let asset_id: AssetId = id.try_into()?;
-    storage.remove(asset_id.clone())?;
-    println!("Removed asset {}", asset_id);
+    for (_, asset) in &assets {
+        let id = asset.id().clone();
+        println!("Removed asset {}", &id);
+        storage.remove(id)?;
+    }
     Ok(())
 }
 
-pub(crate) fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
+pub fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
+    log::debug!("Selecting and initializing storage backend");
     match config.storage {
         Some(StorageDriver::Filesystem) => filesystem::FilesystemStorage::init(config),
         #[cfg(feature = "git-annex")]

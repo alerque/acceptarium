@@ -13,7 +13,7 @@ use crate::Transaction;
 use crate::error::FeatureNotEnabledSnafu;
 #[cfg(feature = "ollama")]
 use crate::error::MissingProcessorConfigSnafu;
-use crate::{AssetId, Config, Error, Result};
+use crate::{Assets, Config, Result};
 
 #[cfg(feature = "ollama")]
 use base64::engine::{Engine as _, general_purpose};
@@ -38,11 +38,7 @@ use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process<ID>(config: &Config, all: bool, unprocessed: bool, ids: Option<&[ID]>) -> Result<()>
-where
-    for<'a> &'a ID: TryInto<AssetId>,
-    for<'a> Error: From<<&'a ID as TryInto<AssetId>>::Error>,
-{
+pub fn process(config: &Config, assets: Assets) -> Result<()> {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
     return {
         let _ = config;
@@ -55,10 +51,8 @@ where
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
     {
         use crate::error::AssetProcessedSnafu;
-        use crate::storage;
         use crate::storage::instantiate_storage;
         use snafu::ensure;
-        let assets = storage::list(config, all, unprocessed, ids)?;
         for (_, asset) in &assets {
             let mut asset = asset.clone();
             log::info!("Processing asset {}", &asset.id());

@@ -22,6 +22,7 @@ pub mod storage;
 pub mod cli;
 
 // Public structs
+pub use cli::AssetSelectors;
 pub use cli::Extractor;
 pub use cli::LedgerFormat;
 pub use cli::Processor;
@@ -52,6 +53,27 @@ pub trait Storage {
     fn save(&self, asset: &Asset) -> Result<()>;
     fn remove(&self, id: AssetId) -> Result<()>;
     fn is_clean(&self, diry: &bool) -> Result<()>;
+
+    fn select(&self, selectors: &AssetSelectors) -> Result<Assets> {
+        let assets = if selectors.all {
+            self.list()?
+        } else if selectors.unprocessed {
+            let mut assets = self.list()?;
+            assets.retain(|_, asset| asset.transaction().is_none());
+            assets
+        } else {
+            let mut assets = Assets::new();
+            if let Some(ids) = &selectors.ids {
+                for id in ids {
+                    let asset_id: AssetId = id.try_into()?;
+                    let asset = self.load(asset_id)?;
+                    assets.add(asset);
+                }
+            }
+            assets
+        };
+        Ok(assets)
+    }
 }
 
 pub trait Ingestable: Send {
