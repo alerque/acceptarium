@@ -39,10 +39,10 @@ use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process<ID>(config: &Config, id: ID) -> Result<()>
+pub fn process<ID>(config: &Config, ids: &Vec<ID>) -> Result<()>
 where
-    ID: TryInto<AssetId>,
-    Error: From<ID::Error>,
+    for<'a> &'a ID: TryInto<AssetId>,
+    for<'a> Error: From<<&'a ID as TryInto<AssetId>>::Error>,
 {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
     return {
@@ -59,62 +59,68 @@ where
         use crate::storage::instantiate_storage;
         use snafu::ensure;
         let storage = instantiate_storage(config)?;
-        let id: AssetId = id.try_into()?;
-        let mut asset = storage.load(id.clone())?;
-        log::info!("Processing asset {id}");
-        let has_existing = asset.transaction().is_some();
-        log::debug!("Checking for previously processed: {has_existing}");
-        ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
-        let data: String = match config.processor {
-            Processor::Vision => {
-                log::info!("Using vision processor");
-                #[cfg(not(feature = "ollama"))]
-                return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
-                #[cfg(feature = "ollama")]
-                {
-                    println!("VISION MODEL RESULTS:");
-                    let data = Runtime::new()?.block_on(query_ollama_vision(config, &asset))?;
-                    println!("{}", &data);
-                    data
-                }
-            }
-            Processor::OCR => {
-                log::info!("Using OCR processor");
-                #[cfg(not(any(feature = "tesseract", feature = "imagemagick")))]
-                FeatureNotEnabledSnafu {
-                    feature: "tesseract,imagemagick",
-                }
-                .fail()?;
-                #[cfg(all(feature = "tesseract", feature = "imagemagick"))]
-                {
-                    println!("OCR RESULTS:");
-                    let ocr = ocr_tesseract(asset.clone())?;
-                    println!("{}", &ocr);
-                    asset.set_ocr(Some(ocr.clone()));
-                    match config.extractor {
-                        Extractor::LLM => {
-                            log::info!("Using LLM extractor");
-                            #[cfg(not(feature = "ollama"))]
-                            return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
-                            #[cfg(feature = "ollama")]
-                            {
-                                println!("OCR DERIVED DATA:");
-                                let data =
-                                    Runtime::new()?.block_on(query_ollama_ocr(config, &asset))?;
-                                println!("{}", &data);
-                                data
-                            }
-                        }
-                        _ => unimplemented!(),
+        let mut assets = Vec::new();
+        for id in ids {
+            let asset_id: AssetId = id.try_into()?;
+            let asset = storage.load(asset_id)?;
+            assets.push(asset);
+        }
+        for mut asset in assets {
+            log::info!("Processing asset {}", &asset.id());
+            let has_existing = asset.transaction().is_some();
+            log::debug!("Checking for previously processed: {has_existing}");
+            ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
+            let data: String = match config.processor {
+                Processor::Vision => {
+                    log::info!("Using vision processor");
+                    #[cfg(not(feature = "ollama"))]
+                    return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
+                    #[cfg(feature = "ollama")]
+                    {
+                        println!("VISION MODEL RESULTS:");
+                        let data = Runtime::new()?.block_on(query_ollama_vision(config, &asset))?;
+                        println!("{}", &data);
+                        data
                     }
                 }
-            }
-            Processor::Manual => unimplemented!(),
-        };
-        let transaction: Transaction = serde_json::from_str(&data)?;
-        log::debug!("Saving transaction data: {:?}", transaction);
-        asset.set_transaction(Some(transaction));
-        storage.save(&asset)?;
+                Processor::OCR => {
+                    log::info!("Using OCR processor");
+                    #[cfg(not(any(feature = "tesseract", feature = "imagemagick")))]
+                    FeatureNotEnabledSnafu {
+                        feature: "tesseract,imagemagick",
+                    }
+                    .fail()?;
+                    #[cfg(all(feature = "tesseract", feature = "imagemagick"))]
+                    {
+                        println!("OCR RESULTS:");
+                        let ocr = ocr_tesseract(asset.clone())?;
+                        println!("{}", &ocr);
+                        asset.set_ocr(Some(ocr.clone()));
+                        match config.extractor {
+                            Extractor::LLM => {
+                                log::info!("Using LLM extractor");
+                                #[cfg(not(feature = "ollama"))]
+                                return FeatureNotEnabledSnafu { feature: "ollama" }.fail();
+                                #[cfg(feature = "ollama")]
+                                {
+                                    println!("OCR DERIVED DATA:");
+                                    let data = Runtime::new()?
+                                        .block_on(query_ollama_ocr(config, &asset))?;
+                                    println!("{}", &data);
+                                    data
+                                }
+                            }
+                            _ => unimplemented!(),
+                        }
+                    }
+                }
+                Processor::Manual => unimplemented!(),
+            };
+            let transaction: Transaction = serde_json::from_str(&data)?;
+            log::debug!("Saving transaction data: {:?}", transaction);
+            asset.set_transaction(Some(transaction));
+            storage.save(&asset)?;
+        }
         Ok(())
     }
 }

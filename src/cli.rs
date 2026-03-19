@@ -139,9 +139,9 @@ pub enum Commands {
 
     /// Process an asset to extract data
     Process {
-        /// ID of asset to process
+        /// IDs of assets to process
         #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
-        id: String,
+        ids: Vec<String>,
 
         /// Choose a specific image processor
         #[clap(short, long)]
