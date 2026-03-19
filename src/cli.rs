@@ -147,12 +147,13 @@ pub enum Commands {
 
     /// Output an asset to a PTA format
     Export {
-        /// ID of asset to export
-        #[clap(value_hint = clap::ValueHint::Unknown, required = true)]
-        id: String,
-
         /// Ledger format to target
+        #[clap(short, long)]
         format: Option<LedgerFormat>,
+
+        /// IDs of asset to export
+        #[clap(value_hint = clap::ValueHint::Unknown, required = true, num_args(1..))]
+        ids: Vec<String>,
     },
 
     /// Get metadata for a specific asset by ID
