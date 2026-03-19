@@ -158,9 +158,13 @@ pub enum Commands {
         #[clap(short, long)]
         format: Option<LedgerFormat>,
 
-        /// IDs of asset to export
-        #[clap(value_hint = clap::ValueHint::Unknown, required = true, num_args(1..))]
-        ids: Vec<String>,
+        /// Export all known assets
+        #[clap(short, long, action = clap::ArgAction::SetTrue)]
+        all: bool,
+
+        /// Asset ID(s) to export
+        #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present = "all", num_args(1..))]
+        ids: Option<Vec<String>>,
     },
 
     /// Get metadata for a specific asset by ID
