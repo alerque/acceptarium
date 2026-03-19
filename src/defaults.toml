@@ -148,7 +148,7 @@ key = "currency"
 desc = """
 The currency used as its ISO code, for example 'TRY' or 'USD'. \
 If not explicitly noted, use the business name or address to guess the country's default currency. \
-For exampl the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD.\
+For example the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD.\
 """
 sample = "USD"
 

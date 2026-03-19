@@ -155,7 +155,7 @@ pub enum Commands {
         #[clap(short, long)]
         extractor: Option<Extractor>,
 
-        /// IDs of assets to proces
+        /// IDs of assets to process
         #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
         ids: Option<Vec<String>>,
     },
