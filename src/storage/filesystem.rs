@@ -118,10 +118,6 @@ impl GitTracker for FilesystemStorage {
 impl Storage for FilesystemStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
         log::info!("Ingesting new asset");
-        #[cfg(feature = "git")]
-        if self.track {
-            self.ensure_staging_empty()?;
-        }
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;
@@ -275,10 +271,6 @@ impl Storage for FilesystemStorage {
     }
 
     fn save(&self, asset: &Asset) -> Result<()> {
-        #[cfg(feature = "git")]
-        if self.track {
-            self.ensure_staging_empty()?;
-        }
         let toml_content = toml::to_string_pretty(asset)?;
         let metadata_path = self.metadata_path(asset)?;
         std::fs::write(&metadata_path, toml_content)?;
@@ -293,10 +285,6 @@ impl Storage for FilesystemStorage {
     }
 
     fn remove(&self, id: AssetId) -> Result<()> {
-        #[cfg(feature = "git")]
-        if self.track {
-            self.ensure_staging_empty()?;
-        }
         let asset = self.load(id.clone())?;
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
             && asset_path.exists()
@@ -327,6 +315,14 @@ impl Storage for FilesystemStorage {
         #[cfg(feature = "git")]
         if self.track && self.commit {
             self.commit_staged("Remove asset(s)")?;
+        }
+        Ok(())
+    }
+
+    fn is_clean(&self) -> Result<()> {
+        #[cfg(feature = "git")]
+        if self.track {
+            return self.ensure_staging_empty();
         }
         Ok(())
     }

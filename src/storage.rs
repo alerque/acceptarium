@@ -20,6 +20,7 @@ pub mod git_tracker;
 
 pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     let storage = instantiate_storage(config)?;
+    storage.is_clean()?;
     let ingestables: Vec<_> = sources
         .iter()
         .map(|source| LocalFile::from_path(source.as_path()))
@@ -68,6 +69,7 @@ where
     Error: From<ID::Error>,
 {
     let storage = instantiate_storage(config)?;
+    storage.is_clean(&config.dirty)?;
     let asset_id: AssetId = id.try_into()?;
     storage.set(asset_id.clone(), key, value)?;
     println!("Set {} = {} for asset {}", key, value, asset_id);
@@ -80,6 +82,7 @@ where
     Error: From<ID::Error>,
 {
     let storage = instantiate_storage(config)?;
+    storage.is_clean(&config.dirty)?;
     let asset_id: AssetId = id.try_into()?;
     storage.remove(asset_id.clone())?;
     println!("Removed asset {}", asset_id);

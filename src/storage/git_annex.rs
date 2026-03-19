@@ -143,7 +143,6 @@ impl GitTracker for GitAnnexStorage {
 impl Storage for GitAnnexStorage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
         log::info!("Ingesting new asset");
-        self.ensure_staging_empty()?;
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
         })?;
@@ -291,7 +290,6 @@ impl Storage for GitAnnexStorage {
     }
 
     fn remove(&self, id: AssetId) -> Result<()> {
-        self.ensure_staging_empty()?;
         let asset = self.load(id.clone())?;
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
             && asset_path.exists()
@@ -304,5 +302,9 @@ impl Storage for GitAnnexStorage {
             self.commit_staged("Remove asset(s)")?;
         }
         Ok(())
+    }
+
+    fn is_clean(&self) -> Result<()> {
+        self.ensure_staging_empty()
     }
 }
