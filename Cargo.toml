@@ -104,7 +104,7 @@ version = "0.4"
 features = ["serde"]
 
 [dependencies.rig-core]
-version = "0.32"
+version = "0.33"
 optional = true
 features = ["all"]
 
