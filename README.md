@@ -2,7 +2,10 @@
 
 A collection of tooling to facilitate scanning receipts, extracting useful data, archiving the assets, and importing the results into [Plain Text Accounting][pta] systems.
 
-acceptarium
+accipiō
+:   (*Classical Latin*) [akˈkɪ.pi.oː] to receive, accept
+
+acceptarius
 :   (*Latin*) allotment-holding
 :   (*Medieval*) receipt book
 
