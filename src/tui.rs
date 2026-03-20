@@ -23,6 +23,7 @@ pub fn main(config: &Config) -> Result<()> {
 struct App {
     assets: Assets,
     selected_index: usize,
+    scroll_offset: usize,
     picker: Picker,
     image_state: Option<StatefulProtocol>,
     image_loader: Option<ImageLoader>,
@@ -39,6 +40,7 @@ impl App {
         Self {
             assets,
             selected_index: 0,
+            scroll_offset: 0,
             picker: Picker::from_query_stdio().unwrap(),
             image_state: None,
             image_loader: None,
@@ -63,6 +65,7 @@ impl App {
     fn select_next(&mut self) {
         if self.len() > 0 {
             self.selected_index = (self.selected_index + 1) % self.len();
+            self.scroll_offset = 0;
         }
         self.trigger_image_load();
     }
@@ -74,6 +77,7 @@ impl App {
             } else {
                 self.selected_index - 1
             };
+            self.scroll_offset = 0;
         }
         self.trigger_image_load();
     }
@@ -163,15 +167,18 @@ impl App {
             .direction(Direction::Vertical)
             .constraints([Constraint::Fill(2), Constraint::Fill(1)])
             .split(details_pane);
-        let details = match self.selected_asset() {
-            Some(asset) => {
-                let details_text = self.format_asset_details(asset);
-                Paragraph::new(details_text)
-                    .block(Block::default().title("Details").borders(borders))
-            }
-            None => Paragraph::new("No asset selected"),
+        let details_text = match self.selected_asset() {
+            Some(asset) => self.format_asset_details(asset),
+            None => "No asset selected".to_string(),
         };
-        frame.render_widget(details, detail_areas[0]);
+        let content_height = details_text.lines().count();
+        let available_height = detail_areas[0].height.saturating_sub(2) as usize;
+        let mut details_paragraph =
+            Paragraph::new(details_text).block(Block::default().title("Details").borders(borders));
+        if content_height > available_height {
+            details_paragraph = details_paragraph.scroll((self.scroll_offset as u16, 0));
+        }
+        frame.render_widget(details_paragraph, detail_areas[0]);
         let export_content = match self.selected_asset() {
             Some(asset) => {
                 let export_text = self.format_export_output(asset);
@@ -207,10 +214,19 @@ impl App {
                 && let Ok(event::Event::Key(key)) = event::read()
                 && key.kind == KeyEventKind::Press
             {
+                let shift = key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::SHIFT);
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-                    KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                    KeyCode::Char('j') | KeyCode::Char('J') | KeyCode::Down => match shift {
+                        false => self.select_next(),
+                        true => self.scroll_offset = self.scroll_offset.saturating_add(1),
+                    },
+                    KeyCode::Char('k') | KeyCode::Char('K') | KeyCode::Up => match shift {
+                        false => self.select_previous(),
+                        true => self.scroll_offset = self.scroll_offset.saturating_sub(1),
+                    },
                     KeyCode::Char('P') => self.toggle_preview(),
                     _ => {}
                 }
