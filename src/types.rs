@@ -446,7 +446,30 @@ impl Assets {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&AssetId, &Asset)> {
-        self.inner.iter()
+        let mut items: Vec<_> = self.inner.iter().collect();
+        items.sort_by(|a, b| {
+            let datetime_a = a.1.transaction.as_ref().and_then(|t| t.datetime.as_ref());
+            let datetime_b = b.1.transaction.as_ref().and_then(|t| t.datetime.as_ref());
+            match (datetime_a, datetime_b) {
+                (Some(d_a), Some(d_b)) => d_a.cmp(d_b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => {
+                    let fname_a =
+                        a.1.source_fname
+                            .as_ref()
+                            .and_then(|p| p.file_name())
+                            .and_then(|n| n.to_str());
+                    let fname_b =
+                        b.1.source_fname
+                            .as_ref()
+                            .and_then(|p| p.file_name())
+                            .and_then(|n| n.to_str());
+                    fname_a.cmp(&fname_b)
+                }
+            }
+        });
+        items.into_iter()
     }
 
     pub fn to_json(&self) -> Result<String, serde_json::Error> {
