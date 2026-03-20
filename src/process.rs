@@ -7,6 +7,7 @@ use crate::Asset;
 use crate::Extractor;
 #[cfg(feature = "ollama")]
 use crate::Processor;
+use crate::Storage;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Transaction;
 #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
@@ -38,7 +39,7 @@ use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process(config: &Config, assets: Assets) -> Result<()> {
+pub fn process(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Result<()> {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
     return {
         let _ = config;
@@ -51,7 +52,6 @@ pub fn process(config: &Config, assets: Assets) -> Result<()> {
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
     {
         use crate::error::AssetProcessedSnafu;
-        use crate::storage::instantiate_storage;
         use snafu::ensure;
         for (_, asset) in &assets {
             let mut asset = asset.clone();
@@ -108,7 +108,6 @@ pub fn process(config: &Config, assets: Assets) -> Result<()> {
             let transaction: Transaction = serde_json::from_str(&data)?;
             log::debug!("Saving transaction data: {:?}", transaction);
             asset.set_transaction(Some(transaction));
-            let storage = instantiate_storage(config)?;
             storage.save(&asset)?;
         }
         Ok(())

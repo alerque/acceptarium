@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::actions::{data_is_in_project, data_is_writable, is_in_project};
 use crate::config::Config;
 use crate::error::{
     AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, UnknownMetaKeySnafu,
 };
 use crate::storage::git_tracker::GitTracker;
-use crate::storage::{data_is_in_project, data_is_writable, is_in_project};
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 

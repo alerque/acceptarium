@@ -1,16 +1,15 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-#[cfg(not(feature = "git-annex"))]
-use crate::error::UnsupportedStorageSnafu;
-use crate::error::{AssetHashExistsSnafu, FilesystemSnafu, NoStorageConfiguredSnafu};
+use crate::Storage;
+use crate::error::AssetHashExistsSnafu;
 use crate::ingestable::local_file::LocalFile;
-use crate::{AssetId, Assets, Storage};
-use crate::{Config, Error, OperationMode, Result, StorageDriver};
+use crate::{AssetId, Assets};
+use crate::{Config, Error, OperationMode, Result};
 
 use snafu::ensure;
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub mod filesystem;
 #[cfg(feature = "git-annex")]
@@ -18,8 +17,7 @@ pub mod git_annex;
 #[cfg(feature = "git")]
 pub mod git_tracker;
 
-pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
-    let storage = instantiate_storage(config)?;
+pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) -> Result<()> {
     storage.is_clean(&config.dirty)?;
     let ingestables: Vec<_> = sources
         .iter()
@@ -46,24 +44,28 @@ pub fn add(config: &Config, sources: Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-pub fn get<ID>(config: &Config, id: ID, key: &str) -> Result<()>
+pub fn get<ID>(_config: &Config, storage: Box<dyn Storage>, id: ID, key: &str) -> Result<()>
 where
     ID: TryInto<AssetId>,
     Error: From<ID::Error>,
 {
-    let storage = instantiate_storage(config)?;
     let id: AssetId = id.try_into()?;
     let val = storage.get(id, key)?;
     println!("{}", val);
     Ok(())
 }
 
-pub fn set<ID>(config: &Config, id: ID, key: &str, value: &str) -> Result<()>
+pub fn set<ID>(
+    config: &Config,
+    storage: Box<dyn Storage>,
+    id: ID,
+    key: &str,
+    value: &str,
+) -> Result<()>
 where
     ID: TryInto<AssetId>,
     Error: From<ID::Error>,
 {
-    let storage = instantiate_storage(config)?;
     storage.is_clean(&config.dirty)?;
     let asset_id: AssetId = id.try_into()?;
     storage.set(asset_id.clone(), key, value)?;
@@ -71,8 +73,7 @@ where
     Ok(())
 }
 
-pub fn remove(config: &Config, assets: Assets) -> Result<()> {
-    let storage = instantiate_storage(config)?;
+pub fn remove(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Result<()> {
     storage.is_clean(&config.dirty)?;
     for (_, asset) in &assets {
         let id = asset.id().clone();
@@ -80,54 +81,4 @@ pub fn remove(config: &Config, assets: Assets) -> Result<()> {
         storage.remove(id)?;
     }
     Ok(())
-}
-
-pub fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
-    log::debug!("Selecting and initializing storage backend");
-    match config.storage {
-        Some(StorageDriver::Filesystem) => filesystem::FilesystemStorage::init(config),
-        #[cfg(feature = "git-annex")]
-        Some(StorageDriver::GitAnnex) => git_annex::GitAnnexStorage::init(config),
-        #[cfg(not(feature = "git-annex"))]
-        Some(StorageDriver::GitAnnex) => {
-            return UnsupportedStorageSnafu {
-                driver: "git-annex",
-            }
-            .fail();
-        }
-        None => NoStorageConfiguredSnafu {}.fail(),
-    }
-}
-
-pub(crate) fn data_is_in_project(data_dir: &Path, project_dir: &Path) -> Result<()> {
-    ensure!(
-        data_dir.starts_with(project_dir),
-        FilesystemSnafu {
-            message: format!(
-                "Storage directory '{}' is not inside project root '{}'",
-                data_dir.display(),
-                project_dir.display()
-            ),
-        }
-    );
-    Ok(())
-}
-
-pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
-    let data_meta = std::fs::metadata(data_dir)?;
-    ensure!(
-        !data_meta.permissions().readonly(),
-        FilesystemSnafu {
-            message: format!(
-                "Storage directory '{}' is not writable by the current user",
-                data_dir.display()
-            ),
-        }
-    );
-    Ok(())
-}
-
-#[cfg(feature = "git")]
-pub(crate) fn is_in_project(path: &Path, project_dir: &Path) -> bool {
-    path.starts_with(project_dir)
 }

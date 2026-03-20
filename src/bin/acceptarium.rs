@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use acceptarium::actions::instantiate_storage;
 use acceptarium::cli::{Cli, Commands, STYLES};
-use acceptarium::storage::instantiate_storage;
 use acceptarium::{Config, Result};
 use acceptarium::{export, process, run, status, storage};
 
@@ -37,7 +37,7 @@ fn run(logger: LoggerHandle) -> Result<()> {
     log::debug!("Passing subcommand to matched handler");
     let storage = instantiate_storage(&config)?;
     match Commands::from_arg_matches(&matches)? {
-        Commands::Add { files, .. } => storage::add(&config, files),
+        Commands::Add { files, .. } => storage::add(&config, storage, files),
         Commands::List {
             json, selectors, ..
         } => {
@@ -51,17 +51,17 @@ fn run(logger: LoggerHandle) -> Result<()> {
         }
         Commands::Process { selectors, .. } => {
             let assets = storage.select(&selectors)?;
-            process::process(&config, assets)
+            process::process(&config, storage, assets)
         }
         Commands::Export { selectors, .. } => {
             let assets = storage.select(&selectors)?;
             export::run(&config, assets)
         }
-        Commands::Get { id, key, .. } => storage::get(&config, &id, &key),
-        Commands::Set { id, key, value } => storage::set(&config, id, &key, &value),
+        Commands::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
+        Commands::Set { id, key, value } => storage::set(&config, storage, id, &key, &value),
         Commands::Remove { selectors } => {
             let assets = storage.select(&selectors)?;
-            storage::remove(&config, assets)
+            storage::remove(&config, storage, assets)
         }
         Commands::Run { name, arguments } => run::run(&config, name, arguments),
         Commands::Status {} => status::run(&config),

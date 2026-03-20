@@ -10,6 +10,7 @@ mod error;
 mod types;
 
 // Public modules
+pub mod actions;
 pub mod export;
 pub mod ingestable;
 pub mod process;
