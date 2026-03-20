@@ -9,6 +9,8 @@ use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
+use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
+use std::env::current_dir;
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
@@ -19,6 +21,8 @@ pub fn main(config: &Config) -> Result<()> {
 struct App {
     assets: Assets,
     selected_index: usize,
+    picker: Picker,
+    image_state: Option<StatefulProtocol>,
 }
 
 impl App {
@@ -26,6 +30,8 @@ impl App {
         Self {
             assets,
             selected_index: 0,
+            picker: Picker::from_query_stdio().unwrap(),
+            image_state: None,
         }
     }
 
@@ -62,7 +68,11 @@ impl App {
         let borders = Borders::ALL;
         let panes = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(9), Constraint::Fill(1)])
+            .constraints([
+                Constraint::Length(9),
+                Constraint::Fill(3),
+                Constraint::Fill(2),
+            ])
             .split(frame.area());
         let asset_list: Vec<ListItem> = self
             .asset_list()
@@ -90,6 +100,21 @@ impl App {
             None => Paragraph::new("No asset selected"),
         };
         frame.render_widget(details, panes[1]);
+        let preview_block = Block::default().title("Preview").borders(borders);
+        frame.render_widget(&preview_block, panes[2]);
+        let preview_area = preview_block.inner(panes[2]);
+        if let Some(asset) = self.selected_asset() {
+            let cwd = current_dir().unwrap_or_default();
+            if let Some(path) = asset.asset_path(&cwd)
+                && let Ok(dyn_img) = image::open(&path)
+            {
+                self.image_state = Some(self.picker.new_resize_protocol(dyn_img));
+            }
+        }
+        if let Some(ref mut state) = self.image_state {
+            let image_widget = StatefulImage::default();
+            frame.render_stateful_widget(image_widget, preview_area, state);
+        }
     }
 
     fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
