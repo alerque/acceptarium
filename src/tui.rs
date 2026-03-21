@@ -4,13 +4,14 @@
 use crate::actions::instantiate_storage;
 use crate::{Asset, Assets, Config, Result};
 
-use crossterm::event::{self, KeyCode};
+use crossterm::event::{self, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 use std::env::current_dir;
+use std::sync::mpsc;
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
@@ -23,6 +24,12 @@ struct App {
     selected_index: usize,
     picker: Picker,
     image_state: Option<StatefulProtocol>,
+    image_loader: Option<ImageLoader>,
+    load_generation: u64,
+}
+
+struct ImageLoader {
+    receiver: mpsc::Receiver<(u64, Option<StatefulProtocol>)>,
 }
 
 impl App {
@@ -32,6 +39,8 @@ impl App {
             selected_index: 0,
             picker: Picker::from_query_stdio().unwrap(),
             image_state: None,
+            image_loader: None,
+            load_generation: 0,
         }
     }
 
@@ -52,6 +61,7 @@ impl App {
         if self.len() > 0 {
             self.selected_index = (self.selected_index + 1) % self.len();
         }
+        self.trigger_image_load();
     }
 
     fn select_previous(&mut self) {
@@ -62,9 +72,50 @@ impl App {
                 self.selected_index - 1
             };
         }
+        self.trigger_image_load();
+    }
+
+    fn trigger_image_load(&mut self) {
+        self.load_generation = self.load_generation.wrapping_add(1);
+        let this_gen = self.load_generation;
+        self.image_state = None;
+        self.image_loader = None;
+        let Some(asset) = self.selected_asset() else {
+            return;
+        };
+        let Some(path) = asset.asset_path(&current_dir().unwrap_or_default()) else {
+            return;
+        };
+        let picker = self.picker.clone();
+        let (tx, rx) = mpsc::channel();
+        std::thread::spawn(move || {
+            let img = match image::open(&path) {
+                Ok(img) => img,
+                Err(_) => {
+                    let _ = tx.send((this_gen, None));
+                    return;
+                }
+            };
+            let protocol = picker.new_resize_protocol(img);
+            let _ = tx.send((this_gen, Some(protocol)));
+        });
+        self.image_loader = Some(ImageLoader { receiver: rx });
+    }
+
+    fn update_image_state(&mut self) {
+        let Some(loader) = &self.image_loader else {
+            return;
+        };
+        if let Ok((generation, protocol_opt)) = loader.receiver.try_recv() {
+            if generation == self.load_generation {
+                self.image_state = protocol_opt;
+            }
+            self.image_loader = None;
+        }
     }
 
     fn render(&mut self, frame: &mut Frame) {
+        self.update_image_state();
         let borders = Borders::ALL;
         let panes = Layout::default()
             .direction(Direction::Horizontal)
@@ -103,29 +154,33 @@ impl App {
         let preview_block = Block::default().title("Preview").borders(borders);
         frame.render_widget(&preview_block, panes[2]);
         let preview_area = preview_block.inner(panes[2]);
-        if let Some(asset) = self.selected_asset() {
-            let cwd = current_dir().unwrap_or_default();
-            if let Some(path) = asset.asset_path(&cwd)
-                && let Ok(dyn_img) = image::open(&path)
-            {
-                self.image_state = Some(self.picker.new_resize_protocol(dyn_img));
+        match &mut self.image_state {
+            Some(state) => {
+                frame.render_stateful_widget(StatefulImage::default(), preview_area, state);
             }
-        }
-        if let Some(ref mut state) = self.image_state {
-            let image_widget = StatefulImage::default();
-            frame.render_stateful_widget(image_widget, preview_area, state);
+            None if self.image_loader.is_some() => {
+                let loading =
+                    Paragraph::new("Loading...").style(Style::default().fg(Color::DarkGray));
+                frame.render_widget(loading, preview_area);
+            }
+            _ => {}
         }
     }
 
     fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        self.trigger_image_load();
         loop {
             terminal.draw(|frame| self.render(frame))?;
-            if let Some(key) = event::read()?.as_key_press_event() {
-                match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-                    KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
-                    _ => {}
+            if event::poll(std::time::Duration::from_millis(50)).unwrap_or(false) {
+                if let Ok(event::Event::Key(key)) = event::read() {
+                    if key.kind == KeyEventKind::Press {
+                        match key.code {
+                            KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                            KeyCode::Char('j') | KeyCode::Down => self.select_next(),
+                            KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                            _ => {}
+                        }
+                    }
                 }
             }
         }
