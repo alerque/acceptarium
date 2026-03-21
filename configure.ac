@@ -19,6 +19,11 @@ AC_PROG_SED
 AX_REQUIRE_PROG(env)
 AX_REQUIRE_PROG(zsh)
 
+AC_ARG_ENABLE([tui],
+            AS_HELP_STRING([--disable-tui],
+                           [Disable TUI mode]))
+AM_CONDITIONAL([TUI], [test "x$enable_tui" != "xno"])
+
 AC_ARG_WITH([git],
             AS_HELP_STRING([--without-git],
                            [Compile without git vcs support used to track projects]))
@@ -54,6 +59,10 @@ AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([reuse])
     AX_REQUIRE_PROG([taplo])
     AX_REQUIRE_PROG([typos])
+])
+
+AM_COND_IF([TUI], [
+    PKG_CHECK_MODULES(CHAFA, chafa)
 ])
 
 AM_COND_IF([GIT], [

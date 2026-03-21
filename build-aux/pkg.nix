@@ -18,6 +18,8 @@
   # buildInputs
   cargo-edit,
   cargo-deny,
+  chafa,
+  glib,
   git-annex,
   just,
   imagemagick,
@@ -63,6 +65,8 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   buildInputs = [
+    chafa
+    glib
     gitMinimal
     git-annex
     imagemagick
@@ -80,6 +84,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   configureFlags = [
+    "--enable-tui"
     "--with-ollama"
     "--with-imagemagick"
     "--with-tesseract"

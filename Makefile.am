@@ -32,6 +32,10 @@ CLEANFILES = $(dist_scripts_SCRIPTS)
 
 CARGO_FEATURE_ARGS = --features shells
 
+if TUI
+CARGO_FEATURE_ARGS += --features tui
+endif
+
 if GIT
 CARGO_FEATURE_ARGS += --features git
 endif
