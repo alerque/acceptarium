@@ -143,11 +143,11 @@ pub enum Commands {
     /// Process an asset to extract data
     Process {
         /// Choose a specific image processor
-        #[clap(short, long)]
+        #[clap(long)]
         processor: Option<Processor>,
 
         /// Choose a specific data extractor
-        #[clap(short, long)]
+        #[clap(long)]
         extractor: Option<Extractor>,
 
         #[command(flatten)]
@@ -216,18 +216,22 @@ pub enum Commands {
 
 /// Asset selector arguments
 #[derive(Args, Debug)]
-#[group()]
+#[group(required = true, multiple = false)]
 pub struct AssetSelectors {
     /// Operate on all known assets
     #[clap(short, long, action = clap::ArgAction::SetTrue)]
     pub all: bool,
 
-    /// Operate on assets that have not been marked as processed
+    /// Operate only on assets have been marked as processed
+    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    pub processed: bool,
+
+    /// Operate only on assets that have not been marked as processed
     #[clap(short, long, action = clap::ArgAction::SetTrue)]
     pub unprocessed: bool,
 
     /// Operate on a list of asset ID(s)
-    #[clap(value_hint = clap::ValueHint::Unknown, required_unless_present_any = ["all", "unprocessed"], num_args(1..))]
+    #[clap(value_hint = clap::ValueHint::Unknown, num_args(1..))]
     pub ids: Option<Vec<String>>,
 }
 

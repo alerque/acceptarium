@@ -62,6 +62,10 @@ pub trait Storage {
     fn select(&self, selectors: &AssetSelectors) -> Result<Assets> {
         let assets = if selectors.all {
             self.list()?
+        } else if selectors.processed {
+            let mut assets = self.list()?;
+            assets.retain(|_, asset| asset.transaction().is_some());
+            assets
         } else if selectors.unprocessed {
             let mut assets = self.list()?;
             assets.retain(|_, asset| asset.transaction().is_none());
