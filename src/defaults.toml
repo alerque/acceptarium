@@ -50,6 +50,8 @@ Receipt content:
 
 [tui]
 preview = true
+# json, toml, yaml
+display = "yaml"
 
 [extra]
 ## some data, but many mistakes

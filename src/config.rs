@@ -14,7 +14,7 @@ use convert_case::Casing;
 use log::LevelFilter;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value, to_value};
+use serde_json::{to_value, Map, Value};
 use snafu::OptionExt;
 
 use std::env;
@@ -106,6 +106,18 @@ pub struct LLMConfig {
 pub struct TuiConfig {
     #[serde(default)]
     pub preview: bool,
+    pub display: TuiDisplay,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum TuiDisplay {
+    HJSON,
+    JSON,
+    TOML,
+    #[default]
+    YAML,
+    XML,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
