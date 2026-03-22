@@ -160,7 +160,7 @@ impl App {
         let details_pane = panes[1];
         let detail_areas = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Fill(3), Constraint::Fill(2)])
+            .constraints([Constraint::Fill(2), Constraint::Fill(1)])
             .split(details_pane);
         let details = match self.selected_asset() {
             Some(asset) => {
@@ -220,7 +220,7 @@ impl App {
 }
 
 fn format_asset_details(asset: &Asset) -> String {
-    format!("{:#?}", asset)
+    toml::to_string_pretty(asset).unwrap_or_default()
 }
 
 fn format_export_output(config: &Config, asset: &Asset) -> String {
