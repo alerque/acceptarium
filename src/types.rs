@@ -64,10 +64,10 @@ pub struct Transaction {
     pub payee: Option<String>,
     pub datetime: Option<String>,
     pub category: Option<String>,
-    pub invoice_number: Option<String>,
     pub items: Option<Vec<TransactionItem>>,
     pub total: Option<f64>,
     pub currency: Option<String>,
+    pub invoice_number: Option<String>,
     pub payment_type: Option<String>,
     pub payment_identifier: Option<String>,
 }
@@ -247,11 +247,11 @@ impl From<AssetId> for String {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Asset {
     id: AssetId,
-    asset_path: Option<PathBuf>,
-    source_fname: Option<PathBuf>,
     blake3: Option<Blake3Sum>,
-    ocr: Option<String>,
+    asset_path: Option<PathBuf>,
     transaction: Option<Transaction>,
+    ocr: Option<String>,
+    source_fname: Option<PathBuf>,
     #[serde(default)]
     extra: Map<String, SerializableValue>,
 }
@@ -267,11 +267,11 @@ impl Asset {
         let source_fname = source_fname.map(Into::into);
         Ok(Self {
             id,
-            asset_path,
-            source_fname,
             blake3,
-            ocr: None,
+            asset_path,
             transaction: None,
+            ocr: None,
+            source_fname,
             extra: Map::new(),
         })
     }
