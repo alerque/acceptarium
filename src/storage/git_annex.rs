@@ -35,7 +35,6 @@ pub struct GitAnnexStorage {
 #[serde(rename_all = "lowercase")]
 enum AnnexCommand {
     Add,
-    Find,
     Metadata,
 }
 
@@ -213,26 +212,16 @@ impl Storage for GitAnnexStorage {
     fn list(&self) -> Result<Assets> {
         log::info!("Listing annex files with acceptarium metadata");
         let output = self.exec_annex_cli(
-            AnnexCommand::Find,
+            AnnexCommand::Metadata,
             Some(&["--json", "--metadata", "acceptarium.id=*"]),
         )?;
-        let keys: Vec<String> = output
-            .lines()
-            .filter_map(|line| {
-                serde_json::from_str::<serde_json::Value>(line.trim())
-                    .ok()
-                    .and_then(|json| json.get("key").and_then(|k| k.as_str().map(String::from)))
-            })
-            .collect();
-        log::info!("Iterating over keys with acceptarium metadata assembling at asset list");
         let mut assets = Assets::new();
-        for key in keys {
-            log::debug!("Deserializing {} into asset", &key);
-            let output = self.exec_annex_cli(
-                AnnexCommand::Metadata,
-                Some(&["--json", "--key", key.as_str()]),
-            )?;
-            let asset = Asset::from_annex_metadata_json(&output)?;
+        for line in output.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let asset = Asset::from_annex_metadata_json(&line)?;
             assets.add(asset);
         }
         Ok(assets)
