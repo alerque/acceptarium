@@ -195,7 +195,7 @@ impl App {
                             KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
                             KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
-                            KeyCode::Char('p') | KeyCode::Char('P') => self.toggle_preview(),
+                            KeyCode::Char('P') => self.toggle_preview(),
                             _ => {}
                         }
                     }
