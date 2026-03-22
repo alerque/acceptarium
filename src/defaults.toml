@@ -48,6 +48,9 @@ Receipt content:
 {{ asset.ocr }}\
 """
 
+[tui]
+preview = true
+
 [extra]
 ## some data, but many mistakes
 # model = "gemma3:27b"

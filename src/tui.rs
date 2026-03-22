@@ -16,7 +16,7 @@ use std::sync::mpsc;
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
     let assets = storage.list()?;
-    ratatui::run(|terminal| App::new(assets).run(terminal))
+    ratatui::run(|terminal| App::new(assets, config).run(terminal))
 }
 
 struct App {
@@ -26,6 +26,7 @@ struct App {
     image_state: Option<StatefulProtocol>,
     image_loader: Option<ImageLoader>,
     load_generation: u64,
+    config: Config,
 }
 
 struct ImageLoader {
@@ -33,7 +34,7 @@ struct ImageLoader {
 }
 
 impl App {
-    fn new(assets: Assets) -> Self {
+    fn new(assets: Assets, config: &Config) -> Self {
         Self {
             assets,
             selected_index: 0,
@@ -41,6 +42,7 @@ impl App {
             image_state: None,
             image_loader: None,
             load_generation: 0,
+            config: config.clone(),
         }
     }
 
@@ -117,13 +119,22 @@ impl App {
     fn render(&mut self, frame: &mut Frame) {
         self.update_image_state();
         let borders = Borders::ALL;
-        let panes = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([
+        let constraints = if self.config.tui.preview {
+            [
                 Constraint::Length(9),
                 Constraint::Fill(3),
                 Constraint::Fill(2),
-            ])
+            ]
+        } else {
+            [
+                Constraint::Length(9),
+                Constraint::Fill(1),
+                Constraint::Fill(0),
+            ]
+        };
+        let panes = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(constraints)
             .split(frame.area());
         let asset_list: Vec<ListItem> = self
             .asset_list()
@@ -151,19 +162,21 @@ impl App {
             None => Paragraph::new("No asset selected"),
         };
         frame.render_widget(details, panes[1]);
-        let preview_block = Block::default().title("Preview").borders(borders);
-        frame.render_widget(&preview_block, panes[2]);
-        let preview_area = preview_block.inner(panes[2]);
-        match &mut self.image_state {
-            Some(state) => {
-                frame.render_stateful_widget(StatefulImage::default(), preview_area, state);
+        if self.config.tui.preview {
+            let preview_block = Block::default().title("Preview").borders(borders);
+            frame.render_widget(&preview_block, panes[2]);
+            let preview_area = preview_block.inner(panes[2]);
+            match &mut self.image_state {
+                Some(state) => {
+                    frame.render_stateful_widget(StatefulImage::default(), preview_area, state);
+                }
+                None if self.image_loader.is_some() => {
+                    let loading =
+                        Paragraph::new("Loading...").style(Style::default().fg(Color::DarkGray));
+                    frame.render_widget(loading, preview_area);
+                }
+                _ => {}
             }
-            None if self.image_loader.is_some() => {
-                let loading =
-                    Paragraph::new("Loading...").style(Style::default().fg(Color::DarkGray));
-                frame.render_widget(loading, preview_area);
-            }
-            _ => {}
         }
     }
 

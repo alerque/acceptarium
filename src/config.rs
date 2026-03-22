@@ -101,6 +101,13 @@ pub struct LLMConfig {
     pub prompt: TemplateString,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct TuiConfig {
+    #[serde(default)]
+    pub preview: bool,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(unused)]
 pub struct Config {
@@ -127,6 +134,8 @@ pub struct Config {
     pub(crate) git_annex: Option<GitAnnexConfig>,
     pub(crate) vision: Option<VisionConfig>,
     pub(crate) llm: Option<LLMConfig>,
+    #[serde(default)]
+    pub(crate) tui: TuiConfig,
     pub extra: Map<String, Value>,
 }
 
