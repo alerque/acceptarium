@@ -138,6 +138,8 @@ An array of items with description, quantity, and total amount (as a number) for
 Note many line items will not have a quantity at all, in which case leave this blank. \
 Many lines will have a % number that is a tax rate or tax amount. \
 Do not mistake percentages or currency amounts that might be tax values as this quantity field.\
+Especially in the case of discounts or coupons, the amount for some line items may be negative.\
+Do include line items for discounts that affect the total amount if adding up the items would otherwise come to the wrong total.\
 """
 sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
 
