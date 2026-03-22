@@ -157,6 +157,11 @@ impl App {
             .block(Block::default().title("Assets").borders(borders))
             .highlight_style(Style::default().fg(Color::LightBlue).bg(Color::DarkGray));
         frame.render_widget(asset_picker, panes[0]);
+        let details_pane = panes[1];
+        let detail_areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Fill(3), Constraint::Fill(2)])
+            .split(details_pane);
         let details = match self.selected_asset() {
             Some(asset) => {
                 let details_text = format_asset_details(asset);
@@ -165,9 +170,18 @@ impl App {
             }
             None => Paragraph::new("No asset selected"),
         };
-        frame.render_widget(details, panes[1]);
+        frame.render_widget(details, detail_areas[0]);
+        let export_content = match self.selected_asset() {
+            Some(asset) => {
+                let export_text = format_export_output(&self.config, asset);
+                Paragraph::new(export_text)
+                    .block(Block::default().title("Export Preview").borders(borders))
+            }
+            None => Paragraph::new(""),
+        };
+        frame.render_widget(export_content, detail_areas[1]);
         if self.config.tui.preview {
-            let preview_block = Block::default().title("Preview").borders(borders);
+            let preview_block = Block::default().title("Image Preview").borders(borders);
             frame.render_widget(&preview_block, panes[2]);
             let preview_area = preview_block.inner(panes[2]);
             match &mut self.image_state {
@@ -207,4 +221,11 @@ impl App {
 
 fn format_asset_details(asset: &Asset) -> String {
     format!("{:#?}", asset)
+}
+
+fn format_export_output(config: &Config, asset: &Asset) -> String {
+    config
+        .template
+        .render(config, asset)
+        .unwrap_or_else(|e| format!("Export error: {}", e))
 }
