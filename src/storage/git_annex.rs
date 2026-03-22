@@ -221,7 +221,7 @@ impl Storage for GitAnnexStorage {
             if line.is_empty() {
                 continue;
             }
-            let asset = Asset::from_annex_metadata_json(&line)?;
+            let asset = Asset::from_annex_metadata_json(line)?;
             assets.add(asset);
         }
         Ok(assets)

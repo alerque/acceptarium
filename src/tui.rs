@@ -202,17 +202,16 @@ impl App {
         self.trigger_image_load();
         loop {
             terminal.draw(|frame| self.render(frame))?;
-            if event::poll(std::time::Duration::from_millis(50)).unwrap_or(false) {
-                if let Ok(event::Event::Key(key)) = event::read() {
-                    if key.kind == KeyEventKind::Press {
-                        match key.code {
-                            KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                            KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-                            KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
-                            KeyCode::Char('P') => self.toggle_preview(),
-                            _ => {}
-                        }
-                    }
+            if event::poll(std::time::Duration::from_millis(50)).unwrap_or(false)
+                && let Ok(event::Event::Key(key)) = event::read()
+                && key.kind == KeyEventKind::Press
+            {
+                match key.code {
+                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                    KeyCode::Char('j') | KeyCode::Down => self.select_next(),
+                    KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                    KeyCode::Char('P') => self.toggle_preview(),
+                    _ => {}
                 }
             }
         }
