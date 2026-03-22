@@ -77,6 +77,10 @@ impl App {
         self.trigger_image_load();
     }
 
+    fn toggle_preview(&mut self) {
+        self.config.tui.preview = !self.config.tui.preview;
+    }
+
     fn trigger_image_load(&mut self) {
         self.load_generation = self.load_generation.wrapping_add(1);
         let this_gen = self.load_generation;
@@ -191,6 +195,7 @@ impl App {
                             KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
                             KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+                            KeyCode::Char('p') | KeyCode::Char('P') => self.toggle_preview(),
                             _ => {}
                         }
                     }
