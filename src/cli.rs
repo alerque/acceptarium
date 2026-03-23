@@ -37,14 +37,23 @@ pub enum Extractor {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
-pub enum LedgerFormat {
+pub enum ExportFormat {
     #[default]
     HLedger,
     #[serde(rename = "ledger-cli")]
     LedgerCli,
     BeanCount,
-    CSV,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum DumpFormat {
+    HJSON,
     JSON,
+    TOML,
+    #[default]
+    YAML,
+    XML,
 }
 
 /// Ingest, process, store, analyze, and export receipts from raster scans to plain text accounting
@@ -154,11 +163,21 @@ pub enum Commands {
         selectors: AssetSelectors,
     },
 
+    /// Output an asset to a structured data format
+    Dump {
+        /// Data format to target
+        #[clap(short, long)]
+        format: Option<DumpFormat>,
+
+        #[command(flatten)]
+        selectors: AssetSelectors,
+    },
+
     /// Output an asset to a PTA format
     Export {
         /// Ledger format to target
         #[clap(short, long)]
-        format: Option<LedgerFormat>,
+        format: Option<ExportFormat>,
 
         #[command(flatten)]
         selectors: AssetSelectors,

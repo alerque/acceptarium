@@ -6,7 +6,7 @@ use acceptarium::cli::{Cli, Commands, STYLES};
 #[cfg(feature = "tui")]
 use acceptarium::tui;
 use acceptarium::{Config, Result};
-use acceptarium::{export, process, run, status, storage};
+use acceptarium::{output, process, run, status, storage};
 
 use clap::{CommandFactory, FromArgMatches};
 use flexi_logger::{Logger, LoggerHandle};
@@ -57,7 +57,15 @@ fn run(logger: LoggerHandle) -> Result<()> {
         }
         Commands::Export { selectors, .. } => {
             let assets = storage.select(&selectors)?;
-            export::run(&config, assets)
+            let output = output::export(&config, &assets)?;
+            println!("{output}");
+            Ok(())
+        }
+        Commands::Dump { selectors, .. } => {
+            let assets = storage.select(&selectors)?;
+            let output = output::dump(&config, &assets)?;
+            println!("{output}");
+            Ok(())
         }
         Commands::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
         Commands::Set { id, key, value } => storage::set(&config, storage, id, &key, &value),

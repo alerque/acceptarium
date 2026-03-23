@@ -11,8 +11,8 @@ mod types;
 
 // Public modules
 pub mod actions;
-pub mod export;
 pub mod ingestable;
+pub mod output;
 pub mod process;
 pub mod run;
 pub mod status;
@@ -28,8 +28,9 @@ pub mod tui;
 
 // Public structs
 pub use cli::AssetSelectors;
+pub use cli::DumpFormat;
+pub use cli::ExportFormat;
 pub use cli::Extractor;
-pub use cli::LedgerFormat;
 pub use cli::Processor;
 pub use cli::StorageDriver;
 pub use config::Config;

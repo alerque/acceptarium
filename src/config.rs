@@ -5,7 +5,7 @@ use crate::cli::{Cli, Commands};
 use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
-use crate::{Extractor, LedgerFormat, Processor, Result, StorageDriver};
+use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
 
 use clap::ValueEnum;
 use config::Case;
@@ -14,7 +14,7 @@ use convert_case::Casing;
 use log::LevelFilter;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_value, Map, Value};
+use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
 
 use std::env;
@@ -106,18 +106,6 @@ pub struct LLMConfig {
 pub struct TuiConfig {
     #[serde(default)]
     pub preview: bool,
-    pub display: TuiDisplay,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, Default, ValueEnum)]
-#[serde(rename_all = "lowercase")]
-pub enum TuiDisplay {
-    HJSON,
-    JSON,
-    TOML,
-    #[default]
-    YAML,
-    XML,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -136,7 +124,10 @@ pub struct Config {
     pub processor: Processor,
     #[serde(default)]
     pub extractor: Extractor,
-    pub format: LedgerFormat,
+    #[serde(rename(deserialize = "export-format"))]
+    pub export_format: ExportFormat,
+    #[serde(rename(deserialize = "dump-format"))]
+    pub dump_format: DumpFormat,
     pub template: TemplateString,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
@@ -261,10 +252,16 @@ impl Config {
                     builder = builder.set_override("extractor", val)?;
                 }
             }
+            Commands::Dump { format, .. } => {
+                if let Some(val) = format {
+                    let val: String = val.to_possible_value().unwrap().get_name().into();
+                    builder = builder.set_override("serialized-format", val)?;
+                }
+            }
             Commands::Export { format, .. } => {
                 if let Some(val) = format {
                     let val: String = val.to_possible_value().unwrap().get_name().into();
-                    builder = builder.set_override("format", val)?;
+                    builder = builder.set_override("export-format", val)?;
                 }
             }
             Commands::Get { .. } => {}

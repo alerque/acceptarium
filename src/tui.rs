@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::actions::instantiate_storage;
-use crate::config::TuiDisplay;
+use crate::output;
 use crate::{Asset, Assets, Config, Result};
 
 use crossterm::event::{self, KeyCode, KeyEventKind};
@@ -13,11 +13,6 @@ use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 use std::env::current_dir;
 use std::sync::mpsc;
-use serde_json::to_string_pretty as to_json_string;
-use toml::to_string as to_toml_string;
-use serde_hjson::ser::to_string as to_hjson_string;
-use serde_yaml::to_string as to_yaml_string;
-use xml_serde::to_string as to_xml_string;
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
@@ -224,19 +219,14 @@ impl App {
     }
 
     fn format_asset_details(&self, asset: &Asset) -> String {
-        match self.config.tui.display {
-            TuiDisplay::JSON => to_json_string(asset).unwrap_or_default(),
-            TuiDisplay::TOML => to_toml_string(asset).unwrap_or_default(),
-            TuiDisplay::YAML => to_yaml_string(asset).unwrap_or_default(),
-            TuiDisplay::HJSON => to_hjson_string(asset).unwrap_or_default(),
-            TuiDisplay::XML => to_xml_string(asset).unwrap_or_default(),
-        }
+        let mut assets = Assets::new();
+        assets.add(asset.clone());
+        output::dump(&self.config, &assets).unwrap_or_default()
     }
 
     fn format_export_output(&self, asset: &Asset) -> String {
-        let template = self.config.template.clone();
-        template
-            .render(&self.config, asset)
-            .unwrap_or_else(|e| format!("Export error: {}", e))
+        let mut assets = Assets::new();
+        assets.add(asset.clone());
+        output::export(&self.config, &assets).unwrap_or_default()
     }
 }

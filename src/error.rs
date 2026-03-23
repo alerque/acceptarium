@@ -16,6 +16,7 @@ use flexi_logger::FlexiLoggerError;
 use git2::Error as GitError;
 use glob::PatternError;
 use serde_json::Error as SerdeJsonError;
+use std::fmt::Error as FmtError;
 use std::io::Error as IoError;
 use std::path::StripPrefixError;
 use tera::Error as TeraError;
@@ -106,6 +107,9 @@ pub enum Error {
 
     #[snafu(display("The feature '{feature}' was not enabled in this build."))]
     FeatureNotEnabled { feature: String },
+
+    #[snafu(display("Trouble formatting output: {source}"))]
+    Output { source: FmtError },
 
     #[cfg(feature = "git")]
     #[snafu(display("Git error: {source}"))]
@@ -203,6 +207,12 @@ impl From<StripPrefixError> for Error {
 impl From<FlexiLoggerError> for Error {
     fn from(source: FlexiLoggerError) -> Self {
         Error::Logger { source }
+    }
+}
+
+impl From<FmtError> for Error {
+    fn from(source: FmtError) -> Self {
+        Error::Output { source }
     }
 }
 
