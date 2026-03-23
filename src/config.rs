@@ -7,19 +7,54 @@ use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
 use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
 
+use std::env;
+use std::path::{Path, PathBuf};
+
 use clap::ValueEnum;
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File, FileFormat};
 use convert_case::Casing;
+use derive_more::{Deref, FromStr, Into};
+use flexi_logger::LogSpecification;
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
 
-use std::env;
-use std::path::{Path, PathBuf};
-
 const DEFAULTS_TOML: &str = include_str!("defaults.toml");
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct Config {
+    pub project: PathBuf,
+    pub verbosity: Verbosity,
+    #[serde(rename = "dry-run")]
+    pub dry_run: bool,
+    pub dirty: bool,
+    pub overwrite: bool,
+    #[serde(rename = "config-file")]
+    pub config_file: Option<PathBuf>,
+    #[serde(default)]
+    pub processor: Processor,
+    #[serde(default)]
+    pub extractor: Extractor,
+    #[serde(rename = "export-format")]
+    pub export_format: ExportFormat,
+    #[serde(rename = "dump-format")]
+    pub dump_format: DumpFormat,
+    pub templates: ExportTemplates,
+    pub(crate) storage: Option<StorageDriver>,
+    pub(crate) filesystem: Option<FilesystemConfig>,
+    // swap rename for alias for env var parsing, but then the TOML breaks.
+    // #[serde(alias = "GITANNEX")]
+    #[serde(rename = "git-annex")]
+    pub(crate) git_annex: Option<GitAnnexConfig>,
+    pub(crate) vision: Option<VisionConfig>,
+    pub(crate) llm: Option<LLMConfig>,
+    #[serde(default)]
+    pub(crate) tui: TuiConfig,
+    pub extra: Map<String, Value>,
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
@@ -71,47 +106,45 @@ pub struct TuiConfig {
     pub preview: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[allow(unused)]
-pub struct Config {
-    pub project: PathBuf,
-    pub verbosity: LevelFilter,
-    #[serde(rename(deserialize = "dry-run"))]
-    pub dry_run: bool,
-    pub dirty: bool,
-    pub overwrite: bool,
-    #[serde(rename(deserialize = "config-file"))]
-    pub config_file: Option<PathBuf>,
-    #[serde(default)]
-    pub processor: Processor,
-    #[serde(default)]
-    pub extractor: Extractor,
-    #[serde(rename(deserialize = "export-format"))]
-    pub export_format: ExportFormat,
-    #[serde(rename(deserialize = "dump-format"))]
-    pub dump_format: DumpFormat,
-    pub templates: ExportTemplates,
-    pub(crate) storage: Option<StorageDriver>,
-    pub(crate) filesystem: Option<FilesystemConfig>,
-    // swap rename for alias for env var parsing, but then the TOML breaks.
-    // #[serde(alias = "GITANNEX")]
-    #[serde(rename(deserialize = "git-annex"))]
-    pub(crate) git_annex: Option<GitAnnexConfig>,
-    pub(crate) vision: Option<VisionConfig>,
-    pub(crate) llm: Option<LLMConfig>,
-    #[serde(default)]
-    pub(crate) tui: TuiConfig,
-    pub extra: Map<String, Value>,
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct ExportTemplates {
     pub hledger: TemplateString,
-    #[serde(rename(deserialize = "ledger-cli"))]
+    #[serde(rename = "ledger-cli")]
     pub ledger_cli: TemplateString,
     pub beancount: TemplateString,
     pub custom: TemplateString,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, FromStr, Into, Deref)]
+#[into(LogSpecification)]
+pub struct Verbosity(LevelFilter);
+
+impl Default for Verbosity {
+    fn default() -> Self {
+        Self(LevelFilter::Warn)
+    }
+}
+
+impl Serialize for Verbosity {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0.to_string().to_lowercase())
+    }
+}
+
+impl<'de> Deserialize<'de> for Verbosity {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse::<LevelFilter>()
+            .map(Verbosity)
+            .map_err(|_| serde::de::Error::custom(format!("invalid log level: {}", s)))
+    }
 }
 
 impl Config {

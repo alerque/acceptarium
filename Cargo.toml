@@ -92,7 +92,7 @@ version = "3.0"
 
 [dependencies.derive_more]
 version = "2.1"
-features = ["debug"]
+features = ["from_str", "debug", "deref", "into"]
 
 [dependencies.flexi_logger]
 version = "0.31"
