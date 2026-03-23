@@ -17,19 +17,14 @@ pub fn export(config: &Config, assets: &Assets) -> Result<String> {
     let mut output = String::new();
     for (_, asset) in assets {
         log::debug!("Attempting to render {} as {:?}", &asset.id(), &format);
-        match format {
-            ExportFormat::HLedger => {
-                log::debug!(
-                    "Using template {:?} for format {:?}",
-                    &config.template,
-                    &format
-                );
-                let transaction = config.template.render(config, asset)?;
-                writeln!(output, "{transaction}")?;
-            }
-            ExportFormat::LedgerCli => unimplemented!(),
-            ExportFormat::BeanCount => unimplemented!(),
+        let template = match format {
+            ExportFormat::HLedger => &config.templates.hledger,
+
+            ExportFormat::LedgerCli => &config.templates.ledger_cli,
+            ExportFormat::BeanCount => &config.templates.beancount,
         };
+        let transaction = template.render(config, asset)?;
+        writeln!(output, "{transaction}")?;
     }
     Ok(output)
 }

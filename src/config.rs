@@ -128,7 +128,7 @@ pub struct Config {
     pub export_format: ExportFormat,
     #[serde(rename(deserialize = "dump-format"))]
     pub dump_format: DumpFormat,
-    pub template: TemplateString,
+    pub templates: ExportTemplates,
     pub(crate) storage: Option<StorageDriver>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.
@@ -140,6 +140,15 @@ pub struct Config {
     #[serde(default)]
     pub(crate) tui: TuiConfig,
     pub extra: Map<String, Value>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct ExportTemplates {
+    pub hledger: TemplateString,
+    #[serde(rename(deserialize = "ledger-cli"))]
+    pub ledger_cli: TemplateString,
+    pub beancount: TemplateString,
 }
 
 impl Config {
