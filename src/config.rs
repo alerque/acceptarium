@@ -149,6 +149,7 @@ pub struct ExportTemplates {
     #[serde(rename(deserialize = "ledger-cli"))]
     pub ledger_cli: TemplateString,
     pub beancount: TemplateString,
+    pub custom: TemplateString,
 }
 
 impl Config {

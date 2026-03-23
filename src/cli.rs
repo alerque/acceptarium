@@ -43,6 +43,7 @@ pub enum ExportFormat {
     #[serde(rename = "ledger-cli")]
     LedgerCli,
     BeanCount,
+    Custom,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]

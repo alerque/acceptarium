@@ -9,7 +9,7 @@ storage = "filesystem"
 processor = "manual"
 # manual, llm, regex, vision
 extractor = "manual"
-# hledger, ledger-cli, beancount
+# hledger, ledger-cli, beancount, custom
 export-format = "hledger"
 # hjson, json, toml, yaml, xml
 dump-format = "yaml"
@@ -29,6 +29,7 @@ hledger = """
 """
 beancount = "No default template"
 ledger-cli = "No default template"
+custom = "Enter a template using Tera syntax in your project config."
 
 [filesystem]
 directory = "acceptarium"
