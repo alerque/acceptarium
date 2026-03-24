@@ -12,49 +12,12 @@ use config::Case;
 use config::{Config as LayeredConfig, Environment, File, FileFormat};
 use convert_case::Casing;
 use log::LevelFilter;
-use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
 
 use std::env;
 use std::path::{Path, PathBuf};
-
-struct LevelFilterVisitor;
-
-impl<'de> Visitor<'de> for LevelFilterVisitor {
-    type Value = LevelFilter;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("a log level string (error, warn, info, debug, trace, or off)")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        let lower = value.to_lowercase();
-        match lower.as_str() {
-            "error" => Ok(LevelFilter::Error),
-            "warn" => Ok(LevelFilter::Warn),
-            "info" => Ok(LevelFilter::Info),
-            "debug" => Ok(LevelFilter::Debug),
-            "trace" => Ok(LevelFilter::Trace),
-            "off" => Ok(LevelFilter::Off),
-            _ => Err(de::Error::unknown_variant(
-                value,
-                &["error", "warn", "info", "debug", "trace", "off"],
-            )),
-        }
-    }
-}
-
-fn deserialize_level_filter<'de, D>(deserializer: D) -> Result<LevelFilter, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    deserializer.deserialize_str(LevelFilterVisitor)
-}
 
 const DEFAULTS_TOML: &str = include_str!("defaults.toml");
 
@@ -112,7 +75,6 @@ pub struct TuiConfig {
 #[allow(unused)]
 pub struct Config {
     pub project: PathBuf,
-    #[serde(deserialize_with = "deserialize_level_filter")]
     pub verbosity: LevelFilter,
     #[serde(rename(deserialize = "dry-run"))]
     pub dry_run: bool,
