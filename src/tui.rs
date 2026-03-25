@@ -28,6 +28,7 @@ struct App {
     image_loader: Option<ImageLoader>,
     load_generation: u64,
     config: Config,
+    details_available_height: usize,
 }
 
 struct ImageLoader {
@@ -45,6 +46,7 @@ impl App {
             image_loader: None,
             load_generation: 0,
             config: config.clone(),
+            details_available_height: 0,
         }
     }
 
@@ -166,16 +168,19 @@ impl App {
             .direction(Direction::Vertical)
             .constraints([Constraint::Fill(2), Constraint::Fill(1)])
             .split(details_pane);
+        let available_height = detail_areas[0].height.saturating_sub(2) as usize;
+        self.details_available_height = available_height;
         let details_text = match self.selected_asset() {
             Some(asset) => self.format_asset_details(asset),
             None => "No asset selected".to_string(),
         };
         let content_height = details_text.lines().count();
-        let available_height = detail_areas[0].height.saturating_sub(2) as usize;
+        let max_scroll = content_height.saturating_sub(available_height);
+        let clamped_scroll = self.scroll_offset.min(max_scroll);
         let mut details_paragraph =
             Paragraph::new(details_text).block(Block::default().title("Details").borders(borders));
         if content_height > available_height {
-            details_paragraph = details_paragraph.scroll((self.scroll_offset as u16, 0));
+            details_paragraph = details_paragraph.scroll((clamped_scroll as u16, 0));
         }
         frame.render_widget(details_paragraph, detail_areas[0]);
         let export_content = match self.selected_asset() {
@@ -220,11 +225,11 @@ impl App {
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Char('j') | KeyCode::Char('J') | KeyCode::Down => match shift {
                         false => self.select_next(),
-                        true => self.scroll_offset = self.scroll_offset.saturating_add(1),
+                        true => self.scroll_down(),
                     },
                     KeyCode::Char('k') | KeyCode::Char('K') | KeyCode::Up => match shift {
                         false => self.select_previous(),
-                        true => self.scroll_offset = self.scroll_offset.saturating_sub(1),
+                        true => self.scroll_up(),
                     },
                     KeyCode::Char('P') => self.toggle_preview(),
                     _ => {}
@@ -243,5 +248,23 @@ impl App {
         let mut assets = Assets::new();
         assets.add(asset.clone());
         output::export(&self.config, &assets).unwrap_or_default()
+    }
+
+    fn max_scroll_offset(&self) -> usize {
+        let Some(asset) = self.selected_asset() else {
+            return 0;
+        };
+        let details_text = self.format_asset_details(asset);
+        let content_height = details_text.lines().count();
+        content_height.saturating_sub(self.details_available_height)
+    }
+
+    fn scroll_down(&mut self) {
+        let max = self.max_scroll_offset();
+        self.scroll_offset = (self.scroll_offset + 1).min(max);
+    }
+
+    fn scroll_up(&mut self) {
+        self.scroll_offset = self.scroll_offset.saturating_sub(1);
     }
 }
