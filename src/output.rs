@@ -8,9 +8,9 @@ use std::fmt::Write;
 
 use serde_hjson::ser::to_string as to_hjson_string;
 use serde_json::to_string_pretty as to_json_string;
+use serde_xml_rs::to_string as to_xml_string;
 use serde_yaml::to_string as to_yaml_string;
 use toml::to_string as to_toml_string;
-use xml_serde::to_string as to_xml_string;
 
 pub fn export(config: &Config, assets: &Assets) -> Result<String> {
     let format = &config.export_format;
