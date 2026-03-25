@@ -121,7 +121,7 @@ optional = true
 
 [dependencies.log]
 version = "0.4"
-features = ["serde"]
+features = ["release_max_level_debug", "serde"]
 
 [dependencies.rig-core]
 version = "0.33"

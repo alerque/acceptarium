@@ -1,4 +1,4 @@
-# off, error, warn, info, debug, or trace
+# off, error, warn, info, debug, or trace (dev builds only)
 verbosity = "warn"
 dry-run = false
 dirty = false
