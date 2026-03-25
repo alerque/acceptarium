@@ -6,6 +6,7 @@ use crate::{Assets, Config, DumpFormat, ExportFormat};
 
 use std::fmt::Write;
 
+use serde::Serialize;
 use serde_hjson::ser::to_string as to_hjson_string;
 use serde_json::to_string_pretty as to_json_string;
 use serde_xml_rs::to_string as to_xml_string;
@@ -29,15 +30,15 @@ pub fn export(config: &Config, assets: &Assets) -> Result<String> {
     Ok(output)
 }
 
-pub fn dump(config: &Config, assets: &Assets) -> Result<String> {
+pub fn dump<T: Serialize>(config: &Config, data: &T) -> Result<String> {
     let format = &config.dump_format;
-    log::debug!("Attempting to dump assets as {:?}", format);
+    log::debug!("Attempting to dump data as {:?}", format);
     let output = match format {
-        DumpFormat::JSON => to_json_string(assets).unwrap_or_default(),
-        DumpFormat::TOML => to_toml_string(assets).unwrap_or_default(),
-        DumpFormat::YAML => to_yaml_string(assets).unwrap_or_default(),
-        DumpFormat::HJSON => to_hjson_string(assets).unwrap_or_default(),
-        DumpFormat::XML => to_xml_string(assets).unwrap_or_default(),
+        DumpFormat::JSON => to_json_string(data).unwrap_or_default(),
+        DumpFormat::TOML => to_toml_string(data).unwrap_or_default(),
+        DumpFormat::YAML => to_yaml_string(data).unwrap_or_default(),
+        DumpFormat::HJSON => to_hjson_string(data).unwrap_or_default(),
+        DumpFormat::XML => to_xml_string(data).unwrap_or_default(),
     };
     Ok(output)
 }

@@ -241,9 +241,7 @@ impl App {
     }
 
     fn format_asset_details(&self, asset: &Asset) -> String {
-        let mut assets = Assets::new();
-        assets.add(asset.clone());
-        output::dump(&self.config, &assets).unwrap_or_default()
+        output::dump(&self.config, asset).unwrap_or_default()
     }
 
     fn format_export_output(&self, asset: &Asset) -> String {
