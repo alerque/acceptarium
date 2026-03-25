@@ -225,12 +225,14 @@ impl App {
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Char('j') | KeyCode::Char('J') | KeyCode::Down => match shift {
                         false => self.select_next(),
-                        true => self.scroll_down(),
+                        true => self.scroll_down(false),
                     },
                     KeyCode::Char('k') | KeyCode::Char('K') | KeyCode::Up => match shift {
                         false => self.select_previous(),
-                        true => self.scroll_up(),
+                        true => self.scroll_up(false),
                     },
+                    KeyCode::PageDown => self.scroll_down(true),
+                    KeyCode::PageUp => self.scroll_up(true),
                     KeyCode::Char('P') => self.toggle_preview(),
                     _ => {}
                 }
@@ -259,12 +261,22 @@ impl App {
         content_height.saturating_sub(self.details_available_height)
     }
 
-    fn scroll_down(&mut self) {
+    fn scroll_down(&mut self, page: bool) {
         let max = self.max_scroll_offset();
-        self.scroll_offset = (self.scroll_offset + 1).min(max);
+        let inc = if page {
+            self.details_available_height.saturating_sub(1)
+        } else {
+            1
+        };
+        self.scroll_offset = (self.scroll_offset + inc).min(max);
     }
 
-    fn scroll_up(&mut self) {
-        self.scroll_offset = self.scroll_offset.saturating_sub(1);
+    fn scroll_up(&mut self, page: bool) {
+        let inc = if page {
+            self.details_available_height.saturating_sub(1)
+        } else {
+            1
+        };
+        self.scroll_offset = self.scroll_offset.saturating_sub(inc);
     }
 }
