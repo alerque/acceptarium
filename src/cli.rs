@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use clap::ArgAction::{SetFalse, SetTrue};
+use clap::ValueHint::{CommandName, DirPath, FilePath, Unknown};
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_verbosity_flag::{Verbosity, WarnLevel};
@@ -66,28 +68,28 @@ pub struct Cli {
     pub verbosity: Verbosity<WarnLevel>,
 
     /// Run actions in dry run mode that checks everything but makes no changes
-    #[clap(short = 'n', long, action = clap::ArgAction::SetTrue, overrides_with("no_dry_run"))]
+    #[clap(short = 'n', long, action = SetTrue, overrides_with("no_dry_run"))]
     pub dry_run: Option<bool>,
 
-    #[clap(long = "no-dry-run", action = clap::ArgAction::SetFalse, hide = true)]
+    #[clap(long = "no-dry-run", action = SetFalse, hide = true)]
     pub no_dry_run: Option<bool>,
 
     /// Allow changing Git state even when repository is dirty
-    #[clap(short = 'd', long, action = clap::ArgAction::SetTrue, overrides_with("no_dirty"))]
+    #[clap(short = 'd', long, action = SetTrue, overrides_with("no_dirty"))]
     pub dirty: Option<bool>,
 
-    #[clap(long, action = clap::ArgAction::SetFalse, hide = true)]
+    #[clap(long, action = SetFalse, hide = true)]
     pub no_dirty: Option<bool>,
 
     /// Overwrite existing extracted transaction data
-    #[clap(long, action = clap::ArgAction::SetTrue, overrides_with("no_overwrite"))]
+    #[clap(long, action = SetTrue, overrides_with("no_overwrite"))]
     pub overwrite: Option<bool>,
 
-    #[clap(long = "no-overwrite", action = clap::ArgAction::SetFalse, hide = true)]
+    #[clap(long = "no-overwrite", action = SetFalse, hide = true)]
     pub no_overwrite: Option<bool>,
 
     /// Set project root path
-    #[clap(short, long, value_hint = clap::ValueHint::DirPath)]
+    #[clap(short, long, value_hint = DirPath)]
     pub project: Option<PathBuf>,
 
     /// Override a configuration value (can be passed multiple times)
@@ -95,51 +97,51 @@ pub struct Cli {
     pub config: Vec<String>,
 
     /// Path to a TOML config file, relative to project root
-    #[clap(long, value_hint = clap::ValueHint::FilePath)]
+    #[clap(long, value_hint = FilePath)]
     pub config_file: Option<PathBuf>,
 
     #[clap(subcommand)]
-    pub subcommand: Commands,
+    pub subcommand: SubCommand,
 }
 
 #[derive(Subcommand, Debug)]
 #[clap(subcommand_negates_reqs = true)]
-pub enum Commands {
+pub enum SubCommand {
     /// Import an asset file and begin tracking via the configured storage
     Add {
         /// Automatically commit imported asset to VCS tracker (if configured)
-        #[clap(short = 't', long, action = clap::ArgAction::SetTrue, overrides_with("no_commit"))]
+        #[clap(short = 't', long, action = SetTrue, overrides_with("no_commit"))]
         commit: Option<bool>,
 
-        #[clap(long = "no-commit", action = clap::ArgAction::SetFalse, hide = true)]
+        #[clap(long = "no-commit", action = SetFalse, hide = true)]
         no_commit: Option<bool>,
 
         /// Copy the source file from its current location into the configured data directory
-        #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_copy"))]
+        #[clap(short, long, action = SetTrue, overrides_with("no_copy"))]
         copy: Option<bool>,
 
-        #[clap(long = "no-copy", action = clap::ArgAction::SetFalse, hide = true)]
+        #[clap(long = "no-copy", action = SetFalse, hide = true)]
         no_copy: Option<bool>,
 
         /// Rename source files using the internal asset ID when copying to data folder
-        #[clap(short, long, action = clap::ArgAction::SetTrue, overrides_with("no_rename"))]
+        #[clap(short, long, action = SetTrue, overrides_with("no_rename"))]
         rename: Option<bool>,
 
-        #[clap(long = "no-rename", action = clap::ArgAction::SetFalse, hide = true)]
+        #[clap(long = "no-rename", action = SetFalse, hide = true)]
         no_rename: Option<bool>,
 
         /// Files to add as assets (at least one required)
-        #[clap(value_hint = clap::ValueHint::FilePath, required = true, num_args(1..))]
+        #[clap(value_hint = FilePath, required = true, num_args(1..))]
         files: Vec<PathBuf>,
     },
 
     /// List known assets
     List {
         /// View only assets currently tracked in VCS (if configured)
-        #[clap(long, action = clap::ArgAction::SetTrue, overrides_with("no_tracked"))]
+        #[clap(long, action = SetTrue, overrides_with("no_tracked"))]
         tracked: Option<bool>,
 
-        #[clap(long = "no-tracked", action = clap::ArgAction::SetFalse, hide = true)]
+        #[clap(long = "no-tracked", action = SetFalse, hide = true)]
         no_tracked: Option<bool>,
 
         /// Output assets as JSON
@@ -214,18 +216,18 @@ pub enum Commands {
     /// Execute a script as a child process that inherits Acceptarium environment
     Run {
         /// Name of script supplied either by Acceptarium or a local project
-        #[clap(value_hint = clap::ValueHint::CommandName)]
+        #[clap(value_hint = CommandName)]
         name: OsString,
 
         /// Arguments to pass to script being run
-        #[clap(value_hint = clap::ValueHint::Unknown)]
+        #[clap(value_hint = Unknown)]
         arguments: Vec<OsString>,
     },
 
     /// Show status information about configuration, and state
     Status {},
 
-    /// TUI interface for interactively managing assets
+    /// TUI for interactively reviewing and managing assets
     #[cfg(feature = "tui")]
     Tui {},
 
@@ -239,19 +241,19 @@ pub enum Commands {
 #[group(required = true, multiple = false)]
 pub struct AssetSelectors {
     /// Operate on all known assets
-    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    #[clap(short, long, action = SetTrue)]
     pub all: bool,
 
     /// Operate only on assets have been marked as processed
-    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    #[clap(short, long, action = SetTrue)]
     pub processed: bool,
 
     /// Operate only on assets that have not been marked as processed
-    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    #[clap(short, long, action = SetTrue)]
     pub unprocessed: bool,
 
     /// Operate on a list of asset ID(s)
-    #[clap(value_hint = clap::ValueHint::Unknown, num_args(1..))]
+    #[clap(value_hint = Unknown, num_args(1..))]
     pub ids: Option<Vec<String>>,
 }
 

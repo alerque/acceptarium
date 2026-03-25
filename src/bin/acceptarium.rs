@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use acceptarium::actions::instantiate_storage;
-use acceptarium::cli::{Cli, Commands, STYLES};
+use acceptarium::cli::{Cli, STYLES, SubCommand};
 #[cfg(feature = "tui")]
 use acceptarium::tui;
 use acceptarium::{Config, Result};
@@ -38,9 +38,9 @@ fn run(logger: LoggerHandle) -> Result<()> {
     log::debug!("Completed config: {:?}", &config);
     log::debug!("Passing subcommand to matched handler");
     let storage = instantiate_storage(&config)?;
-    match Commands::from_arg_matches(&matches)? {
-        Commands::Add { files, .. } => storage::add(&config, storage, files),
-        Commands::List {
+    match SubCommand::from_arg_matches(&matches)? {
+        SubCommand::Add { files, .. } => storage::add(&config, storage, files),
+        SubCommand::List {
             json, selectors, ..
         } => {
             let assets = storage.select(&selectors)?;
@@ -51,35 +51,35 @@ fn run(logger: LoggerHandle) -> Result<()> {
             }
             Ok(())
         }
-        Commands::Process { selectors, .. } => {
+        SubCommand::Process { selectors, .. } => {
             let assets = storage.select(&selectors)?;
             process::process(&config, storage, assets)
         }
-        Commands::Export { selectors, .. } => {
+        SubCommand::Export { selectors, .. } => {
             let assets = storage.select(&selectors)?;
             let output = output::export(&config, &assets)?;
             println!("{output}");
             Ok(())
         }
-        Commands::Dump { selectors, .. } => {
+        SubCommand::Dump { selectors, .. } => {
             let assets = storage.select(&selectors)?;
             let output = output::dump(&config, &assets)?;
             println!("{output}");
             Ok(())
         }
-        Commands::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
-        Commands::Set { id, key, value } => storage::set(&config, storage, id, &key, &value),
-        Commands::Remove { selectors } => {
+        SubCommand::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
+        SubCommand::Set { id, key, value } => storage::set(&config, storage, id, &key, &value),
+        SubCommand::Remove { selectors } => {
             let assets = storage.select(&selectors)?;
             storage::remove(&config, storage, assets)
         }
-        Commands::Run { name, arguments } => run::run(&config, name, arguments),
-        Commands::Status {} => status::run(&config),
-        Commands::External(mut args) => {
+        SubCommand::Run { name, arguments } => run::run(&config, name, arguments),
+        SubCommand::Status {} => status::run(&config),
+        SubCommand::External(mut args) => {
             let name = args.pop().ok_or("external command without a name")?;
             run::run(&config, name, args)
         }
         #[cfg(feature = "tui")]
-        Commands::Tui {} => tui::main(&config),
+        SubCommand::Tui {} => tui::main(&config),
     }
 }

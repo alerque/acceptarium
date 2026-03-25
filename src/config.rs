@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::cli::{Cli, Commands};
+use crate::cli::{Cli, SubCommand};
 use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
@@ -215,7 +215,7 @@ impl Config {
             builder = builder.set_override("overwrite", val)?;
         }
         match args.subcommand {
-            Commands::Add {
+            SubCommand::Add {
                 commit,
                 no_commit,
                 copy,
@@ -234,7 +234,7 @@ impl Config {
                     builder = builder.set_override("filesystem.rename", val)?;
                 }
             }
-            Commands::List {
+            SubCommand::List {
                 // tracked,
                 // no_tracked,
                 ..
@@ -243,7 +243,7 @@ impl Config {
                 //     builder = builder.set_override("filesystem.tracked", val)?;
                 // }
             }
-            Commands::Process {
+            SubCommand::Process {
                 processor,
                 extractor,
                 ..
@@ -257,25 +257,25 @@ impl Config {
                     builder = builder.set_override("extractor", val)?;
                 }
             }
-            Commands::Dump { format, .. } => {
+            SubCommand::Dump { format, .. } => {
                 if let Some(val) = format {
                     let val: String = val.to_possible_value().unwrap().get_name().into();
                     builder = builder.set_override("serialized-format", val)?;
                 }
             }
-            Commands::Export { format, .. } => {
+            SubCommand::Export { format, .. } => {
                 if let Some(val) = format {
                     let val: String = val.to_possible_value().unwrap().get_name().into();
                     builder = builder.set_override("export-format", val)?;
                 }
             }
-            Commands::Get { .. } => {}
-            Commands::Set { .. } => {}
-            Commands::Remove { .. } => {}
-            Commands::Run { .. } => {}
-            Commands::Status {} => {}
-            Commands::Tui {} => {}
-            Commands::External(_) => {}
+            SubCommand::Get { .. } => {}
+            SubCommand::Set { .. } => {}
+            SubCommand::Remove { .. } => {}
+            SubCommand::Run { .. } => {}
+            SubCommand::Status {} => {}
+            SubCommand::Tui {} => {}
+            SubCommand::External(_) => {}
         }
 
         // Put it all together and deserialize it to a config struct
