@@ -11,7 +11,6 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
-use std::env::current_dir;
 use std::sync::mpsc;
 
 pub fn main(config: &Config) -> Result<()> {
@@ -94,7 +93,7 @@ impl App {
         let Some(asset) = self.selected_asset() else {
             return;
         };
-        let Some(path) = asset.asset_path(&current_dir().unwrap_or_default()) else {
+        let Some(path) = asset.asset_path(&self.config.project) else {
             return;
         };
         let picker = self.picker.clone();
