@@ -3,10 +3,11 @@
 
 use crate::assets::AssetId;
 
-use snafu::Snafu;
 use std::convert::Infallible;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Display, Formatter, Result};
 use std::path::PathBuf;
+
+use snafu::Snafu;
 
 // Error types we wrap
 use clap::error::Error as ClapError;
@@ -119,7 +120,7 @@ pub enum Error {
 // Clap CLI errors are reported using the Debug trait, but Snafu sets up the Display trait.
 // So we delegate. c.f. https://github.com/shepmaster/snafu/issues/110
 impl Debug for Error {
-    fn fmt(&self, fmt: &mut Formatter) -> std::fmt::Result {
+    fn fmt(&self, fmt: &mut Formatter) -> Result {
         Display::fmt(self, fmt)
     }
 }

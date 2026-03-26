@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::ffi::OsString;
+use std::path::PathBuf;
+
 use clap::ArgAction::{SetFalse, SetTrue};
 use clap::ValueHint::{CommandName, DirPath, FilePath, Unknown};
 use clap::builder::styling::{AnsiColor, Styles};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_verbosity_flag::{Verbosity, WarnLevel};
 use serde::{Deserialize, Serialize};
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]

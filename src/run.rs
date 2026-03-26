@@ -5,11 +5,12 @@ use crate::CONFIGURE_DATADIR;
 use crate::error::{BufferSnafu, CurrentExecutableSnafu};
 use crate::{Config, Result};
 
-use snafu::{OptionExt, ResultExt};
 use std::env::current_exe;
 use std::ffi::OsString;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+
+use snafu::{OptionExt, ResultExt};
 use subprocess::{Exec, Redirection};
 use which::which;
 

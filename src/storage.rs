@@ -7,9 +7,10 @@ use crate::ingestable::local_file::LocalFile;
 use crate::{AssetId, Assets};
 use crate::{Config, Error, OperationMode, Result};
 
-use snafu::ensure;
 use std::collections::HashSet;
 use std::path::PathBuf;
+
+use snafu::ensure;
 
 pub mod filesystem;
 #[cfg(feature = "git-annex")]

@@ -5,13 +5,14 @@ use crate::actions::instantiate_storage;
 use crate::output;
 use crate::{Asset, Assets, Config, Result};
 
+use std::sync::mpsc;
+
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
-use std::sync::mpsc;
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;

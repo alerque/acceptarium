@@ -7,10 +7,12 @@ use crate::Config;
 use crate::assets::Asset;
 use crate::error::Error;
 
+use std::fmt::Debug;
+use std::ops::Deref;
+
 use glob::Pattern;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as SerializableValue, to_value};
-use std::fmt::Debug;
 use tera::{Context, Tera};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -77,19 +79,13 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 #[derive(Clone, Debug)]
 pub struct GlobPattern(Pattern);
 
-// impl GlobPattern {
-//     pub fn new(pattern: &str) -> Result<Self> {
-//         Ok(Self(Pattern::new(pattern)?))
-//     }
-// }
-
 impl Default for GlobPattern {
     fn default() -> Self {
         Self(Pattern::new("*").unwrap())
     }
 }
 
-impl std::ops::Deref for GlobPattern {
+impl Deref for GlobPattern {
     type Target = Pattern;
 
     fn deref(&self) -> &Self::Target {

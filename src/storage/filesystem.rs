@@ -14,6 +14,10 @@ use crate::storage::git_tracker::GitTracker;
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
+use std::env::current_dir;
+use std::fs::read_to_string;
+use std::path::{Path, PathBuf};
+
 use blake3::Hash as Blake3;
 use derive_more::Debug;
 #[cfg(feature = "git")]
@@ -21,9 +25,6 @@ use git2::Repository;
 use glob::glob;
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
-use std::env::current_dir;
-use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
 
 #[derive(Debug)]

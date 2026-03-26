@@ -6,11 +6,12 @@ use crate::assets::Blake3Sum;
 use crate::error::{FilesystemSnafu, IoSnafu};
 use crate::types::Result;
 
-use snafu::ResultExt;
-use snafu::ensure;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+
+use snafu::ResultExt;
+use snafu::ensure;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct LocalFile {

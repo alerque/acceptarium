@@ -16,6 +16,13 @@ use crate::error::FeatureNotEnabledSnafu;
 use crate::error::MissingProcessorConfigSnafu;
 use crate::{Assets, Config, Result};
 
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use std::env::current_dir;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use std::fs::read;
+#[cfg(feature = "ollama")]
+use std::path::PathBuf;
+
 #[cfg(feature = "ollama")]
 use base64::engine::{Engine as _, general_purpose};
 #[cfg(feature = "ollama")]
@@ -29,13 +36,6 @@ use rig::{
 };
 #[cfg(feature = "ollama")]
 use snafu::OptionExt;
-
-#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
-use std::env::current_dir;
-#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
-use std::fs::read;
-#[cfg(feature = "ollama")]
-use std::path::PathBuf;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 

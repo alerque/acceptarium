@@ -7,8 +7,9 @@ use crate::storage::filesystem::FilesystemStorage;
 use crate::storage::git_annex::GitAnnexStorage;
 use crate::{Config, Result, StorageDriver};
 
-use snafu::ensure;
 use std::path::Path;
+
+use snafu::ensure;
 
 pub fn instantiate_storage(config: &Config) -> Result<Box<dyn Storage>> {
     log::debug!("Selecting and initializing storage backend");

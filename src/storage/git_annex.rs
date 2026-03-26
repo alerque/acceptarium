@@ -10,14 +10,15 @@ use crate::storage::git_tracker::GitTracker;
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
+
 use blake3::Hash as Blake3;
 use derive_more::Debug;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
 use subprocess::{Exec, Redirection};
 
 #[derive(Debug)]

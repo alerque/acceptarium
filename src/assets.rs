@@ -4,19 +4,19 @@
 #[cfg(feature = "git-annex")]
 use crate::ANNEX_META_PREFIX;
 use crate::Transaction;
-use crate::{Error, Result};
-
 use crate::error::InvalidAssetIdSnafu;
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
+use crate::{Error, Result};
+
+use std::collections::HashMap;
+use std::convert::TryFrom;
+use std::fmt::{Debug, Display};
+use std::path::{Path, PathBuf};
 
 use blake3::Hash as Blake3;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as SerializableValue};
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::fmt::{Debug, Display};
-use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);

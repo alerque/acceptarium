@@ -3,9 +3,11 @@
 
 use crate::Result;
 use crate::error::FilesystemSnafu;
+
+use std::path::{Path, PathBuf};
+
 use git2::Repository;
 use snafu::ensure;
-use std::path::{Path, PathBuf};
 
 pub trait GitTracker {
     fn project_dir(&self) -> &Path;
