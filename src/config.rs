@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::DEFAULTS_TOML;
 use crate::cli::{Cli, SubCommand};
-use crate::deboolify;
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
+use crate::utils::discover_project_root;
 use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
 
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use clap::ValueEnum;
 use config::Case;
@@ -20,8 +21,6 @@ use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
-
-const DEFAULTS_TOML: &str = include_str!("defaults.toml");
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
@@ -292,39 +291,6 @@ impl Config {
     }
 }
 
-#[cfg(feature = "git")]
-fn discover_project_root(cwd: &Path) -> PathBuf {
-    use git2::Repository;
-    let git_repo = Repository::discover(cwd).ok();
-    let git_root = git_repo
-        .as_ref()
-        .and_then(|repo| repo.workdir().map(PathBuf::from))
-        .unwrap_or_else(|| PathBuf::from(&cwd));
-    walk_to_root_or_config(cwd, &git_root)
-}
-
-#[cfg(not(feature = "git"))]
-fn discover_project_root(cwd: &Path) -> PathBuf {
-    walk_to_root_or_config(cwd, &PathBuf::from("/"))
-}
-
-fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
-    let mut current = cwd.to_path_buf();
-    loop {
-        let config = current.join("acceptarium.toml");
-        if config.exists() {
-            return current;
-        }
-        if current == *root {
-            break;
-        }
-        if !current.pop() {
-            break;
-        }
-    }
-    root.clone()
-}
-
 fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, String)>) {
     match value {
         Value::Object(map) => {
@@ -344,5 +310,15 @@ fn flatten_json_value(value: &Value, prefix: &str, envs: &mut Vec<(String, Strin
                 envs.push((prefix.to_string(), s));
             }
         }
+    }
+}
+
+// Make up for clap not having a way to negate flags with None being a possible state
+// c.f. https://github.com/clap-rs/clap/issues/815
+fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
+    match (yes, no) {
+        (Some(true), _) => yes,
+        (_, Some(false)) => no,
+        _ => None,
     }
 }

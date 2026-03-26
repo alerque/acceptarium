@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Storage;
 use crate::error::AssetHashExistsSnafu;
+use crate::ingestable::Ingestable;
 use crate::ingestable::local_file::LocalFile;
-use crate::{AssetId, Assets};
-use crate::{Config, Error, OperationMode, Result};
+use crate::{Asset, AssetId, Assets};
+use crate::{AssetSelectors, Config, OperationMode};
+use crate::{Error, Result};
 
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -17,6 +18,42 @@ pub mod filesystem;
 pub mod git_annex;
 #[cfg(feature = "git")]
 pub mod git_tracker;
+
+pub trait Storage {
+    fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
+    fn list(&self) -> Result<Assets>;
+    fn load(&self, id: AssetId) -> Result<Asset>;
+    fn get(&self, id: AssetId, key: &str) -> Result<String>;
+    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()>;
+    fn save(&self, asset: &Asset) -> Result<()>;
+    fn remove(&self, id: AssetId) -> Result<()>;
+    fn is_clean(&self, diry: &bool) -> Result<()>;
+
+    fn select(&self, selectors: &AssetSelectors) -> Result<Assets> {
+        let assets = if selectors.all {
+            self.list()?
+        } else if selectors.processed {
+            let mut assets = self.list()?;
+            assets.retain(|_, asset| asset.transaction().is_some());
+            assets
+        } else if selectors.unprocessed {
+            let mut assets = self.list()?;
+            assets.retain(|_, asset| asset.transaction().is_none());
+            assets
+        } else {
+            let mut assets = Assets::new();
+            if let Some(ids) = &selectors.ids {
+                for id in ids {
+                    let asset_id: AssetId = id.try_into()?;
+                    let asset = self.load(asset_id)?;
+                    assets.add(asset);
+                }
+            }
+            assets
+        };
+        Ok(assets)
+    }
+}
 
 pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) -> Result<()> {
     storage.is_clean(&config.dirty)?;

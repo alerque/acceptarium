@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+// Note: this file gets included directly into build.rs with a macro and everything here needs to
+// be listed as both a dependency and a build-dependency in the Cargo manifest. It should be
+// entirely self-encapsulated and not use anything from the crate specified outside of this file.
+
 use std::ffi::OsString;
 use std::path::PathBuf;
 
