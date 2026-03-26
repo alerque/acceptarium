@@ -9,3 +9,5 @@ debug_env
 
 # Call back to the parent binary and see that all config options should automatically be passed through
 acceptarium status
+
+echo Verbosity is $(get_config verbosity)

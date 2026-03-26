@@ -5,11 +5,19 @@ alias acceptarium="${ACCEPTARIUM:-acceptarium}"
 alias env="${ENV:-@ENV@}"
 alias grep="${GREP:-@GREP@}"
 
+: ${TRANSFORMED_PACKAGE_NAME:=@TRANSFORMED_PACKAGE_NAME@}
+export BINARY_PREFIX="${(U)TRANSFORMED_PACKAGE_NAME##*/}"
+
 function flunk () {
 	echo "Error: $@" >2
 	exit 1
 }
 
+function get_config () {
+	key=${BINARY_PREFIX}_${(U)1}
+	echo -n "${(P)key}"
+}
+
 function debug_env () {
-	env | grep '^ACCEPTARIUM'
+	env | grep "^(ACCEPTARIUM|$BINARY_PREFIX)"
 }
