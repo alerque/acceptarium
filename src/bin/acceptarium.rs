@@ -68,7 +68,17 @@ fn run(logger: LoggerHandle) -> Result<()> {
             Ok(())
         }
         SubCommand::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
-        SubCommand::Set { id, key, value } => storage::set(&config, storage, id, &key, &value),
+        SubCommand::Set { id, key, value } => {
+            let value = if value == "-" || value.eq_ignore_ascii_case("STDIN") {
+                use std::io::Read;
+                let mut stdin_value = String::new();
+                std::io::stdin().read_to_string(&mut stdin_value)?;
+                stdin_value.trim_end().to_string()
+            } else {
+                value
+            };
+            storage::set(&config, storage, id, &key, &value)
+        }
         SubCommand::Remove { selectors } => {
             let assets = storage.select(&selectors)?;
             storage::remove(&config, storage, assets)
