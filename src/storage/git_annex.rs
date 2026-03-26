@@ -234,7 +234,16 @@ impl Storage for GitAnnexStorage {
             format!("acceptarium.id={}", id),
         ];
         let output = self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
-        Asset::from_annex_metadata_json(&output)
+        let mut lines = output.lines();
+        let line = lines.next().unwrap_or_default();
+        log::debug!("Raw git-annex metadata output: {}", &line);
+        if lines.next().is_some() {
+            log::error!(
+                "Multiple asset files are tagged with id '{}' in git-annex metadata. Using first result, but manual correction of duplicated assets required.",
+                &id,
+            );
+        }
+        Asset::from_annex_metadata_json(line)
     }
 
     fn get(&self, id: AssetId, key: &str) -> Result<String> {
