@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::Storage;
 use crate::actions::instantiate_storage;
 use crate::output;
 use crate::{Asset, Assets, Config, Result};
@@ -17,10 +18,11 @@ use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
     let assets = storage.list()?;
-    ratatui::run(|terminal| App::new(assets, config).run(terminal))
+    ratatui::run(|terminal| App::new(config, storage, assets).run(terminal))
 }
 
 struct App {
+    storage: Box<dyn Storage>,
     assets: Assets,
     selected_index: usize,
     scroll_offset: usize,
@@ -37,8 +39,9 @@ struct ImageLoader {
 }
 
 impl App {
-    fn new(assets: Assets, config: &Config) -> Self {
+    fn new(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Self {
         Self {
+            storage,
             assets,
             selected_index: 0,
             scroll_offset: 0,
@@ -234,6 +237,7 @@ impl App {
                     },
                     KeyCode::PageDown => self.scroll_down(true),
                     KeyCode::PageUp => self.scroll_up(true),
+                    KeyCode::Char('R') => self.assets = self.storage.list()?,
                     KeyCode::Char('P') => self.toggle_preview(),
                     _ => {}
                 }
