@@ -4,7 +4,7 @@
 use crate::actions::{data_is_in_project, data_is_writable, is_in_project};
 use crate::config::Config;
 use crate::error::{
-    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, UnknownMetaKeySnafu,
+    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu,
 };
 use crate::storage::git_tracker::GitTracker;
 use crate::{Asset, AssetId, Assets, OperationMode, Result};
@@ -12,8 +12,6 @@ use crate::{Ingestable, Storage};
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-
-use blake3::Hash as Blake3;
 use derive_more::Debug;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
@@ -247,38 +245,15 @@ impl Storage for GitAnnexStorage {
         Asset::from_annex_metadata_json(line)
     }
 
-    fn get(&self, id: AssetId, key: &str) -> Result<String> {
+    fn get(&self, config: &crate::Config, id: AssetId, key: &str) -> Result<String> {
         let asset = self.load(id)?;
-        let value = match key {
-            "id" => asset.id().to_string(),
-            "asset_path" => asset
-                .asset_path(&self.project_dir)
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default(),
-            "source_fname" => asset
-                .source_fname()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default(),
-            "blake3" => asset.blake3().map(|h| h.to_string()).unwrap_or_default(),
-            _ => UnknownMetaKeySnafu { key }.fail()?,
-        };
-        Ok(value)
+        let value = asset.get_field(key)?;
+        crate::output::dump(config, &value)
     }
 
     fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
         let mut asset = self.load(id.clone())?;
-        match key {
-            "asset_path" => {
-                asset.set_asset_path(Some(Path::new(value)));
-            }
-            "source_fname" => {
-                asset.set_source_fname(Some(Path::new(value)));
-            }
-            "blake3" => {
-                asset.set_blake3(Some(Blake3::from_hex(value).expect("bad hash").into()));
-            }
-            _ => return UnknownMetaKeySnafu { key }.fail(),
-        }
+        asset.set_field(key, value)?;
         self.save(&asset)?;
         Ok(())
     }

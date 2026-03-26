@@ -23,7 +23,7 @@ pub trait Storage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
     fn load(&self, id: AssetId) -> Result<Asset>;
-    fn get(&self, id: AssetId, key: &str) -> Result<String>;
+    fn get(&self, config: &Config, id: AssetId, key: &str) -> Result<String>;
     fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()>;
     fn save(&self, asset: &Asset) -> Result<()>;
     fn remove(&self, id: AssetId) -> Result<()>;
@@ -82,13 +82,13 @@ pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) ->
     Ok(())
 }
 
-pub fn get<ID>(_config: &Config, storage: Box<dyn Storage>, id: ID, key: &str) -> Result<()>
+pub fn get<ID>(config: &Config, storage: Box<dyn Storage>, id: ID, key: &str) -> Result<()>
 where
     ID: TryInto<AssetId>,
     Error: From<ID::Error>,
 {
     let id: AssetId = id.try_into()?;
-    let val = storage.get(id, key)?;
+    let val = storage.get(config, id, key)?;
     println!("{}", val);
     Ok(())
 }

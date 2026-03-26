@@ -208,6 +208,95 @@ impl Asset {
         self.transaction = transaction;
     }
 
+    pub fn set_field(&mut self, key: &str, value: &str) -> Result<()> {
+        let valid_fields = ["blake3", "asset_path", "source_fname", "transaction", "ocr"];
+        if !valid_fields.contains(&key) {
+            return crate::error::UnknownMetaKeySnafu { key: key.to_string() }.fail();
+        }
+        let clear_field = value.is_empty()
+            || value == "null"
+            || value == "\"\"";
+        if clear_field {
+            match key {
+                "blake3" => self.blake3 = None,
+                "asset_path" => self.asset_path = None,
+                "source_fname" => self.source_fname = None,
+                "transaction" => self.transaction = None,
+                "ocr" => self.ocr = None,
+                _ => unreachable!(),
+            }
+            return Ok(());
+        }
+        let json_value: serde_json::Value = serde_json::from_str(value)
+            .or_else(|_| serde_json::from_str(&format!("\"{}\"", value)))?;
+        let is_empty_json_string = matches!(&json_value, serde_json::Value::String(s) if s.is_empty());
+        if json_value == serde_json::Value::Null || is_empty_json_string {
+            match key {
+                "blake3" => self.blake3 = None,
+                "asset_path" => self.asset_path = None,
+                "source_fname" => self.source_fname = None,
+                "transaction" => self.transaction = None,
+                "ocr" => self.ocr = None,
+                _ => unreachable!(),
+            }
+            return Ok(());
+        }
+        match key {
+            "blake3" => {
+                let hash = blake3::Hash::from_hex(value)
+                    .map_err(|_| crate::error::FilesystemSnafu {
+                        message: format!("Invalid blake3 hash: {}", value),
+                    }
+                    .build())?;
+                self.blake3 = Some(Blake3Sum::new(hash));
+            }
+            "asset_path" => {
+                self.asset_path = serde_json::from_value(json_value)?;
+            }
+            "source_fname" => {
+                self.source_fname = serde_json::from_value(json_value)?;
+            }
+            "transaction" => {
+                self.transaction = serde_json::from_value(json_value)?;
+            }
+            "ocr" => {
+                self.ocr = serde_json::from_value(json_value)?;
+            }
+            _ => {
+                return UnknownMetaKeySnafu {
+                    key: key.to_string(),
+                }
+                .fail();
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_field(&self, key: &str) -> Result<serde_json::Value> {
+        let valid_fields = ["id", "blake3", "asset_path", "source_fname", "transaction", "ocr"];
+        if !valid_fields.contains(&key) {
+            return crate::error::UnknownMetaKeySnafu { key: key.to_string() }.fail();
+        }
+        let value = match key {
+            "id" => serde_json::to_value(&self.id)?,
+            "blake3" => serde_json::to_value(&self.blake3)?,
+            "asset_path" => serde_json::to_value(&self.asset_path)?,
+            "source_fname" => serde_json::to_value(&self.source_fname)?,
+            "transaction" => serde_json::to_value(&self.transaction)?,
+            "ocr" => serde_json::to_value(&self.ocr)?,
+            _ => {
+                return UnknownMetaKeySnafu {
+                    key: key.to_string(),
+                }
+                .fail();
+            }
+        };
+        if value == serde_json::Value::Null {
+            return Ok(serde_json::Value::String(String::new()));
+        }
+        Ok(value)
+    }
+
     #[cfg(feature = "git-annex")]
     pub fn to_annex_metadata(&self) -> Vec<String> {
         let mut result = Vec::new();
