@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::Ingestable;
+use crate::assets::Blake3Sum;
 use crate::error::{FilesystemSnafu, IoSnafu};
-use crate::types::{Blake3Sum, Result};
+use crate::types::Result;
 
 use snafu::ResultExt;
 use snafu::ensure;

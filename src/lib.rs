@@ -5,6 +5,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 // Private modules
+mod assets;
 mod config;
 mod error;
 mod types;
@@ -27,6 +28,10 @@ pub mod cli;
 pub mod tui;
 
 // Public structs
+pub use assets::Asset;
+pub use assets::AssetId;
+pub use assets::Assets;
+pub use assets::Blake3Sum;
 pub use cli::AssetSelectors;
 pub use cli::DumpFormat;
 pub use cli::ExportFormat;
@@ -35,10 +40,6 @@ pub use cli::Processor;
 pub use cli::StorageDriver;
 pub use config::Config;
 pub use error::Error;
-pub use types::Asset;
-pub use types::AssetId;
-pub use types::Assets;
-pub use types::Blake3Sum;
 pub use types::OperationMode;
 pub use types::Result;
 pub use types::Transaction;
