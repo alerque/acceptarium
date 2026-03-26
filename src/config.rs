@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::DEFAULTS_TOML;
 use crate::cli::{Cli, SubCommand};
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
 use crate::utils::discover_project_root;
+use crate::{DEFAULTS_TOML, ENV_VAR_PREFIX, PROJECT_CONFIG};
 use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
 
 use std::env;
@@ -153,7 +153,7 @@ impl Config {
             .project
             .clone()
             .or_else(|| {
-                env::var("ACCEPTARIUM_PROJECT")
+                env::var(format!("{}_PROJECT", ENV_VAR_PREFIX))
                     .ok()
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
@@ -172,14 +172,14 @@ impl Config {
             .config_file
             .clone()
             .or_else(|| {
-                env::var("ACCEPTARIUM_CONFIG")
+                env::var(format!("{}_CONFIG", ENV_VAR_PREFIX))
                     .ok()
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
             })
             .or_else(|| {
-                // Check if discovered_project has acceptarium.toml
-                let path = discovered_project.join("acceptarium.toml");
+                // Check if discovered_project has config file
+                let path = discovered_project.join(PROJECT_CONFIG);
                 path.exists().then_some(path)
             });
         if let Some(path) = project_config {
@@ -286,7 +286,7 @@ impl Config {
     pub fn try_to_env_vars(&self) -> Result<Vec<(String, String)>> {
         let json_value = to_value(self)?;
         let mut envs = Vec::new();
-        flatten_json_value(&json_value, "ACCEPTARIUM", &mut envs);
+        flatten_json_value(&json_value, ENV_VAR_PREFIX, &mut envs);
         Ok(envs)
     }
 }

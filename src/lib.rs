@@ -61,7 +61,9 @@ const ASSET_ID_CHARS: [char; 62] = [
     'V', 'W', 'X', 'Y', 'Z',
 ];
 
+const ENV_VAR_PREFIX: &str = "ACCEPTARIUM";
 #[cfg(feature = "git-annex")]
 const ANNEX_META_PREFIX: &str = "acceptarium";
 
 const DEFAULTS_TOML: &str = include_str!("defaults.toml");
+const PROJECT_CONFIG: &str = "acceptarium.toml";

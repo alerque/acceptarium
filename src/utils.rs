@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::PROJECT_CONFIG;
+
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "git")]
@@ -22,7 +24,7 @@ pub(crate) fn discover_project_root(cwd: &Path) -> PathBuf {
 fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
     let mut current = cwd.to_path_buf();
     loop {
-        let config = current.join("acceptarium.toml");
+        let config = current.join(PROJECT_CONFIG);
         if config.exists() {
             return current;
         }
