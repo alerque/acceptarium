@@ -5,7 +5,7 @@ use crate::cli::{Cli, SubCommand};
 use crate::error::NonUnicodePathSnafu;
 use crate::types::{GlobPattern, TemplateString};
 use crate::utils::discover_project_root;
-use crate::{DEFAULTS_TOML, ENV_VAR_PREFIX, PROJECT_CONFIG};
+use crate::{BINARY_PREFIX, DEFAULTS_TOML, PROJECT_CONFIG};
 use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
 
 use std::env;
@@ -153,7 +153,7 @@ impl Config {
             .project
             .clone()
             .or_else(|| {
-                env::var(format!("{}_PROJECT", ENV_VAR_PREFIX))
+                env::var(format!("{}_PROJECT", BINARY_PREFIX.to_uppercase()))
                     .ok()
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
@@ -172,7 +172,7 @@ impl Config {
             .config_file
             .clone()
             .or_else(|| {
-                env::var(format!("{}_CONFIG", ENV_VAR_PREFIX))
+                env::var(format!("{}_CONFIG", BINARY_PREFIX.to_uppercase()))
                     .ok()
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
@@ -286,7 +286,11 @@ impl Config {
     pub fn try_to_env_vars(&self) -> Result<Vec<(String, String)>> {
         let json_value = to_value(self)?;
         let mut envs = Vec::new();
-        flatten_json_value(&json_value, ENV_VAR_PREFIX, &mut envs);
+        flatten_json_value(
+            &json_value,
+            BINARY_PREFIX.to_uppercase().as_str(),
+            &mut envs,
+        );
         Ok(envs)
     }
 }

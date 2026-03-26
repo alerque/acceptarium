@@ -1,4 +1,8 @@
 [env]
+# Autotools builds can rename the package binaries allowing multiple versions,
+# deconflicting names, etc., plain Cargo users just get them hard coded here.
+TRANSFORMED_PACKAGE_NAME = { value = "acceptarium", relative = true }
+
 # Since autotools sets these and we are *not* forcing them here, this will not
 # affect release builds. It will affect `cargo run`, `cargo clippy` and others
 # making it easier to test locally since resources other than the main binary

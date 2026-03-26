@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::CONFIGURE_DATADIR;
 use crate::error::{BufferSnafu, CurrentExecutableSnafu};
+use crate::{BINARY_PREFIX, CONFIGURE_DATADIR};
 use crate::{Config, Result};
 
 use std::env::current_exe;
@@ -24,7 +24,7 @@ pub fn run(config: &Config, name: OsString, arguments: RunArgs) -> Result<()> {
     let cmd = if script.is_file() {
         script
     } else {
-        let mut external = OsString::from("acceptarium-");
+        let mut external = OsString::from(format!("{}-", BINARY_PREFIX));
         external.push(name);
         which(&external)?
     };

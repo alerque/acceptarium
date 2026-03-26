@@ -61,9 +61,23 @@ const ASSET_ID_CHARS: [char; 62] = [
     'V', 'W', 'X', 'Y', 'Z',
 ];
 
-const ENV_VAR_PREFIX: &str = "ACCEPTARIUM";
+const TRANSFORMED_PACKAGE_NAME: &str = env!["TRANSFORMED_PACKAGE_NAME"];
+const BINARY_PREFIX: &str = basename(TRANSFORMED_PACKAGE_NAME);
 #[cfg(feature = "git-annex")]
 const ANNEX_META_PREFIX: &str = "acceptarium";
 
 const DEFAULTS_TOML: &str = include_str!("defaults.toml");
 const PROJECT_CONFIG: &str = "acceptarium.toml";
+
+const fn basename(s: &str) -> &str {
+    let bytes = s.as_bytes();
+    let mut i = bytes.len();
+    while i > 0 {
+        i -= 1;
+        if bytes[i] == b'/' {
+            let (_, rest) = s.split_at(i + 1);
+            return rest;
+        }
+    }
+    s
+}
