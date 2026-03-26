@@ -30,8 +30,7 @@ pub fn export(config: &Config, assets: &Assets) -> Result<String> {
     Ok(output)
 }
 
-pub fn dump<T: Serialize>(config: &Config, data: &T) -> Result<String> {
-    let format = &config.dump_format;
+pub fn dump<T: Serialize>(format: DumpFormat, data: &T) -> Result<String> {
     log::debug!("Attempting to dump data as {:?}", format);
     let output = match format {
         DumpFormat::JSON => to_json_string(data).unwrap_or_default(),

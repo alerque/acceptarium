@@ -11,12 +11,13 @@ use crate::error::{
 };
 #[cfg(feature = "git")]
 use crate::storage::git_tracker::GitTracker;
-use crate::{Asset, AssetId, Assets, OperationMode, Result};
+use crate::{Asset, AssetId, Assets, DumpFormat, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 use std::env::current_dir;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
+
 use derive_more::Debug;
 #[cfg(feature = "git")]
 use git2::Repository;
@@ -229,15 +230,14 @@ impl Storage for FilesystemStorage {
         assets.get(&id).cloned().context(UnknownAssetIdSnafu { id })
     }
 
-    fn get(&self, config: &crate::Config, id: AssetId, key: &str) -> Result<String> {
+    fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String> {
         let asset = self.load(id)?;
-        let value = asset.get_field(key)?;
-        crate::output::dump(config, &value)
+        asset.get_field(format, key)
     }
 
-    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
+    fn set(&self, format: DumpFormat, id: AssetId, key: &str, value: &str) -> Result<()> {
         let mut asset = self.load(id.clone())?;
-        asset.set_field(key, value)?;
+        asset.set_field(format, key, value)?;
         self.save(&asset)?;
         Ok(())
     }

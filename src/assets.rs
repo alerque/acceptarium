@@ -3,9 +3,12 @@
 
 #[cfg(feature = "git-annex")]
 use crate::ANNEX_META_PREFIX;
-use crate::Transaction;
-use crate::error::InvalidAssetIdSnafu;
+use crate::error::{
+    DeserializeSnafu, HashSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
+    SerdeXmlSnafu, SerdeYamlSnafu, UnknownMetaKeySnafu,
+};
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
+use crate::{DumpFormat, Transaction};
 use crate::{Error, Result};
 
 use std::collections::HashMap;
@@ -16,7 +19,10 @@ use std::path::{Path, PathBuf};
 use blake3::Hash as Blake3;
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value as SerializableValue};
+use serde_json::{Map, Value, from_value, to_value};
+use snafu::ResultExt;
+use snafu::ensure;
+use struct_field_names_as_array::FieldNamesAsSlice;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);
@@ -137,7 +143,7 @@ impl From<AssetId> for String {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, FieldNamesAsSlice)]
 pub struct Asset {
     id: AssetId,
     blake3: Option<Blake3Sum>,
@@ -145,8 +151,9 @@ pub struct Asset {
     transaction: Option<Transaction>,
     ocr: Option<String>,
     source_fname: Option<PathBuf>,
+    #[field_names_as_slice(skip)]
     #[serde(default)]
-    extra: Map<String, SerializableValue>,
+    extra: Map<String, Value>,
 }
 
 impl Asset {
@@ -208,59 +215,31 @@ impl Asset {
         self.transaction = transaction;
     }
 
-    pub fn set_field(&mut self, key: &str, value: &str) -> Result<()> {
-        let valid_fields = ["blake3", "asset_path", "source_fname", "transaction", "ocr"];
-        if !valid_fields.contains(&key) {
-            return crate::error::UnknownMetaKeySnafu { key: key.to_string() }.fail();
-        }
-        let clear_field = value.is_empty()
-            || value == "null"
-            || value == "\"\"";
-        if clear_field {
-            match key {
-                "blake3" => self.blake3 = None,
-                "asset_path" => self.asset_path = None,
-                "source_fname" => self.source_fname = None,
-                "transaction" => self.transaction = None,
-                "ocr" => self.ocr = None,
-                _ => unreachable!(),
+    pub fn set_field(&mut self, format: DumpFormat, key: &str, value: &str) -> Result<()> {
+        let fields = Asset::FIELD_NAMES_AS_SLICE;
+        ensure!(
+            fields.contains(&key),
+            UnknownMetaKeySnafu {
+                key: key.to_string(),
             }
-            return Ok(());
-        }
-        let json_value: serde_json::Value = serde_json::from_str(value)
-            .or_else(|_| serde_json::from_str(&format!("\"{}\"", value)))?;
-        let is_empty_json_string = matches!(&json_value, serde_json::Value::String(s) if s.is_empty());
-        if json_value == serde_json::Value::Null || is_empty_json_string {
-            match key {
-                "blake3" => self.blake3 = None,
-                "asset_path" => self.asset_path = None,
-                "source_fname" => self.source_fname = None,
-                "transaction" => self.transaction = None,
-                "ocr" => self.ocr = None,
-                _ => unreachable!(),
-            }
-            return Ok(());
-        }
+        );
+        let json_value = parse_value(format, value)?;
         match key {
             "blake3" => {
-                let hash = blake3::Hash::from_hex(value)
-                    .map_err(|_| crate::error::FilesystemSnafu {
-                        message: format!("Invalid blake3 hash: {}", value),
-                    }
-                    .build())?;
+                let hash = blake3::Hash::from_hex(value).context(HashSnafu {})?;
                 self.blake3 = Some(Blake3Sum::new(hash));
             }
             "asset_path" => {
-                self.asset_path = serde_json::from_value(json_value)?;
+                self.asset_path = from_value(json_value)?;
             }
             "source_fname" => {
-                self.source_fname = serde_json::from_value(json_value)?;
+                self.source_fname = from_value(json_value)?;
             }
             "transaction" => {
-                self.transaction = serde_json::from_value(json_value)?;
+                self.transaction = from_value(json_value)?;
             }
             "ocr" => {
-                self.ocr = serde_json::from_value(json_value)?;
+                self.ocr = from_value(json_value)?;
             }
             _ => {
                 return UnknownMetaKeySnafu {
@@ -272,18 +251,14 @@ impl Asset {
         Ok(())
     }
 
-    pub fn get_field(&self, key: &str) -> Result<serde_json::Value> {
-        let valid_fields = ["id", "blake3", "asset_path", "source_fname", "transaction", "ocr"];
-        if !valid_fields.contains(&key) {
-            return crate::error::UnknownMetaKeySnafu { key: key.to_string() }.fail();
-        }
+    pub fn get_field(&self, format: DumpFormat, key: &str) -> Result<String> {
         let value = match key {
-            "id" => serde_json::to_value(&self.id)?,
-            "blake3" => serde_json::to_value(&self.blake3)?,
-            "asset_path" => serde_json::to_value(&self.asset_path)?,
-            "source_fname" => serde_json::to_value(&self.source_fname)?,
-            "transaction" => serde_json::to_value(&self.transaction)?,
-            "ocr" => serde_json::to_value(&self.ocr)?,
+            "id" => to_value(&self.id)?,
+            "blake3" => to_value(&self.blake3)?,
+            "asset_path" => to_value(&self.asset_path)?,
+            "source_fname" => to_value(&self.source_fname)?,
+            "transaction" => to_value(&self.transaction)?,
+            "ocr" => to_value(&self.ocr)?,
             _ => {
                 return UnknownMetaKeySnafu {
                     key: key.to_string(),
@@ -291,17 +266,14 @@ impl Asset {
                 .fail();
             }
         };
-        if value == serde_json::Value::Null {
-            return Ok(serde_json::Value::String(String::new()));
-        }
-        Ok(value)
+        crate::output::dump(format, &value)
     }
 
     #[cfg(feature = "git-annex")]
     pub fn to_annex_metadata(&self) -> Vec<String> {
         let mut result = Vec::new();
         let p = format!("{}.", ANNEX_META_PREFIX);
-        if let Ok(value) = serde_json::to_value(self)
+        if let Ok(value) = to_value(self)
             && let Some(obj) = value.as_object()
         {
             for (key, val) in obj {
@@ -315,16 +287,10 @@ impl Asset {
     }
 
     #[cfg(feature = "git-annex")]
-    fn append_metadata(
-        &self,
-        result: &mut Vec<String>,
-        prefix: &str,
-        key: &str,
-        value: &serde_json::Value,
-    ) {
+    fn append_metadata(&self, result: &mut Vec<String>, prefix: &str, key: &str, value: &Value) {
         match value {
-            serde_json::Value::Null => {}
-            serde_json::Value::String(s) => {
+            Value::Null => {}
+            Value::String(s) => {
                 let field_key = if key == "ocr" {
                     key.to_string()
                 } else {
@@ -332,15 +298,15 @@ impl Asset {
                 };
                 result.push(format!("{}={}", field_key, s));
             }
-            serde_json::Value::Number(n) => {
+            Value::Number(n) => {
                 result.push(format!("{}{}={}", prefix, key, n));
             }
-            serde_json::Value::Object(obj) => {
+            Value::Object(obj) => {
                 for (k, v) in obj {
                     self.append_metadata(result, prefix, &format!("{}.{}", key, k), v);
                 }
             }
-            serde_json::Value::Array(arr) => {
+            Value::Array(arr) => {
                 for (i, item) in arr.iter().enumerate() {
                     if let Some(obj) = item.as_object() {
                         for (k, v) in obj {
@@ -357,12 +323,12 @@ impl Asset {
     pub fn from_annex_metadata_json(json: &str) -> Result<Self> {
         #[derive(Deserialize)]
         struct AnnexMetadata {
-            fields: Map<String, SerializableValue>,
+            fields: Map<String, Value>,
         }
         let annex: AnnexMetadata = serde_json::from_str(json)?;
         let prefix = format!("{}.", ANNEX_META_PREFIX);
         // Build a JSON object from the prefixed fields
-        let mut asset_obj = serde_json::Map::new();
+        let mut asset_obj = Map::new();
         for (key, values) in annex.fields {
             // Handle OCR special case (no prefix)
             if key == "ocr" {
@@ -380,7 +346,7 @@ impl Asset {
             let local_key = &key[prefix.len()..];
             // Extract first value from array (git-annex stores values as arrays)
             let value = if let Some(arr) = values.as_array() {
-                arr.first().cloned().unwrap_or(serde_json::Value::Null)
+                arr.first().cloned().unwrap_or(Value::Null)
             } else {
                 values
             };
@@ -388,7 +354,7 @@ impl Asset {
             insert_nested_value(&mut asset_obj, local_key, value);
         }
         // Deserialize the reconstructed object
-        let asset: Asset = serde_json::from_value(serde_json::Value::Object(asset_obj))?;
+        let asset: Asset = from_value(Value::Object(asset_obj))?;
         Ok(asset)
     }
 }
@@ -407,6 +373,17 @@ impl Display for Asset {
             .unwrap_or_default();
         write!(f, "{}\t{}\t{}", self.id, asset_path, blake3)
     }
+}
+
+fn parse_value(format: DumpFormat, value: &str) -> Result<Value> {
+    let parse_result = match format {
+        DumpFormat::JSON => serde_json::from_str(value).context(SerdeJsonSnafu {}),
+        DumpFormat::YAML => serde_yaml::from_str(value).context(SerdeYamlSnafu {}),
+        DumpFormat::TOML => toml::from_str::<Value>(value).context(DeserializeSnafu {}),
+        DumpFormat::HJSON => serde_hjson::from_str(value).context(SerdeHjsonSnafu {}),
+        DumpFormat::XML => serde_xml_rs::from_str(value).context(SerdeXmlSnafu {}),
+    };
+    parse_result.or_else(|_| Ok(Value::String(value.to_string())))
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -494,16 +471,12 @@ impl Display for Assets {
 }
 
 #[cfg(feature = "git-annex")]
-fn insert_nested_value(
-    obj: &mut serde_json::Map<String, serde_json::Value>,
-    key: &str,
-    value: serde_json::Value,
-) {
+fn insert_nested_value(obj: &mut Map<String, Value>, key: &str, value: Value) {
     let numeric_fields = ["total", "quantity", "amount"];
     let value = if let Some(s) = value.as_str() {
         if numeric_fields.iter().any(|&field| key.ends_with(field)) {
             s.parse::<f64>()
-                .map(|n| serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap()))
+                .map(|n| Value::Number(serde_json::Number::from_f64(n).unwrap()))
                 .unwrap_or(value)
         } else {
             value
@@ -516,7 +489,7 @@ fn insert_nested_value(
         let rest = &rest[1..]; // skip the dot
         let nested = obj
             .entry(first.to_string())
-            .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+            .or_insert_with(|| Value::Object(Map::new()));
         if let Some(nested_obj) = nested.as_object_mut() {
             insert_nested_value(nested_obj, rest, value);
         }
@@ -534,10 +507,10 @@ fn insert_nested_value(
             let idx: usize = array_part[idx_start..].parse().unwrap_or(0);
             let arr = obj
                 .entry(array_name.to_string())
-                .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+                .or_insert_with(|| Value::Array(Vec::new()));
             if let Some(arr_vec) = arr.as_array_mut() {
                 while arr_vec.len() <= idx {
-                    arr_vec.push(serde_json::Value::Object(serde_json::Map::new()));
+                    arr_vec.push(Value::Object(Map::new()));
                 }
                 if let Some(item_obj) = arr_vec[idx].as_object_mut() {
                     item_obj.insert(field.to_string(), value);

@@ -12,7 +12,7 @@ use std::ops::Deref;
 
 use glob::Pattern;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value as SerializableValue, to_value};
+use serde_json::{Map, Value, to_value};
 use tera::{Context, Tera};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -47,11 +47,11 @@ impl TemplateString {
     }
 }
 
-fn build_context(config: &Config, asset: &Asset) -> Result<SerializableValue> {
+fn build_context(config: &Config, asset: &Asset) -> Result<Value> {
     let mut context = Map::new();
     context.insert("config".to_string(), to_value(config)?);
     context.insert("asset".to_string(), to_value(asset)?);
-    Ok(SerializableValue::Object(context))
+    Ok(Value::Object(context))
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

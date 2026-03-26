@@ -63,7 +63,8 @@ fn run(logger: LoggerHandle) -> Result<()> {
         }
         SubCommand::Dump { selectors, .. } => {
             let assets = storage.select(&selectors)?;
-            let output = output::dump(&config, &assets)?;
+            let format = config.dump_format;
+            let output = output::dump(format, &assets)?;
             println!("{output}");
             Ok(())
         }

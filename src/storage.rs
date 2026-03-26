@@ -5,7 +5,7 @@ use crate::error::AssetHashExistsSnafu;
 use crate::ingestable::Ingestable;
 use crate::ingestable::local_file::LocalFile;
 use crate::{Asset, AssetId, Assets};
-use crate::{AssetSelectors, Config, OperationMode};
+use crate::{AssetSelectors, Config, DumpFormat, OperationMode};
 use crate::{Error, Result};
 
 use std::collections::HashSet;
@@ -23,8 +23,8 @@ pub trait Storage {
     fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
     fn load(&self, id: AssetId) -> Result<Asset>;
-    fn get(&self, config: &Config, id: AssetId, key: &str) -> Result<String>;
-    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()>;
+    fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String>;
+    fn set(&self, format: DumpFormat, id: AssetId, key: &str, value: &str) -> Result<()>;
     fn save(&self, asset: &Asset) -> Result<()>;
     fn remove(&self, id: AssetId) -> Result<()>;
     fn is_clean(&self, diry: &bool) -> Result<()>;
@@ -88,7 +88,8 @@ where
     Error: From<ID::Error>,
 {
     let id: AssetId = id.try_into()?;
-    let val = storage.get(config, id, key)?;
+    let format = config.dump_format;
+    let val = storage.get(format, id, key)?;
     println!("{}", val);
     Ok(())
 }
@@ -106,7 +107,8 @@ where
 {
     storage.is_clean(&config.dirty)?;
     let asset_id: AssetId = id.try_into()?;
-    storage.set(asset_id.clone(), key, value)?;
+    let format = config.dump_format;
+    storage.set(format, asset_id.clone(), key, value)?;
     println!("Set {} = {} for asset {}", key, value, asset_id);
     Ok(())
 }

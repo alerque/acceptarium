@@ -10,13 +10,17 @@ use std::path::PathBuf;
 use snafu::Snafu;
 
 // Error types we wrap
+use blake3::HexError;
 use clap::error::Error as ClapError;
 use config::ConfigError;
 use flexi_logger::FlexiLoggerError;
 #[cfg(feature = "git")]
 use git2::Error as GitError;
 use glob::PatternError;
+use serde_hjson::Error as SerdeHjsonError;
 use serde_json::Error as SerdeJsonError;
+use serde_xml_rs::Error as SerdeXmlError;
+use serde_yaml::Error as SerdeYamlError;
 use std::fmt::Error as FmtError;
 use std::io::Error as IoError;
 use std::path::StripPrefixError;
@@ -36,6 +40,15 @@ pub enum Error {
 
     #[snafu(display("JSON serialization error: {source}"))]
     SerdeJson { source: SerdeJsonError },
+
+    #[snafu(display("HJSON serialization error: {source}"))]
+    SerdeHjson { source: SerdeHjsonError },
+
+    #[snafu(display("XML serialization error: {source}"))]
+    SerdeXml { source: SerdeXmlError },
+
+    #[snafu(display("YAML serialization error: {source}"))]
+    SerdeYaml { source: SerdeYamlError },
 
     #[snafu(display("Which error: {source}"))]
     Which { source: WhichError },
@@ -84,6 +97,9 @@ pub enum Error {
 
     #[snafu(display("Deserialize error: {source}"))]
     Deserialize { source: DeserializeError },
+
+    #[snafu(display("Hash hex error: {source}"))]
+    Hash { source: HexError },
 
     #[snafu(display("Serialize error: {source}"))]
     Serialize { source: SerializeError },
@@ -146,6 +162,24 @@ impl From<ClapError> for Error {
 impl From<SerdeJsonError> for Error {
     fn from(source: SerdeJsonError) -> Self {
         Error::SerdeJson { source }
+    }
+}
+
+impl From<SerdeHjsonError> for Error {
+    fn from(source: SerdeHjsonError) -> Self {
+        Error::SerdeHjson { source }
+    }
+}
+
+impl From<SerdeYamlError> for Error {
+    fn from(source: SerdeYamlError) -> Self {
+        Error::SerdeYaml { source }
+    }
+}
+
+impl From<SerdeXmlError> for Error {
+    fn from(source: SerdeXmlError) -> Self {
+        Error::SerdeXml { source }
     }
 }
 

@@ -3,15 +3,14 @@
 
 use crate::actions::{data_is_in_project, data_is_writable, is_in_project};
 use crate::config::Config;
-use crate::error::{
-    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu,
-};
+use crate::error::{AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
 use crate::storage::git_tracker::GitTracker;
-use crate::{Asset, AssetId, Assets, OperationMode, Result};
+use crate::{Asset, AssetId, Assets, DumpFormat, OperationMode, Result};
 use crate::{Ingestable, Storage};
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+
 use derive_more::Debug;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
@@ -245,15 +244,14 @@ impl Storage for GitAnnexStorage {
         Asset::from_annex_metadata_json(line)
     }
 
-    fn get(&self, config: &crate::Config, id: AssetId, key: &str) -> Result<String> {
+    fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String> {
         let asset = self.load(id)?;
-        let value = asset.get_field(key)?;
-        crate::output::dump(config, &value)
+        asset.get_field(format, key)
     }
 
-    fn set(&self, id: AssetId, key: &str, value: &str) -> Result<()> {
+    fn set(&self, format: DumpFormat, id: AssetId, key: &str, value: &str) -> Result<()> {
         let mut asset = self.load(id.clone())?;
-        asset.set_field(key, value)?;
+        asset.set_field(format, key, value)?;
         self.save(&asset)?;
         Ok(())
     }
