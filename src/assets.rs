@@ -4,8 +4,8 @@
 #[cfg(feature = "git-annex")]
 use crate::ANNEX_META_PREFIX;
 use crate::error::{
-    DeserializeSnafu, HashSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
-    SerdeXmlSnafu, SerdeYamlSnafu, UnknownMetaKeySnafu,
+    DeserializeSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
+    SerdeXmlSnafu, SerdeYamlSnafu,
 };
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
 use crate::{DumpFormat, Transaction};
@@ -21,7 +21,6 @@ use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, from_value, to_value};
 use snafu::ResultExt;
-use snafu::ensure;
 use struct_field_names_as_array::FieldNamesAsSlice;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -216,56 +215,23 @@ impl Asset {
     }
 
     pub fn set_field(&mut self, format: DumpFormat, key: &str, value: &str) -> Result<()> {
-        let fields = Asset::FIELD_NAMES_AS_SLICE;
-        ensure!(
-            fields.contains(&key),
-            UnknownMetaKeySnafu {
-                key: key.to_string(),
-            }
-        );
         let json_value = parse_value(format, value)?;
-        match key {
-            "blake3" => {
-                let hash = blake3::Hash::from_hex(value).context(HashSnafu {})?;
-                self.blake3 = Some(Blake3Sum::new(hash));
-            }
-            "asset_path" => {
-                self.asset_path = from_value(json_value)?;
-            }
-            "source_fname" => {
-                self.source_fname = from_value(json_value)?;
-            }
-            "transaction" => {
-                self.transaction = from_value(json_value)?;
-            }
-            "ocr" => {
-                self.ocr = from_value(json_value)?;
-            }
-            _ => {
-                return UnknownMetaKeySnafu {
-                    key: key.to_string(),
-                }
-                .fail();
-            }
-        }
+        let input = to_value(&self)?;
+        let update_filter = format!("({}) = {}", key, json_value);
+        let new_value = run_jaq_update(&input, &update_filter)?;
+        let updated: Asset = from_value(new_value)?;
+        *self = updated;
         Ok(())
     }
 
     pub fn get_field(&self, format: DumpFormat, key: &str) -> Result<String> {
-        let value = match key {
-            "id" => to_value(&self.id)?,
-            "blake3" => to_value(&self.blake3)?,
-            "asset_path" => to_value(&self.asset_path)?,
-            "source_fname" => to_value(&self.source_fname)?,
-            "transaction" => to_value(&self.transaction)?,
-            "ocr" => to_value(&self.ocr)?,
-            _ => {
-                return UnknownMetaKeySnafu {
-                    key: key.to_string(),
-                }
-                .fail();
-            }
-        };
+        let input = to_value(&self)?;
+        let mut results = run_jaq_query(&input, key)?;
+        let value = results
+            .next()
+            .ok_or_else(|| Error::UnknownMetaKey {
+                key: key.to_string(),
+            })??;
         crate::output::dump(format, &value)
     }
 
@@ -384,6 +350,74 @@ fn parse_value(format: DumpFormat, value: &str) -> Result<Value> {
         DumpFormat::XML => serde_xml_rs::from_str(value).context(SerdeXmlSnafu {}),
     };
     parse_result.or_else(|_| Ok(Value::String(value.to_string())))
+}
+
+fn run_jaq_query(
+    input: &serde_json::Value,
+    filter: &str,
+) -> Result<std::vec::IntoIter<Result<serde_json::Value, Error>>, Error> {
+    use jaq_interpret::{Ctx, FilterT, ParseCtx, RcIter, Val};
+
+    let mut defs = ParseCtx::new(Vec::new());
+    defs.insert_natives(jaq_core::core());
+
+    let (f, errs) = jaq_parse::parse(filter, jaq_parse::main());
+    if !errs.is_empty() {
+        return Err(Error::UnknownMetaKey {
+            key: format!("Parse error: {:?}", errs),
+        });
+    }
+
+    let f = defs.compile(f.unwrap());
+    if !defs.errs.is_empty() {
+        return Err(Error::UnknownMetaKey {
+            key: "Compile error".to_string(),
+        });
+    }
+
+    let input = Val::from(input.clone());
+    let inputs = RcIter::new(core::iter::empty());
+
+    let results: Vec<Result<serde_json::Value, Error>> = f
+        .run((Ctx::new([], &inputs), input))
+        .map(|r| r.map_err(|e| Error::UnknownMetaKey { key: e.to_string() }))
+        .map(|r| r.map(serde_json::Value::from))
+        .collect();
+
+    Ok(results.into_iter())
+}
+
+fn run_jaq_update(input: &serde_json::Value, filter: &str) -> Result<serde_json::Value, Error> {
+    use jaq_interpret::{Ctx, FilterT, ParseCtx, RcIter, Val};
+
+    let mut defs = ParseCtx::new(Vec::new());
+    defs.insert_natives(jaq_core::core());
+
+    let (f, errs) = jaq_parse::parse(filter, jaq_parse::main());
+    if !errs.is_empty() {
+        return Err(Error::UnknownMetaKey {
+            key: format!("Parse error: {:?}", errs),
+        });
+    }
+
+    let f = defs.compile(f.unwrap());
+    if !defs.errs.is_empty() {
+        return Err(Error::UnknownMetaKey {
+            key: "Compile error".to_string(),
+        });
+    }
+
+    let input = Val::from(input.clone());
+    let inputs = RcIter::new(core::iter::empty());
+
+    let mut results = f.run((Ctx::new([], &inputs), input));
+
+    let result = results
+        .next()
+        .ok_or_else(|| Error::UnknownMetaKey { key: "No result from jaq update".to_string() })?
+        .map_err(|e| Error::UnknownMetaKey { key: e.to_string() })?;
+
+    Ok(serde_json::Value::from(result))
 }
 
 #[derive(Debug, Default, Serialize)]
