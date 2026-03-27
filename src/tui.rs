@@ -10,10 +10,11 @@ use std::sync::mpsc;
 
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
+use ratatui_themes::Theme;
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = instantiate_storage(config)?;
@@ -32,6 +33,7 @@ struct App {
     load_generation: u64,
     config: Config,
     details_available_height: usize,
+    theme: Theme,
 }
 
 struct ImageLoader {
@@ -40,17 +42,20 @@ struct ImageLoader {
 
 impl App {
     fn new(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Self {
+        let picker = Picker::from_query_stdio().unwrap();
+        let theme = Theme::new(config.tui.theme);
         Self {
             storage,
             assets,
             selected_index: 0,
             scroll_offset: 0,
-            picker: Picker::from_query_stdio().unwrap(),
+            picker,
             image_state: None,
             image_loader: None,
             load_generation: 0,
             config: config.clone(),
             details_available_height: 0,
+            theme,
         }
     }
 
@@ -132,6 +137,7 @@ impl App {
 
     fn render(&mut self, frame: &mut Frame) {
         self.update_image_state();
+        let palette = self.theme.palette();
         let borders = Borders::ALL;
         let constraints = if self.config.tui.preview {
             [
@@ -156,16 +162,21 @@ impl App {
             .enumerate()
             .map(|(i, asset)| {
                 let style = if i == self.selected_index {
-                    Style::default().fg(Color::LightBlue).bg(Color::DarkGray)
+                    Style::default().fg(palette.accent).bg(palette.selection)
                 } else {
-                    Style::default()
+                    Style::default().fg(palette.fg).bg(palette.bg)
                 };
                 ListItem::new(format!("{}", asset.id())).style(style)
             })
             .collect();
         let asset_picker = List::new(asset_list)
-            .block(Block::default().title("Assets").borders(borders))
-            .highlight_style(Style::default().fg(Color::LightBlue).bg(Color::DarkGray));
+            .block(
+                Block::default()
+                    .title("Assets")
+                    .borders(borders)
+                    .style(Style::default().fg(palette.fg).bg(palette.bg)),
+            )
+            .highlight_style(Style::default().fg(palette.accent).bg(palette.selection));
         frame.render_widget(asset_picker, panes[0]);
         let details_pane = panes[1];
         let detail_areas = Layout::default()
@@ -181,8 +192,14 @@ impl App {
         let content_height = details_text.lines().count();
         let max_scroll = content_height.saturating_sub(available_height);
         let clamped_scroll = self.scroll_offset.min(max_scroll);
-        let mut details_paragraph =
-            Paragraph::new(details_text).block(Block::default().title("Details").borders(borders));
+        let mut details_paragraph = Paragraph::new(details_text)
+            .block(
+                Block::default()
+                    .title("Details")
+                    .borders(borders)
+                    .style(Style::default().fg(palette.fg).bg(palette.bg)),
+            )
+            .style(Style::default().fg(palette.fg));
         if content_height > available_height {
             details_paragraph = details_paragraph.scroll((clamped_scroll as u16, 0));
         }
@@ -191,13 +208,22 @@ impl App {
             Some(asset) => {
                 let export_text = self.format_export_output(asset);
                 Paragraph::new(export_text)
-                    .block(Block::default().title("Export Preview").borders(borders))
+                    .block(
+                        Block::default()
+                            .title("Export Preview")
+                            .borders(borders)
+                            .style(Style::default().fg(palette.fg).bg(palette.bg)),
+                    )
+                    .style(Style::default().fg(palette.fg))
             }
             None => Paragraph::new(""),
         };
         frame.render_widget(export_content, detail_areas[1]);
         if self.config.tui.preview {
-            let preview_block = Block::default().title("Image Preview").borders(borders);
+            let preview_block = Block::default()
+                .title("Image Preview")
+                .borders(borders)
+                .style(Style::default().fg(palette.fg).bg(palette.bg));
             frame.render_widget(&preview_block, panes[2]);
             let preview_area = preview_block.inner(panes[2]);
             match &mut self.image_state {
@@ -206,7 +232,7 @@ impl App {
                 }
                 None if self.image_loader.is_some() => {
                     let loading =
-                        Paragraph::new("Loading...").style(Style::default().fg(Color::DarkGray));
+                        Paragraph::new("Loading...").style(Style::default().fg(palette.muted));
                     frame.render_widget(loading, preview_area);
                 }
                 _ => {}

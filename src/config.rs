@@ -18,6 +18,7 @@ use convert_case::Casing;
 use derive_more::{Deref, FromStr, Into};
 use flexi_logger::LogSpecification;
 use log::LevelFilter;
+use ratatui_themes::ThemeName;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
@@ -103,6 +104,7 @@ pub struct LLMConfig {
 pub struct TuiConfig {
     #[serde(default)]
     pub preview: bool,
+    pub theme: ThemeName,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
