@@ -138,7 +138,7 @@ impl GitTracker for GitAnnexStorage {
 }
 
 impl Storage for GitAnnexStorage {
-    fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
+    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
         log::info!("Ingesting new asset");
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
@@ -220,7 +220,7 @@ impl Storage for GitAnnexStorage {
                 continue;
             }
             let asset = Asset::from_annex_metadata_json(line)?;
-            assets.add(asset);
+            assets.insert(asset);
         }
         Ok(assets)
     }

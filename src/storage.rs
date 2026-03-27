@@ -20,7 +20,7 @@ pub mod git_annex;
 pub mod git_tracker;
 
 pub trait Storage {
-    fn add(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
+    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
     fn list(&self) -> Result<Assets>;
     fn load(&self, id: AssetId) -> Result<Asset>;
     fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String>;
@@ -46,7 +46,7 @@ pub trait Storage {
                 for id in ids {
                     let asset_id: AssetId = id.try_into()?;
                     let asset = self.load(asset_id)?;
-                    assets.add(asset);
+                    assets.insert(asset);
                 }
             }
             assets
@@ -64,7 +64,7 @@ pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) ->
     let mut seen_hashes = HashSet::new();
     for ingestable in &ingestables {
         log::debug!("Attempting dry run add for {:?}", ingestable);
-        let _ = storage.add(ingestable, OperationMode::JustCheck)?;
+        let _ = storage.ingest(ingestable, OperationMode::JustCheck)?;
         ensure!(
             seen_hashes.insert(&ingestable.blake3),
             AssetHashExistsSnafu {
@@ -75,7 +75,7 @@ pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) ->
     if !config.dry_run {
         for ingestable in &ingestables {
             log::debug!("Adding {:?}", ingestable);
-            let asset = storage.add(ingestable, OperationMode::JustRun)?;
+            let asset = storage.ingest(ingestable, OperationMode::JustRun)?;
             println!("{}", asset);
         }
     }

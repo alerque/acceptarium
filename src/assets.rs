@@ -396,7 +396,7 @@ impl Assets {
         Self::default()
     }
 
-    pub fn add(&mut self, asset: Asset) {
+    pub fn insert(&mut self, asset: Asset) {
         self.inner.insert(asset.id.clone(), asset);
     }
 
