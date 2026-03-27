@@ -6,8 +6,7 @@ use crate::actions::is_in_project;
 use crate::actions::{data_is_in_project, data_is_writable};
 use crate::config::Config;
 use crate::error::{
-    AssetHashExistsSnafu, FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu,
-    UnknownAssetIdSnafu,
+    FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu, NonUnicodePathSnafu, UnknownAssetIdSnafu,
 };
 #[cfg(feature = "git")]
 use crate::storage::git_tracker::GitTracker;
@@ -116,7 +115,7 @@ impl GitTracker for FilesystemStorage {
 }
 
 impl Storage for FilesystemStorage {
-    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset> {
+    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Option<Asset>> {
         log::info!("Ingesting new asset");
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
@@ -127,14 +126,9 @@ impl Storage for FilesystemStorage {
             let existing_with_same_checksum = assets
                 .iter()
                 .find(|(_, asset)| asset.blake3().is_some_and(|hash| *hash == blake3));
-            ensure!(
-                existing_with_same_checksum.is_none(),
-                AssetHashExistsSnafu {
-                    asset_path: existing_with_same_checksum
-                        .map(|(asset_path, _)| asset_path.to_string())
-                        .unwrap_or_default()
-                }
-            );
+            if existing_with_same_checksum.is_some() {
+                return Ok(None);
+            }
         }
         let mut asset = Asset::new(None, Some(source_file), Some(blake3))?;
         let source_ext = source_file.extension().unwrap_or_default();
@@ -196,7 +190,7 @@ impl Storage for FilesystemStorage {
                 }
             }
         }
-        Ok(asset)
+        Ok(Some(asset))
     }
 
     fn list(&self) -> Result<Assets> {

@@ -11,8 +11,6 @@ use crate::{Error, Result};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use snafu::ensure;
-
 pub mod filesystem;
 #[cfg(feature = "git-annex")]
 pub mod git_annex;
@@ -20,7 +18,7 @@ pub mod git_annex;
 pub mod git_tracker;
 
 pub trait Storage {
-    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Asset>;
+    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Option<Asset>>;
     fn list(&self) -> Result<Assets>;
     fn load(&self, id: AssetId) -> Result<Asset>;
     fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String>;
@@ -62,20 +60,37 @@ pub fn add(config: &Config, storage: Box<dyn Storage>, sources: Vec<PathBuf>) ->
         .map(|source| LocalFile::from_path(source.as_path()))
         .collect::<Result<_>>()?;
     let mut seen_hashes = HashSet::new();
+    let mut valid_ingestables: Vec<LocalFile> = Vec::new();
     for ingestable in &ingestables {
         log::debug!("Attempting dry run add for {:?}", ingestable);
-        let _ = storage.ingest(ingestable, OperationMode::JustCheck)?;
-        ensure!(
-            seen_hashes.insert(&ingestable.blake3),
-            AssetHashExistsSnafu {
-                asset_path: &ingestable.filename,
+        match storage.ingest(ingestable, OperationMode::JustCheck)? {
+            Some(_) => {
+                if !seen_hashes.insert(&ingestable.blake3) {
+                    log::warn!(
+                        "Skipping duplicate file '{}' with hash already seen in this batch",
+                        ingestable.filename.display()
+                    );
+                } else {
+                    valid_ingestables.push(ingestable.clone());
+                }
             }
-        );
+            None => {
+                log::warn!(
+                    "An asset is already tracking the same hash as '{}'",
+                    ingestable.filename.display(),
+                );
+            }
+        }
     }
     if !config.dry_run {
-        for ingestable in &ingestables {
+        for ingestable in &valid_ingestables {
             log::debug!("Adding {:?}", ingestable);
-            let asset = storage.ingest(ingestable, OperationMode::JustRun)?;
+            let Some(asset) = storage.ingest(ingestable, OperationMode::JustRun)? else {
+                return AssetHashExistsSnafu {
+                    asset_path: ingestable.filename.clone(),
+                }
+                .fail()?;
+            };
             println!("{}", asset);
         }
     }

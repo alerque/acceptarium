@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use snafu::ResultExt;
 use snafu::ensure;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LocalFile {
     pub path: PathBuf,
     pub filename: PathBuf,
