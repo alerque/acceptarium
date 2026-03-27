@@ -51,6 +51,7 @@ tesseract = []
 tui = [
   "dep:crossterm",
   "dep:ratatui",
+  "dep:ratatui-hypertile",
   "dep:ratatui-image",
   "dep:ratatui-themes",
   "dep:image",
@@ -120,6 +121,10 @@ optional = true
 
 [dependencies.ratatui]
 version = "0.30"
+optional = true
+
+[dependencies.ratatui-hypertile]
+version = "0.3"
 optional = true
 
 [dependencies.ratatui-image]

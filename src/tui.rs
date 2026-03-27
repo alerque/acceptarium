@@ -9,10 +9,11 @@ use crate::{Asset, Assets, Config, Result};
 use std::sync::mpsc;
 
 use crossterm::event::{self, KeyCode, KeyEventKind};
-use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::layout::Direction;
 use ratatui::style::Style;
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
+use ratatui_hypertile::Hypertile;
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 use ratatui_themes::Theme;
 
@@ -34,6 +35,7 @@ struct App {
     config: Config,
     details_available_height: usize,
     theme: Theme,
+    layout: Hypertile,
 }
 
 struct ImageLoader {
@@ -44,6 +46,11 @@ impl App {
     fn new(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Self {
         let picker = Picker::from_query_stdio().unwrap();
         let theme = Theme::new(config.tui.theme);
+        let mut layout = Hypertile::new();
+        layout.set_resize_step(0.1);
+        let _ = layout.split_focused(Direction::Horizontal);
+        let _ = layout.split_focused(Direction::Vertical);
+        let _ = layout.split_focused(Direction::Horizontal);
         Self {
             storage,
             assets,
@@ -56,6 +63,7 @@ impl App {
             config: config.clone(),
             details_available_height: 0,
             theme,
+            layout,
         }
     }
 
@@ -139,23 +147,8 @@ impl App {
         self.update_image_state();
         let palette = self.theme.palette();
         let borders = Borders::ALL;
-        let constraints = if self.config.tui.preview {
-            [
-                Constraint::Length(9),
-                Constraint::Fill(3),
-                Constraint::Fill(2),
-            ]
-        } else {
-            [
-                Constraint::Length(9),
-                Constraint::Fill(1),
-                Constraint::Fill(0),
-            ]
-        };
-        let panes = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(constraints)
-            .split(frame.area());
+        self.layout.compute_layout(frame.area());
+        let panes: Vec<_> = self.layout.panes_iter().map(|p| p.rect).collect();
         let asset_list: Vec<ListItem> = self
             .asset_list()
             .iter()
@@ -178,13 +171,7 @@ impl App {
             )
             .highlight_style(Style::default().fg(palette.accent).bg(palette.selection));
         frame.render_widget(asset_picker, panes[0]);
-        let details_pane = panes[1];
-        let detail_areas = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Fill(2), Constraint::Fill(1)])
-            .split(details_pane);
-        let available_height = detail_areas[0].height.saturating_sub(2) as usize;
-        self.details_available_height = available_height;
+        let available_height = panes[1].height.saturating_sub(2) as usize;
         let details_text = match self.selected_asset() {
             Some(asset) => self.format_asset_details(asset),
             None => "No asset selected".to_string(),
@@ -203,7 +190,7 @@ impl App {
         if content_height > available_height {
             details_paragraph = details_paragraph.scroll((clamped_scroll as u16, 0));
         }
-        frame.render_widget(details_paragraph, detail_areas[0]);
+        frame.render_widget(details_paragraph, panes[1]);
         let export_content = match self.selected_asset() {
             Some(asset) => {
                 let export_text = self.format_export_output(asset);
@@ -218,14 +205,14 @@ impl App {
             }
             None => Paragraph::new(""),
         };
-        frame.render_widget(export_content, detail_areas[1]);
+        frame.render_widget(export_content, panes[2]);
         if self.config.tui.preview {
             let preview_block = Block::default()
                 .title("Image Preview")
                 .borders(borders)
                 .style(Style::default().fg(palette.fg).bg(palette.bg));
-            frame.render_widget(&preview_block, panes[2]);
-            let preview_area = preview_block.inner(panes[2]);
+            frame.render_widget(&preview_block, panes[1]);
+            let preview_area = preview_block.inner(panes[3]);
             match &mut self.image_state {
                 Some(state) => {
                     frame.render_stateful_widget(StatefulImage::default(), preview_area, state);

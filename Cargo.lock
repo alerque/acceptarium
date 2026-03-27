@@ -24,6 +24,7 @@ dependencies = [
  "log",
  "nanoid",
  "ratatui",
+ "ratatui-hypertile",
  "ratatui-image",
  "ratatui-themes",
  "rig-core",
@@ -4043,6 +4044,15 @@ dependencies = [
  "crossterm",
  "instability",
  "ratatui-core",
+]
+
+[[package]]
+name = "ratatui-hypertile"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b06a507427cb113163922c64eb033245372c45ae76cd3bd60ffbd767a60b57e"
+dependencies = [
+ "ratatui",
 ]
 
 [[package]]
