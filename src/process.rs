@@ -146,13 +146,17 @@ async fn query_ollama_vision(config: &Config, asset: &Asset) -> Result<String> {
     let image_base64 = general_purpose::STANDARD.encode(&image_bytes);
     let image_content = UserContent::image_base64(image_base64, media_type, None);
     let prompt = vision.prompt.render(config, asset)?;
-    log::debug!("Sending prompt: {}", &prompt);
     let text_content = UserContent::text(&prompt);
+    log::info!("Composing prompt with text and image");
+    log::debug!("Text prompt based on: {}", &prompt);
     let content = vec![image_content, text_content];
     let content: OneOrMany<UserContent> =
         OneOrMany::many(content).expect("Unable to create user message");
     let content: Message = content.into();
+    log::info!("Sending combined message to llm");
     let response = llm.prompt(content).await.expect("Failed to prompt");
+    log::info!("Received response from ollama.");
+    log::debug!("Response: {}", &response);
     Ok(response)
 }
 
