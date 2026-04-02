@@ -7,18 +7,19 @@
 // Private modules
 mod assets;
 mod config;
-mod error;
 mod types;
 mod utils;
 
 // Public modules
-pub mod actions;
+pub mod acceptarium;
+pub mod error;
 pub mod ingestable;
 pub mod output;
 pub mod process;
 pub mod run;
 pub mod status;
 pub mod storage;
+pub mod vcs;
 
 #[cfg(feature = "cli")]
 #[doc(hidden)]
@@ -29,23 +30,28 @@ pub mod cli;
 pub mod tui;
 
 // Public structs
+pub use acceptarium::Acceptarium;
 pub use assets::Asset;
 pub use assets::AssetId;
 pub use assets::Assets;
 pub use assets::Blake3Sum;
 pub use cli::AssetSelectors;
-pub use cli::DumpFormat;
+pub use cli::BlobHandler;
 pub use cli::ExportFormat;
 pub use cli::Extractor;
+pub use cli::InfoFormat;
+pub use cli::InfoHandler;
 pub use cli::Processor;
-pub use cli::StorageDriver;
+pub use cli::VersionHandler;
 pub use config::Config;
 pub use error::Error;
 pub use ingestable::Ingestable;
-pub use storage::Storage;
+pub use storage::BlobStorage;
+pub use storage::InfoStorage;
 pub use types::OperationMode;
 pub use types::Result;
 pub use types::Transaction;
+pub use vcs::StorageTracker;
 
 // Import stuff set by autoconf/automake at build time
 pub static CONFIGURE_PREFIX: &str = env!["CONFIGURE_PREFIX"];

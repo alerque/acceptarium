@@ -4,7 +4,7 @@
 use crate::Ingestable;
 use crate::assets::Blake3Sum;
 use crate::error::{FilesystemSnafu, IoSnafu};
-use crate::types::Result;
+use crate::{Error, Result};
 
 use std::fs::File;
 use std::io::Read;
@@ -64,5 +64,13 @@ impl Ingestable for LocalFile {
 
     fn path(&self) -> Option<&Path> {
         Some(&self.path)
+    }
+}
+
+impl TryFrom<PathBuf> for LocalFile {
+    type Error = Error;
+
+    fn try_from(path: PathBuf) -> Result<Self> {
+        Self::from_path(&path)
     }
 }

@@ -1,38 +1,33 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::actions::{data_is_in_project, data_is_writable, is_in_project};
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
-use crate::storage::git_tracker::GitTracker;
-use crate::{Asset, AssetId, Assets, DumpFormat, OperationMode, Result};
-use crate::{Ingestable, Storage};
+use crate::utils::{data_is_in_project, data_is_writable};
+use crate::{Asset, AssetId, Assets, InfoFormat, OperationMode, Result};
+use crate::{BlobStorage, InfoStorage, Ingestable, StorageTracker};
 
+use std::any::Any;
 use std::ffi::OsString;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use derive_more::Debug;
-use git2::Repository;
 use serde::{Deserialize, Serialize};
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use subprocess::{Exec, Redirection};
 
-#[derive(Debug)]
-pub struct GitAnnexStorage {
+#[derive(Debug, Clone)]
+pub struct AnnexedBlob {
     project_dir: PathBuf,
     data_dir: PathBuf,
     copy: bool,
     rename: bool,
-    commit: bool,
-    #[debug(skip)]
-    repo: Option<Repository>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum AnnexCommand {
-    Add,
     Metadata,
 }
 
@@ -45,8 +40,8 @@ impl From<AnnexCommand> for OsString {
     }
 }
 
-impl GitAnnexStorage {
-    pub fn init(config: &Config) -> Result<Box<dyn Storage>> {
+impl AnnexedBlob {
+    pub fn init(config: &Config) -> Result<Self> {
         log::info!("Initializing storage");
         let storage_config = config
             .git_annex
@@ -58,15 +53,12 @@ impl GitAnnexStorage {
         let data_dir = project_dir.join(&storage_config.directory).canonicalize()?;
         data_is_in_project(&data_dir, &project_dir)?;
         data_is_writable(&data_dir)?;
-        let repo = Some(Repository::discover(&project_dir)?);
-        let store = Box::new(Self {
+        let store = Self {
             project_dir,
             data_dir,
             copy: storage_config.copy,
             rename: storage_config.rename,
-            commit: storage_config.commit,
-            repo,
-        });
+        };
         log::debug!("Completed initialization: {:?}", store);
         Ok(store)
     }
@@ -100,45 +92,29 @@ impl GitAnnexStorage {
         Ok(stdout)
     }
 
-    fn set_asset_metadata(&self, asset: &Asset) -> Result<()> {
-        let kvpairs = asset.to_annex_metadata();
-        let mut args: Vec<OsString> = kvpairs
+    fn write_min(&self, asset: &Asset, _tracker: &dyn StorageTracker) -> Result<()> {
+        let kvpairs_min = asset.to_annex_metadata(true);
+        let mut args: Vec<OsString> = kvpairs_min
             .iter()
             .flat_map(|kv| [OsString::from("-s"), OsString::from(kv)])
             .collect();
         let asset_path = asset
             .asset_path(&self.project_dir)
             .ok_or("Asset has no asset path")?;
-        args.insert(0, "--remove-all".into());
         args.insert(0, asset_path.into());
         self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
         Ok(())
     }
 }
 
-impl GitTracker for GitAnnexStorage {
-    fn project_dir(&self) -> &Path {
-        &self.project_dir
-    }
-
-    fn repo(&self) -> Result<&Repository> {
-        self.repo.as_ref().context(FilesystemSnafu {
-            message: "Git repository not initialized".to_string(),
-        })
-    }
-
-    fn commit(&self) -> bool {
-        self.commit
-    }
-
-    fn stage_paths(&self, paths: &[PathBuf]) -> Result<()> {
-        self.exec_annex_cli(AnnexCommand::Add, Some(paths))?;
-        Ok(())
-    }
-}
-
-impl Storage for GitAnnexStorage {
-    fn ingest(&self, source: &dyn Ingestable, mode: OperationMode) -> Result<Option<Asset>> {
+impl BlobStorage for AnnexedBlob {
+    fn ingest(
+        &self,
+        mode: OperationMode,
+        source: &dyn Ingestable,
+        info: &dyn InfoStorage,
+        tracker: &dyn StorageTracker,
+    ) -> Result<Option<Asset>> {
         log::info!("Ingesting new asset");
         let source_file = source.path().context(FilesystemSnafu {
             message: "Current implementation must have a valid filesystem path",
@@ -184,22 +160,57 @@ impl Storage for GitAnnexStorage {
             if self.copy {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
-            let mut to_stage = vec![];
-            if self.copy || is_in_project(&asset_path_abs, &self.project_dir) {
-                to_stage.push(asset_path_abs);
+            tracker.stage_paths(&[asset_path_abs])?;
+            if info.as_any().downcast_ref::<AnnexedBlob>().is_none() {
+                // Keep an ID field in annex meta data  even when using sidecar info storage
+                self.write_min(&asset, tracker)?;
             } else {
-                log::warn!(
-                    "Not staging asset file {:?} outside of project directory.",
-                    &asset_path_abs
-                );
-            }
-            self.stage_paths(&to_stage)?;
-            self.set_asset_metadata(&asset)?;
-            if self.commit {
-                self.commit_staged("Track new asset(s)")?;
+                info.write(&asset, tracker)?;
             }
         }
         Ok(Some(asset))
+    }
+
+    fn egest(
+        &self,
+        asset: &Asset,
+        info: &dyn InfoStorage,
+        tracker: &dyn StorageTracker,
+    ) -> Result<()> {
+        if let Some(asset_path) = asset.asset_path(&self.project_dir)
+            && asset_path.exists()
+        {
+            log::info!("Removing asset file {:?}", &asset_path);
+            std::fs::remove_file(&asset_path)?;
+            tracker.stage_paths(&[asset_path])?;
+            info.erase(asset, tracker)?;
+        }
+        Ok(())
+    }
+
+    fn as_info(&self) -> Option<Box<dyn InfoStorage>> {
+        Some(Box::new(self.clone()))
+    }
+}
+
+impl InfoStorage for AnnexedBlob {
+    fn write(&self, asset: &Asset, _tracker: &dyn StorageTracker) -> Result<()> {
+        let kvpairs = asset.to_annex_metadata(false);
+        let mut args: Vec<OsString> = kvpairs
+            .iter()
+            .flat_map(|kv| [OsString::from("-s"), OsString::from(kv)])
+            .collect();
+        let asset_path = asset
+            .asset_path(&self.project_dir)
+            .ok_or("Asset has no asset path")?;
+        args.insert(0, "--remove-all".into());
+        args.insert(0, asset_path.into());
+        self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
+        Ok(())
+    }
+
+    fn erase(&self, _asset: &Asset, _tracker: &dyn StorageTracker) -> Result<()> {
+        Ok(())
     }
 
     fn list(&self) -> Result<Assets> {
@@ -231,7 +242,7 @@ impl Storage for GitAnnexStorage {
         let line = lines.next().unwrap_or_default();
         log::debug!("Raw git-annex metadata output: {}", &line);
         if lines.next().is_some() {
-            log::error!(
+            log::warn!(
                 "Multiple asset files are tagged with id '{}' in git-annex metadata. Using first result, but manual correction of duplicated assets required.",
                 &id,
             );
@@ -239,44 +250,12 @@ impl Storage for GitAnnexStorage {
         Asset::from_annex_metadata_json(line)
     }
 
-    fn get(&self, format: DumpFormat, id: AssetId, key: &str) -> Result<String> {
+    fn get(&self, format: InfoFormat, id: AssetId, key: &str) -> Result<String> {
         let asset = self.load(id)?;
         asset.get_field(format, key)
     }
 
-    fn set(&self, format: DumpFormat, id: AssetId, key: &str, value: &str) -> Result<()> {
-        let mut asset = self.load(id.clone())?;
-        asset.set_field(format, key, value)?;
-        self.save(&asset)?;
-        Ok(())
-    }
-
-    fn save(&self, asset: &Asset) -> Result<()> {
-        self.set_asset_metadata(asset)?;
-        Ok(())
-    }
-
-    fn remove(&self, id: AssetId) -> Result<()> {
-        let asset = self.load(id.clone())?;
-        if let Some(asset_path) = asset.asset_path(&self.project_dir)
-            && asset_path.exists()
-        {
-            log::info!("Removing asset file {:?}", &asset_path);
-            std::fs::remove_file(&asset_path)?;
-            self.stage_paths(&[asset_path])?;
-        }
-        if self.commit {
-            self.commit_staged("Remove asset(s)")?;
-        }
-        Ok(())
-    }
-
-    fn is_clean(&self, dirty: &bool) -> Result<()> {
-        let cleanish = self.ensure_staging_empty();
-        if *dirty && cleanish.is_err() {
-            log::warn!("Operating on dirty repository");
-            return Ok(());
-        }
-        cleanish
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

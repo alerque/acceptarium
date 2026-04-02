@@ -1,9 +1,14 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::InfoFormat;
 use crate::PROJECT_CONFIG;
+use crate::Result;
+use crate::error::FilesystemSnafu;
 
 use std::path::{Path, PathBuf};
+
+use snafu::ensure;
 
 #[cfg(feature = "git")]
 pub(crate) fn discover_project_root(cwd: &Path) -> PathBuf {
@@ -36,4 +41,48 @@ fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
         }
     }
     root.clone()
+}
+
+pub(crate) fn data_is_in_project(data_dir: &Path, project_dir: &Path) -> Result<()> {
+    ensure!(
+        data_dir.starts_with(project_dir),
+        FilesystemSnafu {
+            message: format!(
+                "Storage directory '{}' is not inside project root '{}'",
+                data_dir.display(),
+                project_dir.display()
+            ),
+        }
+    );
+    Ok(())
+}
+
+pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
+    let data_meta = std::fs::metadata(data_dir)?;
+    ensure!(
+        !data_meta.permissions().readonly(),
+        FilesystemSnafu {
+            message: format!(
+                "Storage directory '{}' is not writable by the current user",
+                data_dir.display()
+            ),
+        }
+    );
+    Ok(())
+}
+
+#[cfg(feature = "git")]
+pub(crate) fn is_in_project(path: &Path, project_dir: &Path) -> bool {
+    path.starts_with(project_dir)
+}
+
+pub(crate) fn info_extension(format: InfoFormat) -> String {
+    match format {
+        InfoFormat::JSON => "json",
+        InfoFormat::TOML => "toml",
+        InfoFormat::YAML => "yaml",
+        InfoFormat::HJSON => "hjson",
+        InfoFormat::XML => "xml",
+    }
+    .into()
 }

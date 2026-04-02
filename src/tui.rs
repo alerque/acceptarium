@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Storage;
-use crate::actions::instantiate_storage;
+use crate::Acceptarium;
 use crate::output;
 use crate::{Asset, Assets, Config, Result};
 
@@ -17,13 +16,13 @@ use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 use ratatui_themes::Theme;
 
 pub fn main(config: &Config) -> Result<()> {
-    let storage = instantiate_storage(config)?;
+    let storage = Acceptarium::new(config)?;
     let assets = storage.list()?;
     ratatui::run(|terminal| App::new(config, storage, assets).run(terminal))
 }
 
 struct App {
-    storage: Box<dyn Storage>,
+    storage: Acceptarium,
     assets: Assets,
     selected_index: usize,
     scroll_offset: usize,
@@ -41,7 +40,7 @@ struct ImageLoader {
 }
 
 impl App {
-    fn new(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Self {
+    fn new(config: &Config, storage: Acceptarium, assets: Assets) -> Self {
         let picker = Picker::from_query_stdio().unwrap();
         let theme = Theme::new(config.tui.theme);
         Self {

@@ -17,10 +17,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
-pub enum StorageDriver {
+pub enum BlobHandler {
     #[default]
     Filesystem,
     GitAnnex,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum InfoHandler {
+    #[default]
+    Sidecar,
+    Metadata,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum VersionHandler {
+    Git,
+    #[default]
+    Manual,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
@@ -55,7 +71,7 @@ pub enum ExportFormat {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
-pub enum DumpFormat {
+pub enum InfoFormat {
     HJSON,
     JSON,
     TOML,
@@ -175,7 +191,7 @@ pub enum SubCommand {
     Dump {
         /// Data format to target
         #[clap(short, long)]
-        format: Option<DumpFormat>,
+        format: Option<InfoFormat>,
 
         #[command(flatten)]
         selectors: AssetSelectors,

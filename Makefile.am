@@ -13,9 +13,12 @@ scriptsdir = $(datadir)/scripts
 scriptlibdir = $(datadir)/lib
 
 bin_PROGRAMS = acceptarium
-acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/error.rs src/types.rs src/assets.rs src/utils.rs
+acceptarium_SOURCES  = src/bin/acceptarium.rs src/config.rs src/cli.rs src/lib.rs src/acceptarium.rs src/error.rs src/types.rs src/assets.rs src/utils.rs
 acceptarium_SOURCES += src/process.rs src/output.rs src/run.rs src/status.rs src/tui.rs
-acceptarium_SOURCES += src/actions.rs src/storage.rs src/storage/filesystem.rs src/storage/git_annex.rs src/storage/git_tracker.rs
+acceptarium_SOURCES += src/storage/mod.rs
+acceptarium_SOURCES += src/storage/git_annex/mod.rs
+acceptarium_SOURCES += src/storage/filesystem/mod.rs src/storage/filesystem/plain.rs src/storage/filesystem/sidecar.rs
+acceptarium_SOURCES += src/vcs/mod.rs src/vcs/git.rs src/vcs/manual.rs
 acceptarium_SOURCES += src/ingestable.rs src/ingestable/local_file.rs
 acceptarium_SOURCES += src/defaults.toml
 EXTRA_acceptarium_SOURCES =

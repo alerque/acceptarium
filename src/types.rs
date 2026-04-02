@@ -8,9 +8,7 @@ use crate::assets::Asset;
 use crate::error::Error;
 
 use std::fmt::Debug;
-use std::ops::Deref;
 
-use glob::Pattern;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use tera::{Context, Tera};
@@ -76,41 +74,3 @@ pub struct TransactionItem {
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-#[derive(Clone, Debug)]
-pub struct GlobPattern(Pattern);
-
-impl Default for GlobPattern {
-    fn default() -> Self {
-        Self(Pattern::new("*").unwrap())
-    }
-}
-
-impl Deref for GlobPattern {
-    type Target = Pattern;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Serialize for GlobPattern {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.0.as_str())
-    }
-}
-
-impl<'de> Deserialize<'de> for GlobPattern {
-    fn deserialize<D>(deserializer: D) -> Result<GlobPattern, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Pattern::new(&s)
-            .map(GlobPattern)
-            .map_err(|e| serde::de::Error::custom(e.to_string()))
-    }
-}

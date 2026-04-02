@@ -4,7 +4,11 @@ dry-run = false
 dirty = false
 overwrite = false
 # filesystem, git-annex
-storage = "filesystem"
+blob-storage = "filesystem"
+# sidecar, metadata (git-annex only)
+info-storage = "sidecar"
+# git, manual
+tracker = "git"
 # manual, ocr, vision
 processor = "manual"
 # manual, llm, regex, vision
@@ -13,6 +17,28 @@ extractor = "manual"
 export-format = "hledger"
 # hjson, json, toml, yaml, xml
 dump-format = "yaml"
+
+[filesystem]
+directory = "acceptarium"
+copy = false
+rename = false
+
+[git-annex]
+directory = "acceptarium"
+copy = false
+rename = false
+
+[sidecar]
+directory = "acceptarium"
+# hjson, json, toml, yaml, xml
+format = "toml"
+hidden = true
+
+[git]
+stage = true
+commit = true
+
+# [metadata]
 
 [templates]
 hledger = """
@@ -30,16 +56,6 @@ hledger = """
 beancount = "No default template"
 ledger-cli = "No default template"
 custom = "Enter a template using Tera syntax in your project config."
-
-[filesystem]
-directory = "acceptarium"
-glob = "*.toml"
-copy = false
-rename = false
-track = false
-
-[git-annex]
-directory = "acceptarium"
 
 [vision]
 model = "{{ config.extra.model }}"

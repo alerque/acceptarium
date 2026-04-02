@@ -3,10 +3,13 @@
 
 use crate::cli::{Cli, SubCommand};
 use crate::error::NonUnicodePathSnafu;
-use crate::types::{GlobPattern, TemplateString};
+use crate::types::TemplateString;
 use crate::utils::discover_project_root;
 use crate::{BINARY_PREFIX, DEFAULTS_TOML, PROJECT_CONFIG};
-use crate::{DumpFormat, ExportFormat, Extractor, Processor, Result, StorageDriver};
+use crate::{
+    BlobHandler, ExportFormat, Extractor, InfoFormat, InfoHandler, Processor, Result,
+    VersionHandler,
+};
 
 use std::env;
 use std::path::PathBuf;
@@ -41,14 +44,20 @@ pub struct Config {
     #[serde(rename = "export-format")]
     pub export_format: ExportFormat,
     #[serde(rename = "dump-format")]
-    pub dump_format: DumpFormat,
+    pub dump_format: InfoFormat,
     pub templates: ExportTemplates,
-    pub(crate) storage: Option<StorageDriver>,
+    #[serde(rename = "blob-storage")]
+    pub(crate) blob_storage: Option<BlobHandler>,
+    #[serde(rename = "info-storage")]
+    pub(crate) info_storage: Option<InfoHandler>,
+    pub(crate) tracker: Option<VersionHandler>,
     pub(crate) filesystem: Option<FilesystemConfig>,
     // swap rename for alias for env var parsing, but then the TOML breaks.
     // #[serde(alias = "GITANNEX")]
     #[serde(rename = "git-annex")]
     pub(crate) git_annex: Option<GitAnnexConfig>,
+    pub(crate) sidecar: Option<SidecarConfig>,
+    pub(crate) git: Option<GitConfig>,
     pub(crate) vision: Option<VisionConfig>,
     pub(crate) llm: Option<LLMConfig>,
     #[serde(default)]
@@ -60,15 +69,12 @@ pub struct Config {
 #[allow(unused)]
 pub struct FilesystemConfig {
     pub directory: PathBuf,
-    pub glob: GlobPattern,
     #[serde(default)]
     pub commit: bool,
     #[serde(default)]
     pub copy: bool,
     #[serde(default)]
     pub rename: bool,
-    #[serde(default)]
-    pub track: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
@@ -81,6 +87,24 @@ pub struct GitAnnexConfig {
     pub copy: bool,
     #[serde(default)]
     pub rename: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct GitConfig {
+    #[serde(default)]
+    pub stage: bool,
+    #[serde(default)]
+    pub commit: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[allow(unused)]
+pub struct SidecarConfig {
+    pub directory: PathBuf,
+    pub format: InfoFormat,
+    #[serde(default)]
+    pub hidden: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]

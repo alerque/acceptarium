@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::Acceptarium;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Asset;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Extractor;
 #[cfg(feature = "ollama")]
 use crate::Processor;
-use crate::Storage;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use crate::Transaction;
 #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
@@ -39,7 +39,7 @@ use snafu::OptionExt;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
-pub fn process(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Result<()> {
+pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<()> {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
     return {
         let _ = config;
@@ -108,7 +108,7 @@ pub fn process(config: &Config, storage: Box<dyn Storage>, assets: Assets) -> Re
             let transaction: Transaction = serde_json::from_str(&data)?;
             log::debug!("Saving transaction data: {:?}", transaction);
             asset.set_transaction(Some(transaction));
-            storage.save(&asset)?;
+            storage.write(&asset)?;
         }
         Ok(())
     }

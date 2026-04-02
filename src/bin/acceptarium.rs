@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use acceptarium::actions::instantiate_storage;
+use acceptarium::AssetId;
 use acceptarium::cli::{Cli, STYLES, SubCommand};
 #[cfg(feature = "tui")]
 use acceptarium::tui;
-use acceptarium::{Config, Result};
-use acceptarium::{output, process, run, status, storage};
+use acceptarium::{Acceptarium, Config, Result};
+use acceptarium::{output, process, run, status};
 
 use clap::{CommandFactory, FromArgMatches};
 use flexi_logger::{Logger, LoggerHandle};
@@ -37,13 +37,17 @@ fn run(logger: LoggerHandle) -> Result<()> {
     logger.set_new_spec(config.verbosity.into());
     log::debug!("Completed config: {:?}", &config);
     log::debug!("Passing subcommand to matched handler");
-    let storage = instantiate_storage(&config)?;
+    let acceptarium = Acceptarium::new(&config)?;
     match SubCommand::from_arg_matches(&matches)? {
-        SubCommand::Add { files, .. } => storage::add(&config, storage, files),
+        SubCommand::Add { files, .. } => acceptarium.add(files),
+        SubCommand::Remove { selectors } => {
+            let assets = acceptarium.select(&selectors)?;
+            acceptarium.remove(assets)
+        }
         SubCommand::List {
             json, selectors, ..
         } => {
-            let assets = storage.select(&selectors)?;
+            let assets = acceptarium.select(&selectors)?;
             if json {
                 println!("{}", assets.to_json()?);
             } else {
@@ -52,23 +56,29 @@ fn run(logger: LoggerHandle) -> Result<()> {
             Ok(())
         }
         SubCommand::Process { selectors, .. } => {
-            let assets = storage.select(&selectors)?;
-            process::process(&config, storage, assets)
+            let assets = acceptarium.select(&selectors)?;
+            process::process(&config, acceptarium, assets)
         }
         SubCommand::Export { selectors, .. } => {
-            let assets = storage.select(&selectors)?;
+            let assets = acceptarium.select(&selectors)?;
             let output = output::export(&config, &assets)?;
             println!("{output}");
             Ok(())
         }
         SubCommand::Dump { selectors, .. } => {
-            let assets = storage.select(&selectors)?;
+            let assets = acceptarium.select(&selectors)?;
             let format = config.dump_format;
             let output = output::dump(format, &assets)?;
             println!("{output}");
             Ok(())
         }
-        SubCommand::Get { id, key, .. } => storage::get(&config, storage, &id, &key),
+        SubCommand::Get { id, key, .. } => {
+            let id: AssetId = id.try_into()?;
+            let format = config.dump_format;
+            let val = acceptarium.get(format, id, key.as_str())?;
+            println!("{}", val);
+            Ok(())
+        }
         SubCommand::Set { id, key, value } => {
             let value = if value == "-" || value.eq_ignore_ascii_case("STDIN") {
                 use std::io::Read;
@@ -78,11 +88,12 @@ fn run(logger: LoggerHandle) -> Result<()> {
             } else {
                 value
             };
-            storage::set(&config, storage, id, &key, &value)
-        }
-        SubCommand::Remove { selectors } => {
-            let assets = storage.select(&selectors)?;
-            storage::remove(&config, storage, assets)
+            acceptarium.is_clean(config.dirty)?;
+            let asset_id: AssetId = id.try_into()?;
+            let format = config.dump_format;
+            acceptarium.set(format, asset_id.clone(), key.as_str(), value.as_str())?;
+            println!("Set {} = {} for asset {}", key, value, asset_id);
+            Ok(())
         }
         SubCommand::Run { name, arguments } => run::run(&config, name, arguments),
         SubCommand::Status {} => status::run(&config),

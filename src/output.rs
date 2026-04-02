@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::Result;
-use crate::{Assets, Config, DumpFormat, ExportFormat};
+use crate::{Assets, Config, ExportFormat, InfoFormat};
 
 use std::fmt::Write;
 
@@ -30,14 +30,14 @@ pub fn export(config: &Config, assets: &Assets) -> Result<String> {
     Ok(output)
 }
 
-pub fn dump<T: Serialize>(format: DumpFormat, data: &T) -> Result<String> {
+pub fn dump<T: Serialize>(format: InfoFormat, data: &T) -> Result<String> {
     log::debug!("Attempting to dump data as {:?}", format);
     let output = match format {
-        DumpFormat::JSON => to_json_string(data).unwrap_or_default(),
-        DumpFormat::TOML => to_toml_string(data).unwrap_or_default(),
-        DumpFormat::YAML => to_yaml_string(data).unwrap_or_default(),
-        DumpFormat::HJSON => to_hjson_string(data).unwrap_or_default(),
-        DumpFormat::XML => to_xml_string(data).unwrap_or_default(),
+        InfoFormat::JSON => to_json_string(data).unwrap_or_default(),
+        InfoFormat::TOML => to_toml_string(data).unwrap_or_default(),
+        InfoFormat::YAML => to_yaml_string(data).unwrap_or_default(),
+        InfoFormat::HJSON => to_hjson_string(data).unwrap_or_default(),
+        InfoFormat::XML => to_xml_string(data).unwrap_or_default(),
     };
     Ok(output)
 }

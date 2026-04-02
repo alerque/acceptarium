@@ -71,6 +71,15 @@ pub enum Error {
     #[snafu(display("No storage driver has been configured"))]
     NoStorageConfigured {},
 
+    #[snafu(display("No version tracking driver has been configured"))]
+    NoTrackerConfigured {},
+
+    #[snafu(display("The VCS tracker `{driver}` requires a valid configuration"))]
+    MissingVcsConfig { driver: String },
+
+    #[snafu(display("The info storage `{driver}` requires a valid configuration"))]
+    MissingInfoConfig { driver: String },
+
     #[snafu(display("The storage driver`{driver}` requires a valid configuration"))]
     MissingStorageConfig { driver: String },
 
@@ -116,8 +125,8 @@ pub enum Error {
     #[snafu(display("The asset ID '{id}' is not in the storage"))]
     UnknownAssetId { id: AssetId },
 
-    #[snafu(display("The field '{key}' is not a known meta data key"))]
-    UnknownMetaKey { key: String },
+    #[snafu(display("The field '{key}' is not a known info field"))]
+    UnknownInfoField { key: String },
 
     #[snafu(display("The processor '{processor}' requires a valid configuration"))]
     MissingProcessorConfig { processor: String },
@@ -127,6 +136,9 @@ pub enum Error {
 
     #[snafu(display("Trouble formatting output: {source}"))]
     Output { source: FmtError },
+
+    #[snafu(display("Unable to stage asset, no source path"))]
+    AssetStage {},
 
     #[cfg(feature = "git")]
     #[snafu(display("Git error: {source}"))]

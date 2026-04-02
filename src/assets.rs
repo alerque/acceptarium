@@ -5,11 +5,11 @@
 use crate::ANNEX_META_PREFIX;
 use crate::error::{
     DeserializeSnafu, HashSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
-    SerdeXmlSnafu, SerdeYamlSnafu, UnknownMetaKeySnafu,
+    SerdeXmlSnafu, SerdeYamlSnafu, UnknownInfoFieldSnafu,
 };
 use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
-use crate::{DumpFormat, Transaction};
 use crate::{Error, Result};
+use crate::{InfoFormat, Transaction};
 
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -175,9 +175,11 @@ impl Asset {
             extra: Map::new(),
         })
     }
+
     pub fn id(&self) -> &AssetId {
         &self.id
     }
+
     pub fn asset_path(&self, project_dir: &Path) -> Option<PathBuf> {
         self.asset_path.to_owned().map(|asset_path| {
             if asset_path.is_absolute() {
@@ -187,39 +189,48 @@ impl Asset {
             }
         })
     }
+
     pub fn source_fname(&self) -> Option<PathBuf> {
         self.source_fname.to_owned()
     }
+
     pub fn set_asset_path(&mut self, asset_path: Option<&Path>) {
         self.asset_path = asset_path.map(Into::into);
     }
+
     pub fn set_source_fname(&mut self, source_fname: Option<&Path>) {
         self.source_fname = source_fname.map(Into::into);
     }
+
     pub fn blake3(&self) -> Option<&Blake3Sum> {
         self.blake3.as_ref()
     }
+
     pub fn set_blake3(&mut self, blake3: Option<Blake3Sum>) {
         self.blake3 = blake3;
     }
+
     pub fn ocr(&self) -> Option<&String> {
         self.ocr.as_ref()
     }
+
     pub fn set_ocr(&mut self, ocr: Option<String>) {
         self.ocr = ocr;
     }
+
     pub fn transaction(&self) -> Option<&Transaction> {
         self.transaction.as_ref()
     }
+
     pub fn set_transaction(&mut self, transaction: Option<Transaction>) {
         self.transaction = transaction;
     }
 
-    pub fn set_field(&mut self, format: DumpFormat, key: &str, value: &str) -> Result<()> {
+    pub fn set_field(&mut self, format: InfoFormat, key: &str, value: &str) -> Result<()> {
         let fields = Asset::FIELD_NAMES_AS_SLICE;
         ensure!(
             fields.contains(&key),
-            UnknownMetaKeySnafu {
+            UnknownInfoFieldSnafu {
                 key: key.to_string(),
             }
         );
@@ -242,7 +253,7 @@ impl Asset {
                 self.ocr = from_value(json_value)?;
             }
             _ => {
-                return UnknownMetaKeySnafu {
+                return UnknownInfoFieldSnafu {
                     key: key.to_string(),
                 }
                 .fail();
@@ -251,7 +262,7 @@ impl Asset {
         Ok(())
     }
 
-    pub fn get_field(&self, format: DumpFormat, key: &str) -> Result<String> {
+    pub fn get_field(&self, format: InfoFormat, key: &str) -> Result<String> {
         let value = match key {
             "id" => to_value(&self.id)?,
             "blake3" => to_value(&self.blake3)?,
@@ -260,7 +271,7 @@ impl Asset {
             "transaction" => to_value(&self.transaction)?,
             "ocr" => to_value(&self.ocr)?,
             _ => {
-                return UnknownMetaKeySnafu {
+                return UnknownInfoFieldSnafu {
                     key: key.to_string(),
                 }
                 .fail();
@@ -270,13 +281,16 @@ impl Asset {
     }
 
     #[cfg(feature = "git-annex")]
-    pub fn to_annex_metadata(&self) -> Vec<String> {
+    pub fn to_annex_metadata(&self, min: bool) -> Vec<String> {
         let mut result = Vec::new();
         let p = format!("{}.", ANNEX_META_PREFIX);
         if let Ok(value) = to_value(self)
             && let Some(obj) = value.as_object()
         {
             for (key, val) in obj {
+                if min && key != "id" {
+                    continue;
+                }
                 if key == "extra" {
                     continue;
                 }
@@ -375,13 +389,13 @@ impl Display for Asset {
     }
 }
 
-fn parse_value(format: DumpFormat, value: &str) -> Result<Value> {
+fn parse_value(format: InfoFormat, value: &str) -> Result<Value> {
     let parse_result = match format {
-        DumpFormat::JSON => serde_json::from_str(value).context(SerdeJsonSnafu {}),
-        DumpFormat::YAML => serde_yaml::from_str(value).context(SerdeYamlSnafu {}),
-        DumpFormat::TOML => toml::from_str::<Value>(value).context(DeserializeSnafu {}),
-        DumpFormat::HJSON => serde_hjson::from_str(value).context(SerdeHjsonSnafu {}),
-        DumpFormat::XML => serde_xml_rs::from_str(value).context(SerdeXmlSnafu {}),
+        InfoFormat::JSON => serde_json::from_str(value).context(SerdeJsonSnafu {}),
+        InfoFormat::YAML => serde_yaml::from_str(value).context(SerdeYamlSnafu {}),
+        InfoFormat::TOML => toml::from_str::<Value>(value).context(DeserializeSnafu {}),
+        InfoFormat::HJSON => serde_hjson::from_str(value).context(SerdeHjsonSnafu {}),
+        InfoFormat::XML => serde_xml_rs::from_str(value).context(SerdeXmlSnafu {}),
     };
     parse_result.or_else(|_| Ok(Value::String(value.to_string())))
 }
