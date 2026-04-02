@@ -59,18 +59,19 @@ pub enum Extractor {
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum ExportFormat {
     #[default]
+    #[value(name = "hledger")]
+    #[serde(rename = "hledger")]
     HLedger,
-    #[serde(rename = "ledger-cli")]
     LedgerCli,
-    BeanCount,
+    Beancount,
     Custom,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum InfoFormat {
     HJSON,
     JSON,
