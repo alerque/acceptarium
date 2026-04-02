@@ -44,30 +44,37 @@ fn run(logger: LoggerHandle) -> Result<()> {
             let assets = acceptarium.select(&selectors)?;
             acceptarium.remove(assets)
         }
-        SubCommand::List {
-            json, selectors, ..
-        } => {
+        SubCommand::List { selectors, .. } => {
             let assets = acceptarium.select(&selectors)?;
-            if json {
-                println!("{}", assets.to_json()?);
-            } else {
-                print!("{}", assets);
-            }
+            print!("{}", assets);
             Ok(())
         }
         SubCommand::Process { selectors, .. } => {
             let assets = acceptarium.select(&selectors)?;
             process::process(&config, acceptarium, assets)
         }
-        SubCommand::Export { selectors, .. } => {
+        SubCommand::Export {
+            format, selectors, ..
+        } => {
             let assets = acceptarium.select(&selectors)?;
-            let output = output::export(&config, &assets)?;
+            let format = if let Some(format) = format {
+                format
+            } else {
+                config.export_format
+            };
+            let output = output::export(&config, format, &assets)?;
             println!("{output}");
             Ok(())
         }
-        SubCommand::Dump { selectors, .. } => {
+        SubCommand::Dump {
+            format, selectors, ..
+        } => {
             let assets = acceptarium.select(&selectors)?;
-            let format = config.dump_format;
+            let format = if let Some(format) = format {
+                format
+            } else {
+                config.dump_format
+            };
             let output = output::dump(format, &assets)?;
             println!("{output}");
             Ok(())

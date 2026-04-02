@@ -13,8 +13,7 @@ use serde_xml_rs::to_string as to_xml_string;
 use serde_yaml::to_string as to_yaml_string;
 use toml::to_string as to_toml_string;
 
-pub fn export(config: &Config, assets: &Assets) -> Result<String> {
-    let format = &config.export_format;
+pub fn export(config: &Config, format: ExportFormat, assets: &Assets) -> Result<String> {
     let mut output = String::new();
     for (_, asset) in assets {
         log::debug!("Attempting to render {} as {:?}", &asset.id(), &format);

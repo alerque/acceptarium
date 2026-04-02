@@ -277,7 +277,7 @@ impl App {
     fn format_export_output(&self, asset: &Asset) -> String {
         let mut assets = Assets::new();
         assets.insert(asset.clone());
-        output::export(&self.config, &assets).unwrap_or_default()
+        output::export(&self.config, self.config.export_format, &assets).unwrap_or_default()
     }
 
     fn max_scroll_offset(&self) -> usize {

@@ -165,10 +165,6 @@ pub enum SubCommand {
         #[clap(long = "no-tracked", action = SetFalse, hide = true)]
         no_tracked: Option<bool>,
 
-        /// Output assets as JSON
-        #[clap(short, long)]
-        json: bool,
-
         #[command(flatten)]
         selectors: AssetSelectors,
     },
