@@ -44,12 +44,10 @@ impl Acceptarium {
             #[cfg(feature = "git-annex")]
             Some(BlobHandler::GitAnnex) => Box::new(AnnexedBlob::init(config)?),
             #[cfg(not(feature = "git-annex"))]
-            Some(BlobHandler::GitAnnex) => {
-                return UnsupportedStorageSnafu {
-                    driver: "git-annex",
-                }
-                .fail();
+            Some(BlobHandler::GitAnnex) => UnsupportedStorageSnafu {
+                driver: "git-annex",
             }
+            .fail()?,
             None => NoStorageConfiguredSnafu {}.fail()?,
         };
         let info: Box<dyn InfoStorage> = match config.info_storage {

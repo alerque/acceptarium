@@ -71,7 +71,8 @@ pub enum ExportFormat {
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize, ValueEnum)]
-#[serde(rename_all = "kebab-case")]
+#[clap(rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum InfoFormat {
     HJSON,
     JSON,

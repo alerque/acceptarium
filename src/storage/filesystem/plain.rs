@@ -3,6 +3,7 @@
 
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
+use crate::utils::path_relative_to_prefix;
 #[cfg(feature = "git")]
 use crate::utils::{data_is_in_project, data_is_writable};
 use crate::{Asset, OperationMode, Result};
@@ -83,10 +84,7 @@ impl BlobStorage for PlainBlob {
             }
             false => source_file.to_path_buf(),
         };
-        let asset_path = asset_path_abs
-            .strip_prefix(&self.project_dir)
-            .map(PathBuf::from)
-            .unwrap_or(asset_path_abs.clone());
+        let asset_path = path_relative_to_prefix(&asset_path_abs, &self.project_dir);
         asset.set_asset_path(Some(&asset_path));
         if mode != OperationMode::JustRun && !self.rename {
             ensure!(

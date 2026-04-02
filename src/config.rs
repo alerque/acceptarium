@@ -14,7 +14,6 @@ use crate::{
 use std::env;
 use std::path::PathBuf;
 
-use clap::ValueEnum;
 use config::Case;
 use config::{Config as LayeredConfig, Environment, File, FileFormat};
 use convert_case::Casing;
@@ -274,24 +273,20 @@ impl Config {
                 ..
             } => {
                 if let Some(val) = processor {
-                    let val: String = val.to_possible_value().unwrap().get_name().into();
-                    builder = builder.set_override("processor", val)?;
+                    builder = builder.set_override("processor", value_to_string(val))?;
                 }
                 if let Some(val) = extractor {
-                    let val: String = val.to_possible_value().unwrap().get_name().into();
-                    builder = builder.set_override("extractor", val)?;
+                    builder = builder.set_override("extractor", value_to_string(val))?;
                 }
             }
             SubCommand::Dump { format, .. } => {
                 if let Some(val) = format {
-                    let val: String = val.to_possible_value().unwrap().get_name().into();
-                    builder = builder.set_override("serialized-format", val)?;
+                    builder = builder.set_override("serialized-format", value_to_string(val))?;
                 }
             }
             SubCommand::Export { format, .. } => {
                 if let Some(val) = format {
-                    let val: String = val.to_possible_value().unwrap().get_name().into();
-                    builder = builder.set_override("export-format", val)?;
+                    builder = builder.set_override("export-format", value_to_string(val))?;
                 }
             }
             SubCommand::Get { .. } => {}
@@ -351,4 +346,8 @@ fn deboolify(yes: Option<bool>, no: Option<bool>) -> Option<bool> {
         (_, Some(false)) => no,
         _ => None,
     }
+}
+
+fn value_to_string<T: clap::ValueEnum>(val: T) -> String {
+    val.to_possible_value().unwrap().get_name().into()
 }

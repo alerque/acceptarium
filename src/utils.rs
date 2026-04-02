@@ -86,3 +86,9 @@ pub(crate) fn info_extension(format: InfoFormat) -> String {
     }
     .into()
 }
+
+pub(crate) fn path_relative_to_prefix(path: &Path, prefix: &Path) -> PathBuf {
+    path.strip_prefix(prefix)
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| path.to_path_buf())
+}

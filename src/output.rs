@@ -13,6 +13,16 @@ use serde_xml_rs::to_string as to_xml_string;
 use serde_yaml::to_string as to_yaml_string;
 use toml::to_string as to_toml_string;
 
+fn serialize_to_string<T: Serialize>(format: InfoFormat, data: &T) -> Result<String> {
+    match format {
+        InfoFormat::JSON => to_json_string(data).map_err(Into::into),
+        InfoFormat::TOML => to_toml_string(data).map_err(Into::into),
+        InfoFormat::YAML => to_yaml_string(data).map_err(Into::into),
+        InfoFormat::HJSON => to_hjson_string(data).map_err(Into::into),
+        InfoFormat::XML => to_xml_string(data).map_err(Into::into),
+    }
+}
+
 pub fn export(config: &Config, format: ExportFormat, assets: &Assets) -> Result<String> {
     let mut output = String::new();
     for (_, asset) in assets {
@@ -31,12 +41,5 @@ pub fn export(config: &Config, format: ExportFormat, assets: &Assets) -> Result<
 
 pub fn dump<T: Serialize>(format: InfoFormat, data: &T) -> Result<String> {
     log::debug!("Attempting to dump data as {:?}", format);
-    let output = match format {
-        InfoFormat::JSON => to_json_string(data).unwrap_or_default(),
-        InfoFormat::TOML => to_toml_string(data).unwrap_or_default(),
-        InfoFormat::YAML => to_yaml_string(data).unwrap_or_default(),
-        InfoFormat::HJSON => to_hjson_string(data).unwrap_or_default(),
-        InfoFormat::XML => to_xml_string(data).unwrap_or_default(),
-    };
-    Ok(output)
+    serialize_to_string(format, data)
 }

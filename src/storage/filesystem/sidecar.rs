@@ -5,7 +5,7 @@ use crate::Config;
 use crate::Result;
 use crate::error::{MissingInfoConfigSnafu, UnknownAssetIdSnafu};
 use crate::output::dump;
-use crate::utils::info_extension;
+use crate::utils::{info_extension, path_relative_to_prefix};
 use crate::{Asset, AssetId, Assets};
 use crate::{InfoFormat, InfoStorage, StorageTracker};
 
@@ -121,7 +121,7 @@ impl InfoStorage for SidecarInfo {
                 {
                     self.project_dir.join(&asset_path).relative(cwd)
                 } else {
-                    asset_path.canonicalize()?
+                    path_relative_to_prefix(&asset_path, &self.project_dir)
                 };
                 asset.set_asset_path(Some(&asset_path));
             }
