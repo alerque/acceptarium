@@ -172,9 +172,8 @@ impl BlobStorage for AnnexedBlob {
             if info.as_any().downcast_ref::<AnnexedBlob>().is_none() {
                 // Keep an ID field in annex meta data  even when using sidecar info storage
                 self.write_min(&asset, tracker)?;
-            } else {
-                info.write(&asset, tracker)?;
             }
+            info.write(&asset, tracker)?;
         }
         Ok(Some(asset))
     }
