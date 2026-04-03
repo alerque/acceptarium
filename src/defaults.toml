@@ -93,10 +93,16 @@ theme = "monokai-pro"
 # model = "granite3.2-vision:latest"
 ## solid results at medium speed, line items for tax entries, sometimes bogus json
 # model = "llama3.2-vision:11b"
-## slow and best
+## slow and best (bested by gemma4)
 # model = "qwen3.5:35b"
 ## fast and pretty good
-model = "qwen3.5:9b"
+# model = "qwen3.5:9b"
+## blink and you miss it for a reasonable guess
+# model = "gemma4:2b"
+## faster than qwen3.5:35b and just about as good but a little spastic
+# model = "gemma4:4b"
+## fast and solid, best overall to date
+model = "gemma4:26b"
 
 ## summary of example with no json
 # model = "bakllava:7b"
