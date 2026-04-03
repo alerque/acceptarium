@@ -69,7 +69,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
                         println!("VISION MODEL RESULTS:");
                         let data = Runtime::new()?.block_on(query_ollama_vision(config, &asset))?;
                         println!("{}", &data);
-                        data
+                        strip_markdown_json(&data)
                     }
                 }
                 Processor::OCR => {
@@ -96,7 +96,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
                                     let data = Runtime::new()?
                                         .block_on(query_ollama_ocr(config, &asset))?;
                                     println!("{}", &data);
-                                    data
+                                    strip_markdown_json(&data)
                                 }
                             }
                             _ => unimplemented!(),
@@ -111,6 +111,19 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
             storage.write(&asset)?;
         }
         Ok(())
+    }
+}
+
+fn strip_markdown_json(s: &str) -> String {
+    let trimmed = s.trim();
+    if trimmed.starts_with("```json") && trimmed.ends_with("```") {
+        trimmed
+            .strip_prefix("```json")
+            .and_then(|s| s.strip_suffix("```"))
+            .map(|s| s.trim().to_string())
+            .unwrap_or_else(|| s.to_string())
+    } else {
+        s.to_string()
     }
 }
 
