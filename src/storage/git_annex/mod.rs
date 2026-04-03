@@ -28,6 +28,7 @@ pub struct AnnexedBlob {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum AnnexCommand {
+    Add,
     Metadata,
 }
 
@@ -105,6 +106,12 @@ impl AnnexedBlob {
         self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
         Ok(())
     }
+
+    fn pre_stage_hook(&self, path: &PathBuf) -> Result<()> {
+        let args: Vec<OsString> = vec![path.into()];
+        self.exec_annex_cli(AnnexCommand::Add, Some(args))?;
+        Ok(())
+    }
 }
 
 impl BlobStorage for AnnexedBlob {
@@ -157,7 +164,11 @@ impl BlobStorage for AnnexedBlob {
             if self.copy {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
-            tracker.stage_paths(&[asset_path_abs])?;
+            let annex = self.clone();
+            tracker.stage_paths(
+                &[asset_path_abs],
+                Some(&move |path: &PathBuf| annex.pre_stage_hook(path)),
+            )?;
             if info.as_any().downcast_ref::<AnnexedBlob>().is_none() {
                 // Keep an ID field in annex meta data  even when using sidecar info storage
                 self.write_min(&asset, tracker)?;
@@ -179,7 +190,7 @@ impl BlobStorage for AnnexedBlob {
         {
             log::info!("Removing asset file {:?}", &asset_path);
             std::fs::remove_file(&asset_path)?;
-            tracker.stage_paths(&[asset_path])?;
+            tracker.stage_paths(&[asset_path], None)?;
             info.erase(asset, tracker)?;
         }
         Ok(())

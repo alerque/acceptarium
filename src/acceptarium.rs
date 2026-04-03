@@ -11,6 +11,7 @@ use crate::storage::git_annex::AnnexedBlob;
 #[cfg(feature = "git")]
 use crate::vcs::GitTracker;
 use crate::vcs::ManualTracker;
+use crate::vcs::PreStageCallback;
 use crate::{Asset, AssetId, Assets};
 use crate::{AssetSelectors, Config, InfoFormat, OperationMode};
 use crate::{BlobHandler, BlobStorage};
@@ -209,8 +210,12 @@ impl Acceptarium {
         self.tracker.is_clean(dirty)
     }
 
-    pub fn stage_paths(&self, paths: &[PathBuf]) -> Result<()> {
-        self.tracker.stage_paths(paths)
+    pub fn stage_paths(
+        &self,
+        paths: &[PathBuf],
+        pre_stage_hook: Option<&PreStageCallback>,
+    ) -> Result<()> {
+        self.tracker.stage_paths(paths, pre_stage_hook)
     }
 
     pub fn commit_staged(&self, msg: &str) -> Result<()> {

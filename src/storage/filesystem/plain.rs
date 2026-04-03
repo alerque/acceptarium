@@ -98,7 +98,7 @@ impl BlobStorage for PlainBlob {
             if self.copy {
                 std::fs::copy(source_file, &asset_path_abs)?;
             }
-            tracker.stage_paths(&[asset_path_abs])?;
+            tracker.stage_paths(&[asset_path_abs], None)?;
             info.write(&asset, tracker)?;
         }
         Ok(Some(asset))
@@ -116,7 +116,7 @@ impl BlobStorage for PlainBlob {
             if asset_path.starts_with(&self.project_dir) {
                 log::info!("Removing asset file {:?}", &asset_path);
                 std::fs::remove_file(&asset_path)?;
-                tracker.stage_paths(&[asset_path])?;
+                tracker.stage_paths(&[asset_path], None)?;
             } else {
                 log::warn!(
                     "Not removing asset file {:?} outside of project directory.",

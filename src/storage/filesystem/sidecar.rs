@@ -67,7 +67,7 @@ impl InfoStorage for SidecarInfo {
         let content = dump(self.format, asset)?;
         let metadata_path = self.metadata_path(asset)?;
         std::fs::write(&metadata_path, content)?;
-        tracker.stage_paths(&[metadata_path])?;
+        tracker.stage_paths(&[metadata_path], None)?;
         tracker.commit_staged("Update existing asset(s)")?;
         Ok(())
     }
@@ -77,7 +77,7 @@ impl InfoStorage for SidecarInfo {
         if metadata_path.exists() {
             log::info!("Removing metadata file {:?}", &metadata_path);
             std::fs::remove_file(&metadata_path)?;
-            tracker.stage_paths(&[metadata_path])?;
+            tracker.stage_paths(&[metadata_path], None)?;
         }
         Ok(())
     }

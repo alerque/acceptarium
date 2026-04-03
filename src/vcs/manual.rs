@@ -14,7 +14,11 @@ impl StorageTracker for ManualTracker {
         Ok(())
     }
 
-    fn stage_paths(&self, paths: &[PathBuf]) -> Result<()> {
+    fn stage_paths(
+        &self,
+        paths: &[PathBuf],
+        _pre_stage_hook: Option<&dyn Fn(&PathBuf) -> Result<()>>,
+    ) -> Result<()> {
         log::warn!(
             "Suggest manually adding {:?} to your version tracking.",
             paths

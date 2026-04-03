@@ -11,8 +11,14 @@ mod manual;
 pub use git::GitTracker;
 pub use manual::ManualTracker;
 
+pub type PreStageCallback = dyn Fn(&PathBuf) -> Result<()>;
+
 pub trait StorageTracker {
     fn is_clean(&self, dirty: bool) -> Result<()>;
-    fn stage_paths(&self, paths: &[PathBuf]) -> Result<()>;
+    fn stage_paths(
+        &self,
+        paths: &[PathBuf],
+        pre_stage_hook: Option<&PreStageCallback>,
+    ) -> Result<()>;
     fn commit_staged(&self, msg: &str) -> Result<()>;
 }

@@ -65,7 +65,11 @@ impl StorageTracker for GitTracker {
         Ok(())
     }
 
-    fn stage_paths(&self, paths: &[PathBuf]) -> Result<()> {
+    fn stage_paths(
+        &self,
+        paths: &[PathBuf],
+        pre_stage_hook: Option<&dyn Fn(&PathBuf) -> Result<()>>,
+    ) -> Result<()> {
         if self.stage {
             log::info!("Adding files to VCS staging: {:?}", paths);
             let mut index = self.repo.index()?;
@@ -78,6 +82,9 @@ impl StorageTracker for GitTracker {
             for path in paths {
                 if is_in_project(path, project_dir) {
                     let path = path_relative_to_prefix(path, &current_dir()?);
+                    if let Some(hook) = &pre_stage_hook {
+                        hook(&path)?;
+                    }
                     index.add_path(&path)?;
                 } else {
                     log::warn!(
