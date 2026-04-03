@@ -5,8 +5,9 @@ use crate::Result;
 use crate::StorageTracker;
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, MissingVcsConfigSnafu};
-use crate::utils::is_in_project;
+use crate::utils::{is_in_project, path_relative_to_prefix};
 
+use std::env::current_dir;
 use std::path::PathBuf;
 
 use derive_more::Debug;
@@ -76,7 +77,8 @@ impl StorageTracker for GitTracker {
             })?;
             for path in paths {
                 if is_in_project(path, project_dir) {
-                    index.add_path(path)?;
+                    let path = path_relative_to_prefix(path, &current_dir()?);
+                    index.add_path(&path)?;
                 } else {
                     log::warn!(
                         "Not staging asset file {:?} outside of project directory.",
