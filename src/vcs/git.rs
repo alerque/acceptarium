@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::Result;
-use crate::StorageTracker;
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, MissingVcsConfigSnafu};
 use crate::utils::{is_in_project, path_relative_to_prefix};
+use crate::{CommitMessage, StorageTracker};
 
 use std::env::current_dir;
 use std::path::PathBuf;
@@ -21,6 +21,7 @@ pub struct GitTracker {
     commit: bool,
     #[debug(skip)]
     repo: Repository,
+    message: CommitMessage,
 }
 
 impl GitTracker {
@@ -30,10 +31,12 @@ impl GitTracker {
         let git_config = config.git.as_ref().context(MissingVcsConfigSnafu {
             driver: "gittracker",
         })?;
+        let message = CommitMessage::new(git_config.message.clone());
         Ok(Self {
             stage: git_config.stage,
             commit: git_config.commit,
             repo,
+            message,
         })
     }
 }
@@ -103,7 +106,7 @@ impl StorageTracker for GitTracker {
         Ok(())
     }
 
-    fn commit_staged(&self, msg: &str) -> Result<()> {
+    fn commit_staged(&self, composer: Option<&dyn Fn(&mut CommitMessage)>) -> Result<()> {
         let mut index = self.repo.index()?;
         let oid = index.write_tree()?;
         let tree = self.repo.find_tree(oid)?;
@@ -114,7 +117,15 @@ impl StorageTracker for GitTracker {
             .ok()
             .map(|h| h.peel_to_commit())
             .transpose()?;
-        let msg = format!("{}\n\nAssisted-by: Acceptarium", msg);
+        let mut msg = self.message.clone();
+        let version =
+            option_env!("VERGEN_GIT_DESCRIBE").unwrap_or_else(|| env!("CARGO_PKG_VERSION"));
+        msg.trailers
+            .push(format!("Assisted-by: acceptarium {}", version));
+        if let Some(callback) = composer {
+            callback(&mut msg);
+        }
+        let msg = msg.render()?;
         if self.commit {
             self.repo.commit(
                 Some("HEAD"),

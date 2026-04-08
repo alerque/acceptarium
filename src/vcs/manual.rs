@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 use crate::Result;
-use crate::StorageTracker;
+use crate::{CommitMessage, StorageTracker};
 
 use std::path::PathBuf;
 
@@ -26,7 +26,17 @@ impl StorageTracker for ManualTracker {
         Ok(())
     }
 
-    fn commit_staged(&self, msg: &str) -> Result<()> {
+    fn commit_staged(&self, composer: Option<&dyn Fn(&mut CommitMessage)>) -> Result<()> {
+        let template = serde_json::from_str("[acceptarium] {{ subject }}")?;
+        let mut msg = CommitMessage::new(template);
+        let version =
+            option_env!("VERGEN_GIT_DESCRIBE").unwrap_or_else(|| env!("CARGO_PKG_VERSION"));
+        msg.trailers
+            .push(format!("Assisted-by: acceptarium {}", version));
+        if let Some(callback) = composer {
+            callback(&mut msg);
+        }
+        let msg = msg.render()?;
         log::warn!("Suggest committing current changes as '{}'", msg);
         Ok(())
     }

@@ -95,6 +95,7 @@ pub struct GitConfig {
     pub stage: bool,
     #[serde(default)]
     pub commit: bool,
+    pub message: TemplateString,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]

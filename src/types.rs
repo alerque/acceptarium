@@ -53,6 +53,38 @@ fn build_context(config: &Config, asset: &Asset) -> Result<Value> {
     Ok(Value::Object(context))
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CommitMessage {
+    template: TemplateString,
+    pub subject: Option<String>,
+    pub body: Option<String>,
+    pub trailers: Vec<String>,
+}
+
+impl CommitMessage {
+    pub fn new(template: TemplateString) -> Self {
+        let subject = None;
+        let body = None;
+        let trailers = vec![];
+        Self {
+            template,
+            subject,
+            body,
+            trailers,
+        }
+    }
+
+    pub fn render(&self) -> Result<String> {
+        let mut tera = Tera::default();
+        let mut context = Map::new();
+        context.insert("msg".to_string(), to_value(self)?);
+        let ctx = Context::from_value(Value::Object(context))?;
+        let template = &self.template.0;
+        let output = tera.render_str(&template, &ctx)?;
+        Ok(output)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Transaction {
     pub payee: Option<String>,

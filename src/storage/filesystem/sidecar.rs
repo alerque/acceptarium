@@ -68,7 +68,9 @@ impl InfoStorage for SidecarInfo {
         let metadata_path = self.metadata_path(asset)?;
         std::fs::write(&metadata_path, content)?;
         tracker.stage_paths(&[metadata_path], None)?;
-        tracker.commit_staged("Update existing asset(s)")?;
+        tracker.commit_staged(Some(&move |msg| {
+            msg.subject = Some("Update existing asset(s)".into());
+        }))?;
         Ok(())
     }
 

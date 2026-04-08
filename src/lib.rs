@@ -48,6 +48,7 @@ pub use error::Error;
 pub use ingestable::Ingestable;
 pub use storage::BlobStorage;
 pub use storage::InfoStorage;
+pub use types::CommitMessage;
 pub use types::OperationMode;
 pub use types::Result;
 pub use types::Transaction;

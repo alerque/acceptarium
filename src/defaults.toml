@@ -37,6 +37,15 @@ hidden = true
 [git]
 stage = true
 commit = true
+message = """
+[acceptarium] {{ msg.subject }}
+
+{{ msg.body }}
+
+{% for trailer in msg.trailers -%}
+{{ trailer }}
+{% endfor -%}
+"""
 
 # [metadata]
 

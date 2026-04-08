@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::CommitMessage;
 use crate::Result;
 
 use std::path::PathBuf;
@@ -20,5 +21,5 @@ pub trait StorageTracker {
         paths: &[PathBuf],
         pre_stage_hook: Option<&PreStageCallback>,
     ) -> Result<()>;
-    fn commit_staged(&self, msg: &str) -> Result<()>;
+    fn commit_staged(&self, composer: Option<&dyn Fn(&mut CommitMessage)>) -> Result<()>;
 }

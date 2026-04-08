@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use crate::CommitMessage;
 use crate::error::{
     FilesystemSnafu, NoStorageConfiguredSnafu, NoTrackerConfiguredSnafu, UnsupportedStorageSnafu,
 };
@@ -148,17 +149,20 @@ impl Acceptarium {
                 }
             }
         }
-        self.tracker.commit_staged("Track new asset(s)")?;
+        self.tracker.commit_staged(Some(&move |msg| {
+            msg.subject = Some("Track new asset(s)".into());
+        }))?;
         Ok(())
     }
 
     pub fn remove(&self, assets: Assets) -> Result<()> {
         self.tracker.is_clean(self.dirty)?;
         for (_, asset) in &assets {
-            println!("Removing asset {}", asset.id());
             self.blob.egest(asset, &*self.info, &*self.tracker)?;
         }
-        self.tracker.commit_staged("Remove asset(s)")?;
+        self.tracker.commit_staged(Some(&move |msg| {
+            msg.subject = Some("Remove asset(s)".into());
+        }))?;
         Ok(())
     }
 
@@ -218,7 +222,7 @@ impl Acceptarium {
         self.tracker.stage_paths(paths, pre_stage_hook)
     }
 
-    pub fn commit_staged(&self, msg: &str) -> Result<()> {
-        self.tracker.commit_staged(msg)
+    pub fn commit_staged(&self, composer: Option<&dyn Fn(&mut CommitMessage)>) -> Result<()> {
+        self.tracker.commit_staged(composer)
     }
 }
