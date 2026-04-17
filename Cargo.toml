@@ -139,7 +139,7 @@ features = ["serde"]
 optional = true
 
 [dependencies.rig-core]
-version = "0.33"
+version = "0.35"
 optional = true
 features = ["all"]
 
