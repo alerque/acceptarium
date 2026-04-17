@@ -132,7 +132,7 @@ async fn query_ollama_vision(config: &Config, asset: &Asset) -> Result<String> {
     let vision = config.vision.clone().context(MissingProcessorConfigSnafu {
         processor: "vision",
     })?;
-    let model = vision.model;
+    let model = vision.model.render(config, asset)?;
     let cwd = current_dir().unwrap_or(PathBuf::from("./"));
     let file = asset.asset_path(cwd.as_path()).unwrap();
     log::info!("Creating LLM agent for model {}", model);
@@ -212,10 +212,12 @@ async fn query_ollama_ocr(config: &Config, asset: &Asset) -> Result<String> {
         .llm
         .clone()
         .context(MissingProcessorConfigSnafu { processor: "ocr" })?;
-    log::info!("Creating LLM agent for model {}", &llm.model);
+
+    let model = llm.model.render(config, asset)?;
+    log::info!("Creating LLM agent for model {}", model);
     let client: ollama::Client = ollama::Client::new(Nothing).unwrap();
     let preamble = llm.preamble.render(config, asset)?;
-    let agent = client.agent(llm.model).preamble(&preamble).build();
+    let agent = client.agent(model).preamble(&preamble).build();
     log::debug!("Using preamble: {}", preamble);
     let prompt = llm.prompt.render(config, asset)?;
     log::debug!("Sending prompt: {}", &prompt);

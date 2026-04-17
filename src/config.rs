@@ -109,7 +109,7 @@ pub struct SidecarConfig {
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct VisionConfig {
-    pub model: String,
+    pub model: TemplateString,
     pub preamble: TemplateString,
     pub prompt: TemplateString,
 }
@@ -117,7 +117,7 @@ pub struct VisionConfig {
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]
 pub struct LLMConfig {
-    pub model: String,
+    pub model: TemplateString,
     pub preamble: TemplateString,
     pub prompt: TemplateString,
 }
