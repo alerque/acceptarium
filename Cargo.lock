@@ -22,7 +22,7 @@ dependencies = [
  "glob",
  "image",
  "log",
- "nanoid",
+ "nanoid 0.5.0",
  "ratatui",
  "ratatui-image",
  "ratatui-themes",
@@ -3331,6 +3331,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "nanoid"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8628de41fe064cc3f0cf07f3d299ee3e73521adaff72278731d5c8cae3797873"
+dependencies = [
+ "rand 0.9.4",
+]
+
+[[package]]
 name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4349,7 +4358,7 @@ dependencies = [
  "lopdf",
  "mime",
  "mime_guess",
- "nanoid",
+ "nanoid 0.4.0",
  "ordered-float 5.3.0",
  "pin-project-lite",
  "rayon",
