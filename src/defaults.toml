@@ -111,7 +111,8 @@ theme = "monokai-pro"
 ## faster than qwen3.5:35b and just about as good but a little spastic
 # model = "gemma4:4b"
 ## fast and solid, best overall to date
-model = "gemma4:26b"
+# model = "gemma4:26b"
+model = "qwen3.6:35b"
 
 ## summary of example with no json
 # model = "bakllava:7b"
