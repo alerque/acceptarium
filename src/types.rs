@@ -80,7 +80,7 @@ impl CommitMessage {
         context.insert("msg".to_string(), to_value(self)?);
         let ctx = Context::from_value(Value::Object(context))?;
         let template = &self.template.0;
-        let output = tera.render_str(&template, &ctx)?;
+        let output = tera.render_str(template, &ctx)?;
         Ok(output)
     }
 }
