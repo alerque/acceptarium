@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::path::PathBuf;
+
 use crate::CommitMessage;
 use crate::Result;
-
-use std::path::PathBuf;
 
 mod git;
 mod manual;

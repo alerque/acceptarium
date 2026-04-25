@@ -1,10 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Acceptarium;
-use crate::output;
-use crate::{Asset, Assets, Config, Result};
-
 use std::sync::mpsc;
 
 use crossterm::event::{self, KeyCode, KeyEventKind};
@@ -14,6 +10,10 @@ use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol};
 use ratatui_themes::Theme;
+
+use crate::Acceptarium;
+use crate::output;
+use crate::{Asset, Assets, Config, Result};
 
 pub fn main(config: &Config) -> Result<()> {
     let storage = Acceptarium::new(config)?;

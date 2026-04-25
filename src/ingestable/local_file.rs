@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Ingestable;
-use crate::assets::Blake3Sum;
-use crate::error::{FilesystemSnafu, IoSnafu};
-use crate::{Error, Result};
-
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use snafu::ResultExt;
 use snafu::ensure;
+
+use crate::Ingestable;
+use crate::assets::Blake3Sum;
+use crate::error::{FilesystemSnafu, IoSnafu};
+use crate::{Error, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LocalFile {

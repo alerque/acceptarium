@@ -1,17 +1,16 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-#[cfg(feature = "git-annex")]
-use crate::Config;
-
-use crate::assets::Asset;
-use crate::error::Error;
-
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use tera::{Context, Tera};
+
+#[cfg(feature = "git-annex")]
+use crate::Config;
+use crate::assets::Asset;
+use crate::error::Error;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum OperationMode {

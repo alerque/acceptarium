@@ -1,6 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::path::PathBuf;
+
+use derive_more::Debug;
+use snafu::ensure;
+use snafu::{OptionExt, ResultExt};
+
 use crate::config::Config;
 use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
 use crate::utils::path_relative_to_prefix;
@@ -8,12 +14,6 @@ use crate::utils::path_relative_to_prefix;
 use crate::utils::{data_is_in_project, data_is_writable};
 use crate::{Asset, OperationMode, Result};
 use crate::{BlobStorage, InfoStorage, Ingestable, StorageTracker};
-
-use std::path::PathBuf;
-
-use derive_more::Debug;
-use snafu::ensure;
-use snafu::{OptionExt, ResultExt};
 
 #[derive(Debug)]
 pub struct PlainBlob {

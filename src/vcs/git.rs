@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Result;
-use crate::config::Config;
-use crate::error::{FilesystemSnafu, MissingVcsConfigSnafu};
-use crate::utils::{is_in_project, path_relative_to_prefix};
-use crate::{CommitMessage, StorageTracker};
-
 use std::env::current_dir;
 use std::path::PathBuf;
 
@@ -14,6 +8,12 @@ use derive_more::Debug;
 use git2::Repository;
 use snafu::OptionExt;
 use snafu::ensure;
+
+use crate::Result;
+use crate::config::Config;
+use crate::error::{FilesystemSnafu, MissingVcsConfigSnafu};
+use crate::utils::{is_in_project, path_relative_to_prefix};
+use crate::{CommitMessage, StorageTracker};
 
 #[derive(Debug)]
 pub struct GitTracker {

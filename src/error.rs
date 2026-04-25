@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::assets::AssetId;
-
 use std::convert::Infallible;
+use std::fmt::Error as FmtError;
 use std::fmt::{Debug, Display, Formatter, Result};
+use std::io::Error as IoError;
 use std::path::PathBuf;
-
-use snafu::Snafu;
+use std::path::StripPrefixError;
 
 // Error types we wrap
 use blake3::HexError;
@@ -21,13 +20,13 @@ use serde_hjson::Error as SerdeHjsonError;
 use serde_json::Error as SerdeJsonError;
 use serde_xml_rs::Error as SerdeXmlError;
 use serde_yaml::Error as SerdeYamlError;
-use std::fmt::Error as FmtError;
-use std::io::Error as IoError;
-use std::path::StripPrefixError;
+use snafu::Snafu;
 use tera::Error as TeraError;
 use toml::de::Error as DeserializeError;
 use toml::ser::Error as SerializeError;
 use which::Error as WhichError;
+
+use crate::assets::AssetId;
 
 #[derive(Snafu)]
 #[snafu(visibility(pub))]

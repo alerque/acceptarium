@@ -1,14 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Config;
-use crate::Result;
-use crate::error::{MissingInfoConfigSnafu, UnknownAssetIdSnafu};
-use crate::output::dump;
-use crate::utils::{info_extension, path_relative_to_prefix};
-use crate::{Asset, AssetId, Assets};
-use crate::{InfoFormat, InfoStorage, StorageTracker};
-
 use std::any::Any;
 use std::env::current_dir;
 use std::fs::read_to_string;
@@ -19,6 +11,14 @@ use glob::MatchOptions;
 use glob::glob_with;
 use snafu::OptionExt;
 use sugar_path::SugarPath;
+
+use crate::Config;
+use crate::Result;
+use crate::error::{MissingInfoConfigSnafu, UnknownAssetIdSnafu};
+use crate::output::dump;
+use crate::utils::{info_extension, path_relative_to_prefix};
+use crate::{Asset, AssetId, Assets};
+use crate::{InfoFormat, InfoStorage, StorageTracker};
 
 #[derive(Debug)]
 pub struct SidecarInfo {

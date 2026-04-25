@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::path::{Path, PathBuf};
+
+use snafu::ensure;
+
 use crate::InfoFormat;
 use crate::PROJECT_CONFIG;
 use crate::Result;
 use crate::error::FilesystemSnafu;
-
-use std::path::{Path, PathBuf};
-
-use snafu::ensure;
 
 #[cfg(feature = "git")]
 pub(crate) fn discover_project_root(cwd: &Path) -> PathBuf {

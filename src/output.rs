@@ -1,9 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Result;
-use crate::{Assets, Config, ExportFormat, InfoFormat};
-
 use std::fmt::Write;
 
 use serde::Serialize;
@@ -12,6 +9,9 @@ use serde_json::to_string_pretty as to_json_string;
 use serde_xml_rs::to_string as to_xml_string;
 use serde_yaml::to_string as to_yaml_string;
 use toml::to_string as to_toml_string;
+
+use crate::Result;
+use crate::{Assets, Config, ExportFormat, InfoFormat};
 
 fn serialize_to_string<T: Serialize>(format: InfoFormat, data: &T) -> Result<String> {
     match format {

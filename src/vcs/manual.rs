@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::path::PathBuf;
+
 use crate::Result;
 use crate::{CommitMessage, StorageTracker};
-
-use std::path::PathBuf;
 
 pub struct ManualTracker {}
 

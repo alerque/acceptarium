@@ -7,7 +7,6 @@ use acceptarium::cli::{Cli, STYLES, SubCommand};
 use acceptarium::tui;
 use acceptarium::{Acceptarium, Config, Result};
 use acceptarium::{output, process, run, status};
-
 use clap::{CommandFactory, FromArgMatches};
 use flexi_logger::{Logger, LoggerHandle};
 use log::LevelFilter;

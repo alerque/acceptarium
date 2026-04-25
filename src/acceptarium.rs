@@ -1,6 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
+use std::collections::HashSet;
+use std::path::PathBuf;
+
+use derive_more::Debug;
+use snafu::OptionExt;
+
 use crate::CommitMessage;
 use crate::error::{
     FilesystemSnafu, NoStorageConfiguredSnafu, NoTrackerConfiguredSnafu, UnsupportedStorageSnafu,
@@ -19,12 +25,6 @@ use crate::{BlobHandler, BlobStorage};
 use crate::{Error, Result};
 use crate::{InfoHandler, InfoStorage};
 use crate::{StorageTracker, VersionHandler};
-
-use std::collections::HashSet;
-use std::path::PathBuf;
-
-use derive_more::Debug;
-use snafu::OptionExt;
 
 #[derive(Debug)]
 pub struct Acceptarium {

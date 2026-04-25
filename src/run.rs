@@ -1,10 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::error::{BufferSnafu, CurrentExecutableSnafu};
-use crate::{BINARY_PREFIX, CONFIGURE_DATADIR};
-use crate::{Config, Result};
-
 use std::env::current_exe;
 use std::ffi::OsString;
 use std::io::{BufRead, BufReader};
@@ -13,6 +9,10 @@ use std::path::PathBuf;
 use snafu::{OptionExt, ResultExt};
 use subprocess::{Exec, Redirection};
 use which::which;
+
+use crate::error::{BufferSnafu, CurrentExecutableSnafu};
+use crate::{BINARY_PREFIX, CONFIGURE_DATADIR};
+use crate::{Config, Result};
 
 pub type RunArgs = Vec<OsString>;
 

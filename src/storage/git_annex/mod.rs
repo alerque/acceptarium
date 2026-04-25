@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::config::Config;
-use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
-use crate::utils::{data_is_in_project, data_is_writable, path_relative_to_prefix};
-use crate::{Asset, AssetId, Assets, InfoFormat, OperationMode, Result};
-use crate::{BlobStorage, InfoStorage, Ingestable, StorageTracker};
-
 use std::any::Any;
 use std::ffi::OsString;
 use std::path::PathBuf;
@@ -16,6 +10,12 @@ use serde::{Deserialize, Serialize};
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use subprocess::{Exec, Redirection};
+
+use crate::config::Config;
+use crate::error::{FilesystemSnafu, IoSnafu, MissingStorageConfigSnafu};
+use crate::utils::{data_is_in_project, data_is_writable, path_relative_to_prefix};
+use crate::{Asset, AssetId, Assets, InfoFormat, OperationMode, Result};
+use crate::{BlobStorage, InfoStorage, Ingestable, StorageTracker};
 
 #[derive(Debug, Clone)]
 pub struct AnnexedBlob {

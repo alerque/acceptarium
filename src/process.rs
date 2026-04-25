@@ -1,21 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Acceptarium;
-#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
-use crate::Asset;
-#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
-use crate::Extractor;
-#[cfg(feature = "ollama")]
-use crate::Processor;
-#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
-use crate::Transaction;
-#[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
-use crate::error::FeatureNotEnabledSnafu;
-#[cfg(feature = "ollama")]
-use crate::error::MissingProcessorConfigSnafu;
-use crate::{Assets, Config, Result};
-
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
 use std::env::current_dir;
 #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
@@ -39,6 +24,21 @@ use snafu::OptionExt;
 #[cfg(feature = "ollama")]
 use tokio::runtime::Runtime;
 
+use crate::Acceptarium;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Asset;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Extractor;
+#[cfg(feature = "ollama")]
+use crate::Processor;
+#[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
+use crate::Transaction;
+#[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
+use crate::error::FeatureNotEnabledSnafu;
+#[cfg(feature = "ollama")]
+use crate::error::MissingProcessorConfigSnafu;
+use crate::{Assets, Config, Result};
+
 pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<()> {
     #[cfg(not(any(feature = "ollama", feature = "tesseract", feature = "imagemagick")))]
     return {
@@ -51,8 +51,9 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
     .fail();
     #[cfg(any(feature = "ollama", feature = "tesseract", feature = "imagemagick"))]
     {
-        use crate::error::AssetProcessedSnafu;
         use snafu::ensure;
+
+        use crate::error::AssetProcessedSnafu;
         for (_, asset) in &assets {
             let mut asset = asset.clone();
             log::info!("Processing asset {}", &asset.id());

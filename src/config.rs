@@ -1,16 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::cli::{Cli, SubCommand};
-use crate::error::NonUnicodePathSnafu;
-use crate::types::TemplateString;
-use crate::utils::discover_project_root;
-use crate::{BINARY_PREFIX, DEFAULTS_TOML, PROJECT_CONFIG};
-use crate::{
-    BlobHandler, ExportFormat, Extractor, InfoFormat, InfoHandler, Processor, Result,
-    VersionHandler,
-};
-
 use std::env;
 use std::path::PathBuf;
 
@@ -24,6 +14,16 @@ use ratatui_themes::ThemeName;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, to_value};
 use snafu::OptionExt;
+
+use crate::cli::{Cli, SubCommand};
+use crate::error::NonUnicodePathSnafu;
+use crate::types::TemplateString;
+use crate::utils::discover_project_root;
+use crate::{BINARY_PREFIX, DEFAULTS_TOML, PROJECT_CONFIG};
+use crate::{
+    BlobHandler, ExportFormat, Extractor, InfoFormat, InfoHandler, Processor, Result,
+    VersionHandler,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[allow(unused)]

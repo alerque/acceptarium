@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use crate::Blake3Sum;
-
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
+
+use crate::Blake3Sum;
 
 pub mod local_file;
 

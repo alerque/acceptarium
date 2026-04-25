@@ -1,16 +1,6 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-#[cfg(feature = "git-annex")]
-use crate::ANNEX_META_PREFIX;
-use crate::error::{
-    DeserializeSnafu, HashSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
-    SerdeXmlSnafu, SerdeYamlSnafu, UnknownInfoFieldSnafu,
-};
-use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
-use crate::{Error, Result};
-use crate::{InfoFormat, Transaction};
-
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
@@ -23,6 +13,16 @@ use serde_json::{Map, Value, from_value, to_value};
 use snafu::ResultExt;
 use snafu::ensure;
 use struct_field_names_as_array::FieldNamesAsSlice;
+
+#[cfg(feature = "git-annex")]
+use crate::ANNEX_META_PREFIX;
+use crate::error::{
+    DeserializeSnafu, HashSnafu, InvalidAssetIdSnafu, SerdeHjsonSnafu, SerdeJsonSnafu,
+    SerdeXmlSnafu, SerdeYamlSnafu, UnknownInfoFieldSnafu,
+};
+use crate::{ASSET_ID_CHARS, ASSET_ID_LEN};
+use crate::{Error, Result};
+use crate::{InfoFormat, Transaction};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Blake3Sum(Blake3);
