@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: © 2026 Caleb Maclennan <caleb@alerque.com>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-use acceptarium::AssetId;
 use acceptarium::cli::{Cli, STYLES, SubCommand};
 #[cfg(feature = "tui")]
 use acceptarium::tui;
-use acceptarium::{Acceptarium, Config, Result};
+use acceptarium::{Acceptarium, AssetId, Config, Result};
 use acceptarium::{output, process, run, status};
-use clap::{CommandFactory, FromArgMatches};
+use clap::{CommandFactory as _, FromArgMatches as _};
 use flexi_logger::{Logger, LoggerHandle};
 use log::LevelFilter;
 
