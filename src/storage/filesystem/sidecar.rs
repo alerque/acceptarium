@@ -96,14 +96,11 @@ impl InfoStorage for SidecarInfo {
             }
         };
         log::debug!("Pattern used: {}", pattern);
-        let entries: Vec<PathBuf> = glob_with(
-            pattern.as_str(),
-            MatchOptions {
-                case_sensitive: true,
-                require_literal_separator: true,
-                require_literal_leading_dot: false,
-            },
-        )?
+        let entries: Vec<PathBuf> = glob_with(pattern.as_str(), MatchOptions {
+            case_sensitive: true,
+            require_literal_separator: true,
+            require_literal_leading_dot: false,
+        })?
         .flatten()
         .collect();
         let mut assets = Assets::new();

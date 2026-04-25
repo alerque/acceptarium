@@ -125,6 +125,7 @@ impl<'de> Deserialize<'de> for AssetId {
 
 impl TryFrom<String> for AssetId {
     type Error = Error;
+
     fn try_from(s: String) -> Result<Self> {
         Self::parse(&s)
     }
@@ -132,6 +133,7 @@ impl TryFrom<String> for AssetId {
 
 impl TryFrom<&String> for AssetId {
     type Error = Error;
+
     fn try_from(s: &String) -> Result<Self> {
         Self::parse(s)
     }
@@ -228,12 +230,9 @@ impl Asset {
 
     pub fn set_field(&mut self, format: InfoFormat, key: &str, value: &str) -> Result<()> {
         let fields = Asset::FIELD_NAMES_AS_SLICE;
-        ensure!(
-            fields.contains(&key),
-            UnknownInfoFieldSnafu {
-                key: key.to_string(),
-            }
-        );
+        ensure!(fields.contains(&key), UnknownInfoFieldSnafu {
+            key: key.to_string(),
+        });
         let json_value = parse_value(format, value)?;
         match key {
             "blake3" => {
@@ -458,8 +457,8 @@ impl Assets {
 }
 
 impl IntoIterator for Assets {
-    type Item = Asset;
     type IntoIter = std::collections::hash_map::IntoValues<AssetId, Asset>;
+    type Item = Asset;
 
     fn into_iter(self) -> Self::IntoIter {
         self.inner.into_values()
@@ -467,8 +466,8 @@ impl IntoIterator for Assets {
 }
 
 impl<'a> IntoIterator for &'a Assets {
-    type Item = (&'a AssetId, &'a Asset);
     type IntoIter = std::collections::hash_map::Iter<'a, AssetId, Asset>;
+    type Item = (&'a AssetId, &'a Asset);
 
     fn into_iter(self) -> Self::IntoIter {
         self.inner.iter()

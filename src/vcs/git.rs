@@ -58,13 +58,10 @@ impl StorageTracker for GitTracker {
             log::warn!("Operating on dirty repository");
             return Ok(());
         }
-        ensure!(
-            !has_staged,
-            FilesystemSnafu {
-                message: "Git repository has staged changes. Please commit or unstage them first."
-                    .to_string(),
-            }
-        );
+        ensure!(!has_staged, FilesystemSnafu {
+            message: "Git repository has staged changes. Please commit or unstage them first."
+                .to_string(),
+        });
         Ok(())
     }
 

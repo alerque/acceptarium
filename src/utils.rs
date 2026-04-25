@@ -44,30 +44,24 @@ fn walk_to_root_or_config(cwd: &Path, root: &PathBuf) -> PathBuf {
 }
 
 pub(crate) fn data_is_in_project(data_dir: &Path, project_dir: &Path) -> Result<()> {
-    ensure!(
-        data_dir.starts_with(project_dir),
-        FilesystemSnafu {
-            message: format!(
-                "Storage directory '{}' is not inside project root '{}'",
-                data_dir.display(),
-                project_dir.display()
-            ),
-        }
-    );
+    ensure!(data_dir.starts_with(project_dir), FilesystemSnafu {
+        message: format!(
+            "Storage directory '{}' is not inside project root '{}'",
+            data_dir.display(),
+            project_dir.display()
+        ),
+    });
     Ok(())
 }
 
 pub(crate) fn data_is_writable(data_dir: &Path) -> Result<()> {
     let data_meta = std::fs::metadata(data_dir)?;
-    ensure!(
-        !data_meta.permissions().readonly(),
-        FilesystemSnafu {
-            message: format!(
-                "Storage directory '{}' is not writable by the current user",
-                data_dir.display()
-            ),
-        }
-    );
+    ensure!(!data_meta.permissions().readonly(), FilesystemSnafu {
+        message: format!(
+            "Storage directory '{}' is not writable by the current user",
+            data_dir.display()
+        ),
+    });
     Ok(())
 }
 

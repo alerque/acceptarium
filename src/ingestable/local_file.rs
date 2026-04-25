@@ -23,12 +23,9 @@ pub struct LocalFile {
 impl LocalFile {
     pub fn from_path(path: &Path) -> Result<Self> {
         let path = path.canonicalize()?;
-        ensure!(
-            path.try_exists().context(IoSnafu)?,
-            FilesystemSnafu {
-                message: format!("Source file '{}' does not exist", path.display()),
-            }
-        );
+        ensure!(path.try_exists().context(IoSnafu)?, FilesystemSnafu {
+            message: format!("Source file '{}' does not exist", path.display()),
+        });
         let filename = PathBuf::from(path.file_name().unwrap_or_default());
         let blake3 = Self::compute_blake3(&path)?;
         Ok(Self {

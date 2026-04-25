@@ -250,7 +250,8 @@ impl InfoStorage for AnnexedBlob {
         log::debug!("Raw git-annex metadata output: {}", &line);
         if lines.next().is_some() {
             log::warn!(
-                "Multiple asset files are tagged with id '{}' in git-annex metadata. Using first result, but manual correction of duplicated assets required.",
+                "Multiple asset files are tagged with id '{}' in git-annex metadata. Using first \
+                 result, but manual correction of duplicated assets required.",
                 &id,
             );
         }
