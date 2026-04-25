@@ -117,7 +117,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
 fn strip_markdown_json(s: &str) -> String {
     let trimmed = s.trim();
     if trimmed.starts_with("```json") && trimmed.ends_with("```") {
-        log::debug!("Detcted JSON wrapper, stripping");
+        log::debug!("Detected JSON wrapper, stripping");
         trimmed
             .strip_prefix("```json")
             .and_then(|s| s.strip_suffix("```"))
