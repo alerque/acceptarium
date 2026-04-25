@@ -6,7 +6,10 @@ exclude-dev = true
 multiple-versions = "allow"
 
 [advisories]
-ignore = ["RUSTSEC-2024-0436"]
+ignore = [
+  "RUSTSEC-2024-0436", # paste crate no longer maintained, via ratatui-image
+  "RUSTSEC-2026-0104", # rustls-webpki crate can panic in cert parsing, via rig
+]
 
 # Not exhaustive, just whitelist the current dependency tree
 [licenses]
