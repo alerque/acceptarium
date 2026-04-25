@@ -10,8 +10,8 @@ taplo := require('taplo')
 
 set script-interpreter := ['zsh', '+o', 'nomatch', '-eu']
 set shell := ['zsh', '+o', 'nomatch', '-ecu']
-set positional-arguments := true
-set unstable := true
+set positional-arguments
+set unstable
 
 [default]
 [private]
@@ -78,4 +78,3 @@ post-release semver: keys
     # {{ berg }} release download v{{ semver }} --skip-existing
     ls acceptarium-{{ semver }}.{tar.zst,zip} | xargs -n1 {{ gpg }} -a --detach-sign
     # {{ berg }} release upload v{{ semver }} acceptarium-{{ semver }}.{tar.zst,zip}.asc
-
