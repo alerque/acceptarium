@@ -29,6 +29,7 @@ path = [
   ".cargo/config.toml",
   ".editorconfig",
   ".gitignore",
+  ".rustfmt.toml",
   "Cargo.lock",
   "Cargo.toml",
   "Justfile",
