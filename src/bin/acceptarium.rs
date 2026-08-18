@@ -30,10 +30,10 @@ fn run(logger: LoggerHandle) -> Result<()> {
     log::debug!("Attempting to parse CLI arguments, {:?}", matches);
     let args = Cli::from_arg_matches(&matches)?;
     log::debug!("Mixing up runtime config from defaults, config file, env vars, and CLI flags");
-    log::debug!("CLI Args: {:?}", &args);
+    log::debug!("CLI Args: {:?}", args);
     let config = Config::new(&args)?;
     logger.set_new_spec(config.verbosity.into());
-    log::debug!("Completed config: {:?}", &config);
+    log::debug!("Completed config: {:?}", config);
     log::debug!("Passing subcommand to matched handler");
     let acceptarium = Acceptarium::new(&config)?;
     match SubCommand::from_arg_matches(&matches)? {

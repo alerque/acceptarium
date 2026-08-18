@@ -26,7 +26,7 @@ fn serialize_to_string<T: Serialize>(format: InfoFormat, data: &T) -> Result<Str
 pub fn export(config: &Config, format: ExportFormat, assets: &Assets) -> Result<String> {
     let mut output = String::new();
     for (_, asset) in assets {
-        log::debug!("Attempting to render {} as {:?}", &asset.id(), &format);
+        log::debug!("Attempting to render {} as {:?}", asset.id(), format);
         let template = match format {
             ExportFormat::HLedger => &config.templates.hledger,
             ExportFormat::LedgerCli => &config.templates.ledger_cli,

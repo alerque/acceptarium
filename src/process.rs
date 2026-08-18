@@ -56,7 +56,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
         use crate::error::AssetProcessedSnafu;
         for (_, asset) in &assets {
             let mut asset = asset.clone();
-            log::info!("Processing asset {}", &asset.id());
+            log::info!("Processing asset {}", asset.id());
             let has_existing = asset.transaction().is_some();
             log::debug!("Checking for previously processed: {has_existing}");
             ensure!(!has_existing || config.overwrite, AssetProcessedSnafu {});
@@ -69,7 +69,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
                     {
                         println!("VISION MODEL RESULTS:");
                         let data = Runtime::new()?.block_on(query_ollama_vision(config, &asset))?;
-                        println!("{}", &data);
+                        println!("{}", data);
                         strip_markdown_json(&data)
                     }
                 }
@@ -84,7 +84,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
                     {
                         println!("OCR RESULTS:");
                         let ocr = ocr_tesseract(asset.clone())?;
-                        println!("{}", &ocr);
+                        println!("{}", ocr);
                         asset.set_ocr(Some(ocr.clone()));
                         match config.extractor {
                             Extractor::LLM => {
@@ -96,7 +96,7 @@ pub fn process(config: &Config, storage: Acceptarium, assets: Assets) -> Result<
                                     println!("OCR DERIVED DATA:");
                                     let data = Runtime::new()?
                                         .block_on(query_ollama_ocr(config, &asset))?;
-                                    println!("{}", &data);
+                                    println!("{}", data);
                                     strip_markdown_json(&data)
                                 }
                             }
@@ -163,7 +163,7 @@ async fn query_ollama_vision(config: &Config, asset: &Asset) -> Result<String> {
     let prompt = vision.prompt.render(config, asset)?;
     let text_content = UserContent::text(&prompt);
     log::info!("Composing prompt with text and image");
-    log::debug!("Text prompt based on: {}", &prompt);
+    log::debug!("Text prompt based on: {}", prompt);
     let content = vec![image_content, text_content];
     let content: OneOrMany<UserContent> =
         OneOrMany::many(content).expect("Unable to create user message");
@@ -171,7 +171,7 @@ async fn query_ollama_vision(config: &Config, asset: &Asset) -> Result<String> {
     log::info!("Sending combined message to llm");
     let response = llm.prompt(content).await.expect("Failed to prompt");
     log::info!("Received response from ollama.");
-    log::debug!("Response: {}", &response);
+    log::debug!("Response: {}", response);
     Ok(response)
 }
 
@@ -222,7 +222,7 @@ async fn query_ollama_ocr(config: &Config, asset: &Asset) -> Result<String> {
     let agent = client.agent(model).preamble(&preamble).build();
     log::debug!("Using preamble: {}", preamble);
     let prompt = llm.prompt.render(config, asset)?;
-    log::debug!("Sending prompt: {}", &prompt);
+    log::debug!("Sending prompt: {}", prompt);
     let response = agent.prompt(prompt).await.expect("Failed to prompt");
     Ok(response)
 }

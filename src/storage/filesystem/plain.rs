@@ -90,7 +90,7 @@ impl BlobStorage for PlainBlob {
             ensure!(
                 !&asset_path_abs.try_exists().context(IoSnafu)?,
                 FilesystemSnafu {
-                    message: format!("Data file '{}' already exists", &asset_path_abs.display()),
+                    message: format!("Data file '{}' already exists", asset_path_abs.display()),
                 }
             );
         }
@@ -114,13 +114,13 @@ impl BlobStorage for PlainBlob {
             && asset_path.exists()
         {
             if asset_path.starts_with(&self.project_dir) {
-                log::info!("Removing asset file {:?}", &asset_path);
+                log::info!("Removing asset file {:?}", asset_path);
                 std::fs::remove_file(&asset_path)?;
                 tracker.stage_paths(&[asset_path], None)?;
             } else {
                 log::warn!(
                     "Not removing asset file {:?} outside of project directory.",
-                    &asset_path
+                    asset_path
                 );
             }
         }

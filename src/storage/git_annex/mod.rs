@@ -72,8 +72,8 @@ impl AnnexedBlob {
         let args: Vec<OsString> = args.into_iter().flatten().map(Into::into).collect();
         log::info!(
             "Executing git-annex CLI command {:?} with args {:?}",
-            &command,
-            &args
+            command,
+            args
         );
         let output = Exec::cmd("git-annex")
             .arg(command)
@@ -156,7 +156,7 @@ impl BlobStorage for AnnexedBlob {
             ensure!(
                 !&asset_path_abs.try_exists().context(IoSnafu)?,
                 FilesystemSnafu {
-                    message: format!("Data file '{}' already exists", &asset_path_abs.display()),
+                    message: format!("Data file '{}' already exists", asset_path_abs.display()),
                 }
             );
         }
@@ -187,7 +187,7 @@ impl BlobStorage for AnnexedBlob {
         if let Some(asset_path) = asset.asset_path(&self.project_dir)
             && asset_path.exists()
         {
-            log::info!("Removing asset file {:?}", &asset_path);
+            log::info!("Removing asset file {:?}", asset_path);
             std::fs::remove_file(&asset_path)?;
             tracker.stage_paths(&[asset_path], None)?;
             info.erase(asset, tracker)?;
@@ -247,12 +247,12 @@ impl InfoStorage for AnnexedBlob {
         let output = self.exec_annex_cli(AnnexCommand::Metadata, Some(args))?;
         let mut lines = output.lines();
         let line = lines.next().unwrap_or_default();
-        log::debug!("Raw git-annex metadata output: {}", &line);
+        log::debug!("Raw git-annex metadata output: {}", line);
         if lines.next().is_some() {
             log::warn!(
                 "Multiple asset files are tagged with id '{}' in git-annex metadata. Using first \
                  result, but manual correction of duplicated assets required.",
-                &id,
+                id,
             );
         }
         Asset::from_annex_metadata_json(line)

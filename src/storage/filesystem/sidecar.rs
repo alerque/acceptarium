@@ -77,7 +77,7 @@ impl InfoStorage for SidecarInfo {
     fn erase(&self, asset: &Asset, tracker: &dyn StorageTracker) -> Result<()> {
         let metadata_path = self.metadata_path(asset)?;
         if metadata_path.exists() {
-            log::info!("Removing metadata file {:?}", &metadata_path);
+            log::info!("Removing metadata file {:?}", metadata_path);
             std::fs::remove_file(&metadata_path)?;
             tracker.stage_paths(&[metadata_path], None)?;
         }
