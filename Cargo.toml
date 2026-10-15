@@ -68,7 +68,7 @@ powershell = ["completions"]
 zsh = ["completions"]
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 convert_case = "0.6"                # held back to match config crate's case feature
 glob = "0.3"
 nanoid = "0.5"
@@ -113,7 +113,7 @@ version = "0.31"
 features = ["colors"]
 
 [dependencies.git2]
-version = "0.20"
+version = "0.21"
 optional = true
 default-features = false
 
@@ -130,11 +130,11 @@ version = "0.30"
 optional = true
 
 [dependencies.ratatui-image]
-version = "10"
+version = "11"
 optional = true
 
 [dependencies.ratatui-themes]
-version = "0.2"
+version = "0.3"
 features = ["serde"]
 optional = true
 
