@@ -29,7 +29,7 @@ impl TemplateString {
         let mut output = self.0.clone();
         log::info!("Rendering template for asset {}", asset);
         let max_iterations = 10;
-        let tera = Tera::default();
+        let tera = new_tera();
         let context = build_context(config, asset)?;
         let ctx = Context::from_serialize(&context)?;
         for i in 0..max_iterations {
@@ -43,6 +43,15 @@ impl TemplateString {
         log::info!("Finished rending template: {}", output);
         Ok(output)
     }
+}
+
+/// Tera v2 moved the dependency-backed filters out of the core crate and into
+/// `tera-contrib`. They have to be registered on every instance we create.
+fn new_tera() -> Tera {
+    let mut tera = Tera::default();
+    tera.register_filter("date", tera_contrib::dates::date);
+    tera.register_filter("json_encode", tera_contrib::json::json_encode);
+    tera
 }
 
 fn build_context(config: &Config, asset: &Asset) -> Result<Value> {
@@ -74,7 +83,7 @@ impl CommitMessage {
     }
 
     pub fn render(&self) -> Result<String> {
-        let tera = Tera::default();
+        let tera = new_tera();
         let mut context = Map::new();
         context.insert("msg".to_string(), to_value(self)?);
         let ctx = Context::from_serialize(&Value::Object(context))?;

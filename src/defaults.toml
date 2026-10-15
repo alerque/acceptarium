@@ -141,7 +141,7 @@ field_descriptions = """
 sample_json = """
 {
 {% for field in config.extra.fields -%}
-  "{{ field.key }}": {{ field.sample | json_encode(pretty=true) | safe }}
+  "{{ field.key }}": {% if field.raw | default(value=false) %}{{ field.sample }}{% else %}{{ field.sample | json_encode(pretty=true) | safe }}{% endif %}
 {%- if not loop.last -%},{%- endif %}
 {% endfor -%}
 }
@@ -179,6 +179,9 @@ Especially in the case of discounts or coupons, the amount for some line items m
 Do include line items for discounts that affect the total amount if adding up the items would otherwise come to the wrong total.\
 """
 sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
+# This sample is itself a rendered JSON snippet rather than a scalar value, so
+# the loop above must emit it as-is instead of JSON-encoding the string again.
+raw = true
 
 [[extra.fields]]
 key = "total"

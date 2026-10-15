@@ -152,6 +152,10 @@ version = "2"
 default-features = false
 features = ["preserve_order", "unicode"]
 
+[dependencies.tera-contrib]
+version = "0.3"
+features = ["date", "json"]
+
 [dependencies.tokio]
 version = "1"
 optional = true
