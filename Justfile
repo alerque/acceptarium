@@ -10,13 +10,10 @@ taplo := require('taplo')
 
 set script-interpreter := ['zsh', '+o', 'nomatch', '-eu']
 set shell := ['zsh', '+o', 'nomatch', '-ecu']
+set default-list
+set default-script
 set positional-arguments
 set unstable
-
-[default]
-[private]
-@list:
-    {{ just }} --list --unsorted
 
 nuke-n-pave:
     {{ git }} clean -dxff -e target -e completions
