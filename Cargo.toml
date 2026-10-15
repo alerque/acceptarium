@@ -148,9 +148,9 @@ version = "1"
 features = ["derive"]
 
 [dependencies.tera]
-version = "1"
+version = "2"
 default-features = false
-features = ["builtins", "preserve_order"]
+features = ["preserve_order", "unicode"]
 
 [dependencies.tokio]
 version = "1"

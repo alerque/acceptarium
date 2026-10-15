@@ -29,16 +29,16 @@ impl TemplateString {
         let mut output = self.0.clone();
         log::info!("Rendering template for asset {}", asset);
         let max_iterations = 10;
-        let mut tera = Tera::default();
+        let tera = Tera::default();
         let context = build_context(config, asset)?;
-        let ctx = Context::from_value(context)?;
+        let ctx = Context::from_serialize(&context)?;
         for i in 0..max_iterations {
             if output == template {
                 break;
             }
             template = output.clone();
             log::debug!("Rendering Tera pass {i} template: {}", template);
-            output = tera.render_str(&template, &ctx)?;
+            output = tera.render_str(&template, &ctx, false)?;
         }
         log::info!("Finished rending template: {}", output);
         Ok(output)
@@ -74,12 +74,12 @@ impl CommitMessage {
     }
 
     pub fn render(&self) -> Result<String> {
-        let mut tera = Tera::default();
+        let tera = Tera::default();
         let mut context = Map::new();
         context.insert("msg".to_string(), to_value(self)?);
-        let ctx = Context::from_value(Value::Object(context))?;
+        let ctx = Context::from_serialize(&Value::Object(context))?;
         let template = &self.template.0;
-        let output = tera.render_str(template, &ctx)?;
+        let output = tera.render_str(template, &ctx, false)?;
         Ok(output)
     }
 }
