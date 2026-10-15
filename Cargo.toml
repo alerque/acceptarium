@@ -37,7 +37,7 @@ crate-type = ["rlib", "cdylib"]
 lto = true
 strip = true
 codegen-units = 1
-opt-level = "s"
+opt-level = 3
 
 [features]
 default = ["cli", "storages", "ml", "ocr", "tui"]
