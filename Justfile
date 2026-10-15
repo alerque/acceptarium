@@ -15,6 +15,20 @@ set default-script
 set positional-arguments
 set unstable
 
+export ACCEPTARIUM_BINARY := justfile_directory() + "/acceptarium"
+
+# With positional arguments enabled, we can pass all the arguments to the bash
+# shell in a way that will get expanded to the original 'word' breakdown. However,
+# when we do this blindly in all cases and the job's positional arguments happen
+# to be empty the shell decides we must have wanted a placeholder for an empty
+# string argument — a construct that is invalid for many of our commands. The
+# solution is to decide up front whether we have any positional arguments at all
+# and then either not pass anything or pass them in a way that will get expanded
+# properly. As a caveat we can't use this workaround for nested jobs that pass
+# positional arguments to other jobs since one layer of quoting is lost, but we
+# don't need to because none of those happen to use spaces in arguments anyway.
+maybe-pass(args) := if args != "" { '"$@"' } else { "" }
+
 nuke-n-pave:
     {{ git }} clean -dxff -e target -e completions
     ./bootstrap.sh
@@ -43,6 +57,17 @@ perfect:
 restyle:
     {{ git }} ls-files '*.rs' '*.rs.in' | xargs {{ rustfmt }} +nightly
     {{ git }} ls-files '*.toml' | xargs {{ taplo }} format
+
+# This task will build (if necessary) and run the Acceptarium CLI via the development version from this repository.
+# This is especially useful for manual testing and can be used from anywhere by invoking the Justfile externally,
+# e.g. with an alias such as:
+#
+#     alias acceptarium='just --justfile ~/path/to/acceptarium/Justfile acceptarium'
+#
+# Build and run Acceptarium for testing (can be used from outside the project).
+[no-cd]
+acceptarium *ARGS: build
+    $ACCEPTARIUM_BINARY {{ maybe-pass(ARGS) }}
 
 [doc('Block execution if Git working tree isn’t pristine.')]
 [private]
