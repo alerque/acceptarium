@@ -133,44 +133,19 @@ Return a JSON object with as many of those fields as were positively detected, f
 {{ config.extra.sample_json }}\
 """
 field_descriptions = """
-{% for field in config.extra.fields -%}
-- **{{ field.key }}**: {{ field.desc }}
+{% for key, desc in config.extra.fields -%}
+- **{{ key }}**: {{ desc }}
 {% endfor -%}
 """
-# Note when Tera 2 is released we should be able to directly encode the map we want and json_encode it
-sample_json = """
-{
-{% for field in config.extra.fields -%}
-  "{{ field.key }}": {% if field.raw | default(value=false) %}{{ field.sample }}{% else %}{{ field.sample | json_encode(pretty=true) | safe }}{% endif %}
-{%- if not loop.last -%},{%- endif %}
-{% endfor -%}
-}
-"""
+sample_json = "{{ config.extra.samples | json_encode(pretty=true) | safe }}"
 language = "Turkish"
 
-[[extra.fields]]
-key = "payee"
-desc = "The vendor, merchant, or payee name, preferring the common business name over corporate divisions"
-sample = "My Store Name"
-
-[[extra.fields]]
-key = "datetime"
-desc = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if the transaction time can be determined"
-sample = 2024-01-15T14:30:00
-
-[[extra.fields]]
-key = "type"
-desc = "The financial document type, most likely 'receipt' or 'invoice'"
-sample = "receipt"
-
-[[extra.fields]]
-key = "invoice_number"
-desc = "A receipt or invoice number if visible (can be null) that would uniquely identify the transaction to the merchant"
-sample = "A000012345"
-
-[[extra.fields]]
-key = "items"
-desc = """
+[extra.fields]
+payee = "The vendor, merchant, or payee name, preferring the common business name over corporate divisions"
+datetime = "The transaction date in ISO 8601 format (YYYY-MM-DD), or include time (YYYY-MM-DDTHH:MM:SS) if the transaction time can be determined"
+type = "The financial document type, most likely 'receipt' or 'invoice'"
+invoice_number = "A receipt or invoice number if visible (can be null) that would uniquely identify the transaction to the merchant"
+items = """
 An array of items with description, quantity, and total amount (as a number) for each line item. \
 Note many line items will not have a quantity at all, in which case leave this blank. \
 Many lines will have a % number that is a tax rate or tax amount. \
@@ -178,41 +153,25 @@ Do not mistake percentages or currency amounts that might be tax values as this 
 Especially in the case of discounts or coupons, the amount for some line items may be negative.\
 Do include line items for discounts that affect the total amount if adding up the items would otherwise come to the wrong total.\
 """
-sample = "{{ config.extra.items | json_encode(pretty=true) | safe }}"
-# This sample is itself a rendered JSON snippet rather than a scalar value, so
-# the loop above must emit it as-is instead of JSON-encoding the string again.
-raw = true
-
-[[extra.fields]]
-key = "total"
-desc = "The final total amount with all items, taxes, discounts, fees, etc. as a number without currency symbols"
-sample = 125.50
-
-[[extra.fields]]
-key = "currency"
-desc = """
+total = "The final total amount with all items, taxes, discounts, fees, etc. as a number without currency symbols"
+currency = """
 The currency used as its ISO code, for example 'TRY' or 'USD'. \
 If not explicitly noted, use the business name or address to guess the country's default currency. \
 For example the symbol '$' is ambiguous but a Colorado addresses would imply USD, Alberta would be CAD.\
 """
-sample = "USD"
+payment_type = "The payment method used - 'cash', 'credit', 'debt', 'check', or 'other'"
+payment_identifier = "The last 4 digits of card or other identifier if visible (can be null)"
 
-[[extra.fields]]
-key = "payment_type"
-desc = "The payment method used - 'cash', 'credit', 'debt', 'check', or 'other'"
-sample = "card"
-
-[[extra.fields]]
-key = "payment_identifier"
-desc = "The last 4 digits of card or other identifier if visible (can be null)"
-sample = "**** **** **** 1234"
-
-[[extra.items]]
-description = "Item A"
-quantity = 1
-amount = 50.00
-
-[[extra.items]]
-description = "Thing B"
-quantity = 2
-amount = 37.75
+[extra.samples]
+payee = "My Store Name"
+datetime = "2024-01-15T14:30:00"
+type = "receipt"
+invoice_number = "A000012345"
+items = [
+  { description = "Item A", quantity = 1, amount = 50.00 },
+  { description = "Thing B", quantity = 2, amount = 37.75 },
+]
+total = 125.50
+currency = "USD"
+payment_type = "card"
+payment_identifier = "**** **** **** 1234"
