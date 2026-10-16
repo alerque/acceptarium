@@ -43,13 +43,13 @@ rel-conf: nuke-n-pave
 
 [parallel]
 build:
-    {{ make }} $0
+    {{ make }} {{ recipe_name() }}
 
 check:
-    {{ make }} $0
+    {{ make }} {{ recipe_name() }}
 
 lint:
-    {{ make }} $0
+    {{ make }} {{ recipe_name() }}
 
 perfect:
     {{ make }} build check lint
