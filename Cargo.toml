@@ -75,7 +75,6 @@ glob = "0.3"
 nanoid = "0.5"
 serde-hjson = "1"
 serde-xml-rs = "0.8"
-serde_json = { version = "1", features = ["preserve_order"] }
 serde_yaml = "0.9"
 snafu = "0.9"
 struct-field-names-as-array = "0.3"
@@ -147,6 +146,10 @@ features = ["all"]
 [dependencies.serde]
 version = "1"
 features = ["derive"]
+
+[dependencies.serde_json]
+version = "1"
+features = ["preserve_order"]
 
 [dependencies.tera]
 version = "2"
