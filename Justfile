@@ -91,7 +91,7 @@ release semver: pristine keys
     {{ git }} add -f Cargo.{toml,lock} README.md CHANGELOG.md
     {{ git }} commit -m 'chore: Release v{{ semver }}'
     {{ git }} tag -s v{{ semver }} -F acceptarium-{{ semver }}.md
-    {{ git }} diff-files --quiet || exit 1
+    {{ just }} build && {{ git }} diff-files --quiet || exit 1
     ./config.status && {{ make }}
     {{ git }} push --atomic origin master v{{ semver }}
     {{ cargo }} publish --locked
