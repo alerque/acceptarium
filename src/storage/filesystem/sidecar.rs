@@ -118,7 +118,10 @@ impl InfoStorage for SidecarInfo {
                 let asset_path = if asset_path.starts_with(&self.project_dir)
                     && cwd.starts_with(&self.project_dir)
                 {
-                    self.project_dir.join(&asset_path).relative(cwd)
+                    self.project_dir
+                        .join(&asset_path)
+                        .relative(cwd)
+                        .to_path_buf()
                 } else {
                     path_relative_to_prefix(&asset_path, &self.project_dir)
                 };

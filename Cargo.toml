@@ -79,7 +79,7 @@ serde_yaml = "0.9"
 snafu = "0.9"
 struct-field-names-as-array = "0.3"
 subprocess = "1"
-sugar_path = "2"
+sugar_path = "3"
 toml = "1"
 which = "8"
 
