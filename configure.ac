@@ -52,8 +52,6 @@ AM_CONDITIONAL([IMAGEMAGICK], [test "x$with_imagemagick" == "xyes"])
 AM_COND_IF([DEVELOPER_MODE], [
     AX_REQUIRE_PROG([just])
     # Release tooling
-    AX_REQUIRE_PROG([cargo-deny])
-    AX_REQUIRE_PROG([cargo-msrv])
     AX_REQUIRE_PROG([cargo-set-version])
     AX_REQUIRE_PROG([git-cliff])
     AX_REQUIRE_PROG([reuse])

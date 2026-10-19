@@ -201,6 +201,9 @@ default_job = "build"
 [package.metadata.bacon.jobs.build]
 command = ["cargo", "build", "--features", "full", "--color", "always"]
 
+[package.metadata.binstall]
+pkg-fmt = "bin"
+
 [package.metadata.docs.rs]
 features = []
 rustdoc-args = ["--cfg", "docsrs"]
@@ -226,6 +229,3 @@ ratatui = "ratatui"
 [package.metadata.typos.files]
 ignore-hidden = false
 extend-exclude = ["/.git"]
-
-[package.metadata.binstall]
-pkg-fmt = "bin"

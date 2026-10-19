@@ -20,8 +20,7 @@ use {
 include!("../src/cli.rs");
 
 fn main() -> AnyhowResult<()> {
-    println!("cargo:rustc-cfg=build");
-    println!("cargo:rustc-check-cfg=cfg(build)");
+    configure_docs_generation();
     if let Ok(val) = env::var("AUTOTOOLS_DEPENDENCIES") {
         for dependency in val.split(' ') {
             println!("cargo:rerun-if-changed={dependency}");
@@ -44,6 +43,11 @@ fn main() -> AnyhowResult<()> {
     #[cfg(feature = "completions")]
     generate_shell_completions();
     Ok(())
+}
+
+fn configure_docs_generation() {
+    println!("cargo:rustc-cfg=build");
+    println!("cargo:rustc-check-cfg=cfg(build)");
 }
 
 /// Generate man page
@@ -106,9 +110,9 @@ fn generate_shell_completions() {
         .expect("Unable to generate zsh completions");
 }
 
-/// Pass through some variables set by autoconf/automake about where we're installed to cargo for
-/// use in finding resources at runtime
+/// Pass through some variables set by autoconf/automake integrations to cargo
 fn pass_on_configure_details() {
+    // Where we're installed for use in finding resources at runtime
     let mut autoconf_vars = collections::HashMap::new();
     autoconf_vars.insert("CONFIGURE_PREFIX", String::from("./"));
     autoconf_vars.insert("CONFIGURE_BINDIR", String::from("./"));
