@@ -22,7 +22,8 @@ edition = "2024"
 rust-version = "1.96"
 
 [workspace]
-resolver = "2"
+# https://doc.rust-lang.org/edition-guide/rust-2024/cargo-resolver.html#details
+resolver = "3"
 members = ["."]
 
 [[bin]]
